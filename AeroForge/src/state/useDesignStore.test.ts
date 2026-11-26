@@ -5,7 +5,7 @@ import { legacyWingView } from '../engineering/wingGeometry';
 import { useDesignStore } from './useDesignStore';
 
 describe('versioned aircraft design state', () => {
-  afterEach(() => useDesignStore.setState({ design: defaultDesign, selectedSizingPoint: undefined }));
+  afterEach(() => useDesignStore.setState({ design: defaultDesign, selectedSizingPoint: undefined, wingHistory: [], selectedWingStationId: defaultDesign.wing.stations[0].id }));
 
   it('preserves the schema version and increments the design revision on edits', () => {
     useDesignStore.setState({ design: defaultDesign });
@@ -36,5 +36,20 @@ describe('versioned aircraft design state', () => {
     useDesignStore.setState({ design: defaultDesign });
     useDesignStore.getState().update('wing.rootChordM', 0);
     expect(useDesignStore.getState().design).toBe(defaultDesign);
+  });
+
+  it('undoes and resets committed wing geometry without affecting the schema contract', () => {
+    useDesignStore.setState({ design: defaultDesign, wingHistory: [], selectedWingStationId: 'wing-root' });
+    const edited = structuredClone(defaultDesign.wing); edited.stations[1].chordM = 1.4;
+    expect(useDesignStore.getState().commitWingGeometry(edited, 'wing-tip')).toEqual([]);
+    expect(useDesignStore.getState().design.wing.stations[1].chordM).toBe(1.4);
+    expect(useDesignStore.getState().wingHistory).toHaveLength(1);
+    useDesignStore.getState().undoWingGeometry();
+    expect(useDesignStore.getState().design.wing).toEqual(defaultDesign.wing);
+    expect(useDesignStore.getState().selectedWingStationId).toBe('wing-tip');
+    useDesignStore.getState().commitWingGeometry(edited, 'wing-tip');
+    useDesignStore.getState().resetWingGeometry();
+    expect(useDesignStore.getState().design.wing).toEqual(defaultDesign.wing);
+    expect(useDesignStore.getState().design.schemaVersion).toBe(AIRCRAFT_DESIGN_SCHEMA_VERSION);
   });
 });

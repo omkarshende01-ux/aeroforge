@@ -95,6 +95,16 @@ For a symmetric, single trapezoidal wing, span b, root chord cr, tip chord ct, t
 - Schema-v1 migration maps the old trapezoid to root and tip stations at `y=0` and `y=b/2`; `c_tip=lambda c_root`, `x_LE,tip=x_LE,root+(b/2)tan(Lambda_LE)`, and the old dihedral/tip twist/airfoil/placement are retained. No second legacy planform is stored.
 - M5.1 does not add control surfaces, an advanced station editor, VLM panels, aerodynamic load prediction, takeoff analysis, or optimization. Per-station airfoil identifiers are geometry metadata only; no polar is inferred.
 
+## M5.2 interactive wing editing
+
+- Editor operations transform the authoritative schema-v2 `WingGeometry`; the station table, analytical metrics, and 3D loft do not keep independent planform values. A candidate change is committed only after the M5.1 topology and physical validation succeeds.
+- Insertion linearly interpolates chord, leading-edge position, twist, and section height at the new span station and splits the original section. Duplication creates a nearby station within the selected adjacent interval. Add-outboard extrapolates a finite positive-chord station from the outermost section. Removal reconnects the surviving neighbors. These are geometry-editing rules, not aerodynamic assumptions.
+- Changing to asymmetric geometry expands the current symmetric wing to its explicit port-to-starboard physical stations. Changing back retains the root and starboard half and restores analytical mirroring. Asymmetric edits may therefore represent unequal planforms, but no asymmetric aerodynamic loads, lateral stability, or structural response are inferred.
+- Leading-edge sweep shown for a section is derived from its adjacent station coordinates, `Lambda_LE=atan2(Delta x_LE, Delta y)`. Editing sweep moves only that section's outboard leading edge. Dihedral remains a section property; twist and airfoil identifier remain station properties.
+- Undo stores validated in-session wing snapshots; reset restores the default schema-v2 wing. Neither is project persistence. Selection, markers, dimension annotations, and engineering camera views are visualization state only and do not affect geometry or metrics.
+- Live span, projected area, aspect ratio, MAC, and reference locations use the analytical M5.1 equations after every accepted edit. The renderer lofts the same expanded physical stations, so render tessellation and annotations cannot change reference properties.
+- Airfoil editing is restricted to the NACA four-digit identifiers currently supported by the loft generator. An identifier selects section coordinates only; it does not supply a polar. Control surfaces, VLM, complex-wing aerodynamic validity, takeoff analysis, and optimization remain outside M5.2.
+
 ## Later physics
 - Aerodynamics: add sourced airfoil polars, lifting-line or VLM, geometry-sensitive spanwise loads and component drag buildup. VLM is inviscid and is not a stall/viscous drag model.
 - Structures: add geometry-varying stiffness, wing self-weight, torsion, shear stress and validated aerodynamic load transfer; later buckling, modal, fatigue and FEA comparison.

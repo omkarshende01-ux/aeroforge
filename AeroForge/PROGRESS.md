@@ -1,5 +1,19 @@
 # AeroForge progress
 
+## M5.2 checkpoint — 2026-11-26
+
+The repository is on the `development` branch. M5.2, Interactive Wing Section Editor and 3D Lofting, is complete. The dedicated geometry workspace edits the existing schema-v2 wing directly, with validated real-time lofting and reference-property feedback. No control surfaces, VLM, new aerodynamic solver, advanced fuselage geometry, optimization, or persistence was added.
+
+## M5.2 completed
+
+- Added a dedicated wing workspace with an editable station table for span, chord, leading-edge position, derived leading-edge sweep, twist, section dihedral, and supported NACA airfoil identifiers.
+- Added validated add-outboard, insert-after, duplicate, remove, symmetric/asymmetric conversion, undo, and reset operations as pure transformations of the authoritative schema-v2 wing. Invalid ordering, dimensions, topology, and symmetry changes are rejected before state mutation with actionable messages.
+- Added live span, projected area, aspect ratio, MAC, MAC leading-edge, and quarter-chord reference feedback. Every accepted edit increments the design revision and updates the same geometry consumed by existing analyses.
+- Added selectable station rows and viewport markers, selected-station highlighting, optional station dimensions, and top/front/side/isometric engineering views over the actual expanded physical stations.
+- Preserved backward compatibility with schema-v1 migration, the simple station model, preliminary sizing, M4.6 detached candidate generation, and all existing analysis regressions.
+- Added focused operation, validation, symmetry, live-metric, history, reset, and editor-to-mesh consistency tests. Browser smoke covered insertion, editing, all engineering views, annotations, asymmetric conversion/editing, invalid-input rejection, undo, and reset.
+- Verification passes: strict typecheck, 76 automated tests across 15 files, and the production build. Vite's existing non-blocking main-chunk warning remains.
+
 ## M5.1 checkpoint — 2026-11-26
 
 The repository is on the `development` branch. M5.1, Multi-Section Aircraft Geometry Foundation, is complete. The authoritative aircraft schema is version 2 and the wing is represented once as validated spanwise stations and connecting piecewise-trapezoidal sections. No advanced editor, control surfaces, VLM, takeoff model, optimization, or project persistence was added.
@@ -91,7 +105,7 @@ The codebase is a functional conceptual-design demonstrator with three prelimina
 |---|---|---|
 | Frontend foundation | React 18, strict TypeScript, Vite, Zustand, Three.js/React Three Fiber, Vitest; CAD-style navigation and inspector | Implemented baseline |
 | Shared design state | Typed `AircraftDesign` schema version 2 with incrementing revision and mission, geometry, mass, propulsion, stability, and structure groups | Versioned in memory; v1 wing migration exists, but project persistence is not implemented |
-| Geometry | Validated multi-section symmetric/asymmetric wing, trapezoidal tails, NACA four-digit sections, circular-section fuselage loft, component stations, standard views, orbit/pan/zoom | M5.1 wing foundation implemented; no advanced editor, control surfaces, or generalized tail/fuselage stations |
+| Geometry | Validated multi-section symmetric/asymmetric wing, interactive station editor, real-time loft, station selection/annotations, trapezoidal tails, NACA four-digit sections, circular-section fuselage loft, component stations, standard views, orbit/pan/zoom | M5.2 wing editor implemented; no control surfaces or generalized tail/fuselage stations |
 | Geometry metrics | Piecewise projected area, span, aspect ratio, tip chord, MAC/reference locations, section properties, wing loading, conditional stall speed | Implemented and analytically tested |
 | Atmosphere | ISA 1976-style troposphere from 0–11 km plus manual density | Implemented and tested; manual-density Mach uses sea-level sound speed with warning |
 | Aerodynamics | Linear finite-wing lift slope, pre-stall CL, parabolic polar, forces, Mach, L/D, analytical elliptical span load | Implemented low-fidelity baseline; key coefficients are supplied assumptions |
@@ -100,7 +114,7 @@ The codebase is a functional conceptual-design demonstrator with three prelimina
 | Stability | Tail area/volume, neutral point, static margin from supplied tail/downwash assumptions | Implemented baseline; no trim, control authority, lateral or dynamic stability |
 | Flight envelope | Simplified aerodynamic/structural maneuver envelope | Implemented baseline; no gust or dynamic effects |
 | Structures | Half-wing Euler–Bernoulli cantilever, constant EI, elliptical limit load, shear/moment/stress/deflection/safety factor | Implemented benchmark model; no wing box, materials workflow, self-weight, torsion, buckling, or FEA |
-| Tests | 69 automated tests in 14 files, including independent geometry cases, analytical fixtures, published-data sanity checks, mission/constraint benchmarks, mass/energy closure, robustness, version contracts, and unit conversions | Geometry reference equations and M4.2–M4.4 equations are independently verified in their declared scope; full-aircraft external validation remains incomplete |
+| Tests | 76 automated tests in 15 files, including editor operations/history, independent geometry cases, analytical fixtures, published-data sanity checks, mission/constraint benchmarks, mass/energy closure, robustness, version contracts, and unit conversions | Geometry reference equations and M4.2–M4.4 equations are independently verified in their declared scope; full-aircraft external validation remains incomplete |
 | Optimization, 6-DOF, controls | No implementation found | Planned |
 | Save/load, reports, geometry/data export, public release workflow | No implementation found | Planned |
 
@@ -116,7 +130,7 @@ The codebase is a functional conceptual-design demonstrator with three prelimina
 | Phase | Status | Principal gap |
 |---:|---|---|
 | 1. Mission requirements and preliminary sizing | M4.2–M4.5 complete; broader phase partial | Analytical pipeline independently verified; no takeoff model, matched full-aircraft closure validation, sourced empty-mass correlation, or segment mission sizing |
-| 2. Advanced parametric geometry | M5.1 foundation complete; broader phase partial | Multi-section wing schema/calculations/loft and v1 migration exist; no advanced editor, controls, generalized tail/fuselage stations, or analysis lattice |
+| 2. Advanced parametric geometry | M5.2 wing editor complete; broader phase partial | Multi-section wing schema/calculations/interactive loft and v1 migration exist; no controls, generalized tail/fuselage stations, or analysis lattice |
 | 3. Airfoil analysis and VLM | Partial precursor | NACA coordinates and analytical lift model only; no polar import or VLM |
 | 4. Structures and materials | Partial precursor | Constant-EI beam only; no load transfer, wing box, materials, or advanced failure modes |
 | 5. Propulsion sizing | Partial precursor | Aggregate electric/fuel cruise sizing exists; no component maps, electrical details, derating, or operating-point coverage |
@@ -150,4 +164,4 @@ The codebase is a functional conceptual-design demonstrator with three prelimina
 
 ## Current stop point
 
-M5.1 is complete. Development stops here pending owner review. The geometry foundation is analysis-ready for later advanced editing and VLM discretization, but neither is implemented. Provisional candidates remain isolated with no apply action; takeoff and full segment mission analysis remain unavailable, so mission feasibility remains indeterminate.
+M5.2 is complete. Development stops here pending owner review. The schema-v2 wing is interactively editable and analysis-ready, but control surfaces and VLM discretization are not implemented. Provisional candidates remain isolated with no apply action; takeoff and full segment mission analysis remain unavailable, so mission feasibility remains indeterminate.

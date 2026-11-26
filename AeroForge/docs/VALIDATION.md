@@ -17,7 +17,7 @@ The portfolio MVP requires V2 for its primary reference workflow and at least V1
 
 | Area | Existing evidence found | Level | Limitation |
 |---|---|---:|---|
-| Geometry/metrics | Independent rectangular, trapezoidal, multi-section and asymmetric span/area/AR/MAC/reference-location cases; invalid topology, v1 migration, mesh bounds, finite normals, and NACA coordinates | V2 for analytical reference properties; V1 for loft | No external CAD comparison, generalized tail stations, or mesh snapshot/round-trip evidence |
+| Geometry/metrics | Independent rectangular, trapezoidal, multi-section and asymmetric span/area/AR/MAC/reference-location cases; editor topology/history/validation tests; invalid topology, v1 migration, mesh bounds, finite normals, and NACA coordinates | V2 for analytical reference properties; V1 for editor and loft | No external CAD comparison, generalized tail stations, or mesh snapshot/round-trip evidence |
 | Atmosphere | 1976 Standard Atmosphere source plus independent 3000 m and boundary regressions | V2 | Troposphere only; altitude is treated as geopotential in the implemented equation |
 | Analytical aerodynamics | Independent coefficient/force formulas, span-load symmetry/tip behavior, CLmax warning | V1 | No numerical span-load integral test, sweep correction, polar data, or external aero benchmark |
 | Mass/CG | Independent four-component mass-moment calculation | V1 | Longitudinal CG only; no hierarchy, envelope, or inertia |
@@ -25,9 +25,9 @@ The portfolio MVP requires V2 for its primary reference workflow and at least V1
 | Preliminary sizing | Closed-form electric/fuel mass, energy, reserve, wing, and power benchmarks; convergence matrix; NASA TERA direct sizing sanity check | V2 for declared equations | Published full-aircraft mass/battery closure not reproduced; NASA case has a higher-fidelity battery/mission model |
 | Static stability | Independent tail-volume/neutral-point/static-margin calculation | V1 | Relies on supplied derivatives; no trim or lateral/dynamic modes |
 | Structures | Elliptical-load root shear/moment compared with analytical values | V1/V2 | Constant EI; no self-weight/torsion/buckling/material library/load-transfer evidence |
-| Build quality | Typecheck, 69 tests across 14 files, and the production build complete successfully on Windows | V1 | Existing Vite main-chunk size warning remains (approximately 1.095 MB minified / 302 kB gzip); CI/clean-clone evidence is still planned |
+| Build quality | Typecheck, 76 tests across 15 files, production build, and M5.2 browser workflow complete successfully on Windows | V1 | Existing Vite main-chunk size warning remains (1,118.25 kB minified / 308.31 kB gzip); CI/clean-clone evidence is still planned |
 
-The current suite contains 69 tests across 14 test files. Detailed M4.5 evidence and source links are recorded in `docs/BENCHMARKS.md`; M5.1 geometry evidence is recorded below. This count is inventory, not proof of completeness. Each release must reproduce tests and build from a clean checkout and record tool versions and environment.
+The current suite contains 76 tests across 15 test files. Detailed M4.5 evidence and source links are recorded in `docs/BENCHMARKS.md`; M5.1 analytical geometry and M5.2 editor evidence are recorded below. This count is inventory, not proof of completeness. Each release must reproduce tests and build from a clean checkout and record tool versions and environment.
 
 ## Validation process
 
@@ -84,6 +84,9 @@ The current suite contains 69 tests across 14 test files. Detailed M4.5 evidence
 - M5.1 asymmetric check uses `(-4,2),(0,3),(6,1)` and requires `b=10 m`, `S=22 m²`, `AR=100/22`, and `MAC=7/3 m`; independent port/starboard dihedral signs produce upward tips without implicit mirroring.
 - Spanwise manufactured interpolation verifies chord, leading edge, quarter chord, twist, and integrated height. Invalid ordering, zero/negative chord, broken adjacency, empty airfoil, and 90-degree dihedral are rejected.
 - Schema-v1 migration must preserve the established 12 m trapezoid's area, AR, MAC, sweep-derived tip leading edge, dihedral, twist, airfoil, and placement. M4.6 regression tests must continue to reproduce candidate area/aspect/taper and state isolation.
+- M5.2 station-operation tests cover insertion with analytical area/MAC preservation, duplicate/add/remove connectivity, station and section edits, supported sweep edits, symmetric-to-asymmetric expansion, independent asymmetric changes, and invalid chord/order/root-removal rejection.
+- M5.2 store tests verify accepted edits update the authoritative design revision, undo restores the preceding validated wing, and reset restores the default schema-v2 geometry. Mesh-bound and vertex-count checks verify the viewport consumes the edited physical stations rather than a separate planform.
+- M5.2 browser smoke covers station insertion and chord editing with immediate metric changes; top, side, and front views; dimension annotations; asymmetric conversion and port-side editing; actionable negative-chord rejection; airfoil selection; duplicate/remove; undo; and reset.
 - Multi-section volume and independent numerical-integration comparison remain planned because M5.1 defines a reference surface, not a closed wing volume model. Target relative error for later numerical comparisons remains below 0.1%.
 - NACA symmetric/cambered section properties, cosine spacing, finite normals, winding, closure, section continuity, and mirrored topology.
 - Translation/rotation/reference-frame invariance where applicable; render tessellation changes must not change analytical reference properties.

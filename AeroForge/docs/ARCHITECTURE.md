@@ -36,7 +36,11 @@ M5.1 advances `AircraftDesign` to schema version 2. `wing` is the sole authorita
 
 The pure v1 migration converts the old scalar trapezoid to two symmetric stations without changing span, root/tip chord, leading-edge sweep, dihedral, tip twist, root placement, or airfoil. The existing simple inspector remains a compatibility view over schema v2 and applies validated whole-wing transforms to the same stations. It is not a second stored model. Persisted project envelopes and automatic load-time routing remain deferred because project persistence does not yet exist.
 
-M5.1 geometry calculations are independent of the render tessellation. The geometry module expands symmetry, integrates piecewise-linear chord and leading-edge functions, and exposes physical stations and reference properties for future analysis discretization. The renderer consumes expanded stations only to produce the visual loft. Control surfaces, a separate VLM lattice, generalized tail stations, and the advanced editor remain future contracts.
+M5.1 geometry calculations are independent of the render tessellation. The geometry module expands symmetry, integrates piecewise-linear chord and leading-edge functions, and exposes physical stations and reference properties for future analysis discretization. The renderer consumes expanded stations only to produce the visual loft.
+
+M5.2 adds an editing layer without adding a geometry representation. Pure station operations accept and return `WingGeometry`, rebuild adjacent sections where topology changes, and pass the result through the existing schema-v2 validator before the store may commit it. The store keeps bounded in-memory snapshots for wing-only undo, exposes station selection as transient UI state, increments the shared design revision on accepted geometry changes, and resets through the same validated commit path. Project persistence and durable command history remain deferred.
+
+The dedicated wing workspace computes live feedback with the existing reference-property functions. Viewport station markers, dimensions, selection highlights, and the loft all consume expanded physical stations from the authoritative wing; these overlays are presentation state and do not become analysis inputs. Control surfaces, a separate VLM lattice, generalized tail stations, and persisted editor history remain future contracts.
 
 ## Milestone 1 acceptance
 - Local app opens; parameter edits visibly update mathematically generated geometry.
