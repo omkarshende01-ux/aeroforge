@@ -28,8 +28,8 @@ Priority: **P0** is required for a releasable MVP, **P1** is desired if it does 
 |---|---|---:|---|
 | MIS-001 | Define payload, crew, range/endurance, cruise speed/altitude, stall speed, climb, ceiling, takeoff/landing, reserve, and propulsion type with units. | P0 | Partial |
 | MIS-002 | Plot applicable wing-loading versus power/thrust-loading constraints and identify feasible regions and the selected design point. | P0 | Implemented | M4.3 |
-| MIS-003 | Iterate takeoff mass, empty mass, energy/fuel, wing area, and installed power to a reported residual or an infeasibility result. | P0 | Planned |
-| MIS-004 | Preserve the source, applicability range, and uncertainty of empirical sizing correlations. | P0 | Planned |
+| MIS-003 | Iterate takeoff mass, empty mass, energy/fuel, wing area, and installed power to a reported residual or an infeasibility result. | P0 | Implemented | M4.4 |
+| MIS-004 | Preserve the source, applicability range, and uncertainty of empirical sizing correlations. | P0 | Partial | M4.4 uses explicit user inputs and provenance; sourced statistical correlations remain planned |
 
 ### Parametric geometry
 
@@ -68,9 +68,9 @@ Priority: **P0** is required for a releasable MVP, **P1** is desired if it does 
 | ID | Requirement | Priority | Status |
 |---|---|---:|---|
 | PRO-001 | Calculate required shaft power, available excess power, energy-based endurance, and range using explicit efficiencies. | P0 | Implemented |
-| PRO-002 | Represent electric and fuel propulsion with distinct mass, energy, reserve, and derating models. | P0 | Planned |
+| PRO-002 | Represent electric and fuel propulsion with distinct mass, energy, reserve, and derating models. | P0 | Partial | M4.4 aggregate energy models; maps and derating remain planned |
 | PRO-003 | Import and interpolate propeller/motor/engine maps with domain checks and source metadata. | P0 | Planned |
-| PRO-004 | Size installed power/thrust and energy/fuel capacity across mission operating points. | P0 | Planned |
+| PRO-004 | Size installed power/thrust and energy/fuel capacity across mission operating points. | P0 | Partial | M4.4 sizes installed shaft power and cruise-only capacity |
 
 ### Weight, CG, and inertia
 

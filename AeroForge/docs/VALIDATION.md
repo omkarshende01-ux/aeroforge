@@ -24,9 +24,9 @@ The portfolio MVP requires V2 for its primary reference workflow and at least V1
 | Performance | Independent fixed-condition CL/drag/power/climb/range calculation; envelope cap checks | V1 | No takeoff, ceiling, changing mass, wind, or mission integration |
 | Static stability | Independent tail-volume/neutral-point/static-margin calculation | V1 | Relies on supplied derivatives; no trim or lateral/dynamic modes |
 | Structures | Elliptical-load root shear/moment compared with analytical values | V1/V2 | Constant EI; no self-weight/torsion/buckling/material library/load-transfer evidence |
-| Build quality | Current typecheck completed successfully | V1 | In this audit, Vitest and production build were blocked by Windows `EPERM` writes to generated Vite/TypeScript cache files; historical progress claims a prior clean run |
+| Build quality | Typecheck, 45 tests, and the production build complete successfully on Windows | V1 | Existing Vite main-chunk size warning remains; CI/clean-clone evidence is still planned |
 
-The M4.3 suite contains 35 tests across ten test files. This count is inventory, not proof of completeness. Each release must reproduce tests and build from a clean checkout and record tool versions and environment.
+The M4.4 suite contains 45 tests across eleven test files. This count is inventory, not proof of completeness. Each release must reproduce tests and build from a clean checkout and record tool versions and environment.
 
 ## Validation process
 
@@ -63,6 +63,12 @@ The M4.3 suite contains 35 tests across ten test files. This count is inventory,
 - Mass closure from two separated initial guesses; report iteration residual and convergence rate.
 - Deliberately infeasible stall/climb/takeoff combinations must return no feasible region.
 - Energy/fuel and reserve balances must close within 0.1% for deterministic cases.
+- M4.4 independently checks the closed component mass sum, signed mass/energy residuals, `S=W/(W/S)`, and `P_installed=(P/W)*W`.
+- Electric storage mass is checked from effective shaft-specific energy; fuel mass is checked independently from brake-specific fuel consumption. Both include reserve as unavailable total capacity.
+- Two separated initial masses converge to the same solution within twice the requested tolerance. A one-iteration budget returns non-converged, and an energy mass fraction at least one returns infeasible.
+- Missing propulsion properties, invalid iteration controls, non-finite design points, and M4.3-infeasible points return incomplete or infeasible without fabricated outputs.
+- Area, power, energy, specific-energy, and fuel-consumption conversions have independent aviation-unit benchmarks or round-trip tests.
+- External aircraft validation remains open: no published reference aircraft is claimed because M4.4 deliberately uses user-supplied effective energy and fixed-mass assumptions.
 
 ### 2. Advanced parametric geometry
 

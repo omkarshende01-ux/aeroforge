@@ -13,6 +13,7 @@ Milestone status as of 2026-11-26:
 - **M4.1 prerequisite complete for constraint analysis:** schema version, design revision, and versioned constraint-result contract exist in memory. Persistence and migration remain in ARC-01.
 - **M4.2 complete:** typed mission definition, validation, unit conversion, and current-design feasibility.
 - **M4.3 complete:** interactive W/S versus installed shaft P/W analysis with stall, cruise, climb, supported service ceiling, candidate selection, margins, governing constraint, and explicitly unevaluated takeoff.
+- **M4.4 complete:** damped preliminary mass closure, explicit fixed masses, electric/fuel cruise-energy branches, wing/power sizing, residual history, sensitivity to two initial guesses, and explicit incomplete/infeasible/non-converged states.
 
 ## Twelve-week MVP backlog
 
@@ -24,7 +25,7 @@ Milestone status as of 2026-11-26:
 | UX-01 | 1 | P1 | Global input/error/status conventions and units component | ARC-01 | 1.0 d | Input/estimate/warning/invalid states are visually distinct |
 | MIS-01 | 2 | P0 | Mission schema/editor with payload, cruise, stall, climb, ceiling, takeoff, reserve | ARC-01 | 1.5 d | Invalid or dimensionally inconsistent inputs are blocked |
 | MIS-02 | 2 | P0 | Wing-loading/power-loading constraints and design-point plot | MIS-01 | 2.0 d | **Complete (M4.3):** independent stall, cruise, climb, boundary, intersection, and infeasible-domain tests pass |
-| MIS-03 | 2 | P0 | Iterative mass/wing/power/energy closure with residual history | MIS-02, WGT baseline | 2.0 d | Two initial guesses converge to the same feasible result or fail explicitly |
+| MIS-03 | 2 | P0 | Iterative mass/wing/power/energy closure with residual history | MIS-02, WGT baseline | 2.0 d | **Complete (M4.4):** two initial guesses converge to the same closure or fail explicitly; takeoff keeps mission status indeterminate |
 | GEO-01 | 3 | P0 | Multi-section lifting-surface domain model and migration | ARC-01 | 1.5 d | Existing trapezoid becomes equivalent two-section data |
 | GEO-02 | 3 | P0 | Piecewise wing/tail lofts and independent reference-property integration | GEO-01 | 2.0 d | Area/MAC/span and mesh invariants pass analytic cases |
 | GEO-03 | 3 | P1 | Control-surface definitions and overlap diagnostics | GEO-01 | 1.5 d | Invalid sections/control overlaps block dependent analyses |

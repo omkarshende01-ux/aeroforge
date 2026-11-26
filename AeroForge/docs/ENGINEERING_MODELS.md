@@ -51,6 +51,20 @@ For a symmetric, single trapezoidal wing, span b, root chord cr, tip chord ct, t
 - Takeoff distance remains not evaluated because thrust-versus-speed, rolling resistance, rotation, and obstacle-clearance models do not exist. Therefore a point that passes every plotted constraint is labeled evaluated-feasible but overall indeterminate, never overall feasible.
 - Service-ceiling provenance: FAA Airplane Flying Handbook glossary, “Service ceiling,” https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/airplane_handbook/20_afh_glossary.pdf.
 
+## M4.4 iterative preliminary aircraft sizing
+
+- Inputs are the M4.3 selected design point `x=W/S` and `p_i=P_installed,shaft/W`, mission requirements, explicit fixed component masses, reserve fraction, propulsion-specific energy data, and numerical controls. Current aircraft geometry is not modified.
+- At each mass estimate `m_n`, weight is `W_n=m_n*g`. Required wing area and installed shaft power after closure are `S=W/x` and `P_installed,shaft=p_i*W`. Mass and weight remain dimensionally distinct.
+- The existing level-flight parabolic-polar model supplies cruise shaft power loading `p_c`. Nominal cruise duration is `t=R/V`, and nominal mission shaft energy is `E_mission=p_c*W*t`. This is a constant-mass, steady, level, still-air cruise estimate.
+- Electric sizing uses user-supplied effective shaft-deliverable battery specific energy `e_b` in J/kg: `m_battery=E_mission/[e_b*(1-r)]`. The effective property includes pack-to-shaft losses; AeroForge does not silently introduce a motor/controller efficiency.
+- Fuel sizing uses user-supplied brake-specific fuel consumption `c_b` in kg/J of shaft energy: `m_fuel=E_mission*c_b/(1-r)`. No engine map, altitude derating, or fuel-flow schedule is inferred.
+- Reserve `r` is a fraction of total stored capacity unavailable to the nominal mission. Thus total shaft-energy-equivalent capacity is `E_total=E_mission/(1-r)` and reserve capacity is `E_total-E_mission`.
+- Fixed empty mass is the sum of explicit airframe, propulsion, and fixed-equipment inputs. No undocumented statistical empty-mass fraction is used. Target takeoff mass is `F(m_n)=m_empty+m_payload+m_energy(m_n)`.
+- Damped fixed-point iteration is `m_(n+1)=m_n+lambda*[F(m_n)-m_n]`, with user-selected `0<lambda<=1`, absolute mass tolerance, and iteration limit. The complete signed residual history is retained. A second user-selected initial mass runs through the same solver for sensitivity.
+- The energy-storage mass fraction must be finite and below one. Nonpositive properties, negative masses, invalid design points, non-finite states, excessive mass, violated M4.3 constraints, and exhausted iteration limits produce explicit incomplete, infeasible, or non-converged states.
+- A converged result remains mission-indeterminate because takeoff is mandatory and unevaluated. Cruise-only energy excludes takeoff, climb, descent, taxi, loiter, wind, fuel-mass depletion, and altitude-dependent propulsion availability.
+- Model provenance is internal analytical power and constraint equations plus clearly labeled user-supplied assumptions. No aircraft-specific empirical coefficient source is claimed.
+
 ## Later physics
 - Aerodynamics: add sourced airfoil polars, lifting-line or VLM, geometry-sensitive spanwise loads and component drag buildup. VLM is inviscid and is not a stall/viscous drag model.
 - Structures: add geometry-varying stiffness, wing self-weight, torsion, shear stress and validated aerodynamic load transfer; later buckling, modal, fatigue and FEA comparison.

@@ -28,6 +28,8 @@ Architect must define one typed AircraftDesign schema: mission, mass, wing, fuse
 
 M4.3 establishes the first versioned contract: `AircraftDesign` schema version 1 and an incrementing in-memory revision. Constraint-analysis results include schema/model versions, design revision, validity, assumptions, warnings, and sources. This is sufficient for traceable in-session analysis; serialized project envelopes, migrations, and conversion of older analysis result types remain future work.
 
+M4.4 reuses that contract for preliminary sizing results and adds convergence metadata through a complete iteration history. The selected W/S and installed shaft P/W point is shared as transient workflow state, while sizing assumptions and results remain separate from `AircraftDesign`; no sizing result mutates geometry or authoritative mass until a future explicit apply workflow is approved.
+
 ## Milestone 1 acceptance
 - Local app opens; parameter edits visibly update mathematically generated geometry.
 - Orbit/pan/zoom and standard orthographic views work.

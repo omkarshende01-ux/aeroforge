@@ -10,6 +10,10 @@ describe('mission unit conversions', () => {
     expect(convertFromSi(0.45359237, 'mass', 'aviation')).toBeCloseTo(1, 12);
     expect(convertFromSi(47.88025898033584, 'wingLoading', 'aviation')).toBeCloseTo(1, 10);
     expect(convertFromSi(745.6998715822702 / 4.4482216152605, 'shaftPowerLoading', 'aviation')).toBeCloseTo(1, 10);
+    expect(convertFromSi(0.09290304, 'area', 'aviation')).toBeCloseTo(1, 10);
+    expect(convertFromSi(745.6998715822702, 'power', 'aviation')).toBeCloseTo(1, 10);
+    expect(convertFromSi(3.6e6, 'energy', 'aviation')).toBeCloseTo(1, 10);
+    expect(convertFromSi(3600 / 0.45359237, 'specificEnergy', 'aviation')).toBeCloseTo(1, 10);
   });
 
   it('round-trips every mission quantity', () => {
@@ -17,6 +21,8 @@ describe('mission unit conversions', () => {
       ['mass', 172.5], ['distance', 1_250_000], ['length', 420],
       ['speed', 53.2], ['altitude', 3048], ['climbRate', 3.4],
       ['wingLoading', 650], ['shaftPowerLoading', 15.3],
+      ['area', 18], ['power', 180_000], ['energy', 1.8e9],
+      ['specificEnergy', 800_000], ['fuelConsumption', 8.3e-8],
     ] as const;
     for (const [quantity, value] of cases) {
       expect(convertToSi(convertFromSi(value, quantity, 'aviation'), quantity, 'aviation')).toBeCloseTo(value, 10);

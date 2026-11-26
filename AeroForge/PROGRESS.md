@@ -1,8 +1,21 @@
 # AeroForge progress
 
-## M4.3 checkpoint — 2026-11-26
+## M4.4 checkpoint — 2026-11-26
 
-The repository is on the `development` branch. M4.3, Aircraft Constraint Analysis, is complete. No iterative mass closure, geometry modification, VLM, optimization, or takeoff model was added.
+The repository is on the `development` branch. M4.4, Iterative Preliminary Aircraft Sizing, is complete. No geometry modification, mission-segment solver, propulsion map, VLM, optimization, or takeoff model was added.
+
+## M4.4 completed
+
+- Added a pure, versioned preliminary sizing solver that consumes mission requirements and the shared M4.3 W/S–installed-shaft-P/W design point without changing current geometry.
+- Added explicit airframe, propulsion, fixed-equipment and payload mass accounting. Empty mass is user supplied; no undocumented empirical correlation is used.
+- Added separate electric effective shaft-specific-energy and fuel brake-specific-consumption models with reserve capacity.
+- Added cruise shaft-energy estimation by reusing ISA atmosphere, the analytical drag polar, propulsive efficiency, and shared level-flight power model.
+- Added damped fixed-point mass closure with configurable initial mass, damping, mass tolerance and iteration limit.
+- Added convergence, non-convergence, infeasible and incomplete states; physically impossible energy fractions and invalid design points are rejected.
+- Added required wing area, installed shaft power, cruise shaft power, storage mass/capacity, mass residual and energy residual outputs.
+- Added two-initial-guess sensitivity, convergence history visualization, mass breakdown, and SI/aviation displays.
+- A converged closure remains mission-indeterminate because takeoff distance is mandatory and unevaluated.
+- Added independent mass balance, W/S area, P/W power, electric/fuel bookkeeping, convergence sensitivity, non-convergence, infeasibility, invalid-input and unit-conversion tests.
 
 ## M4.3 completed
 
@@ -42,31 +55,31 @@ The codebase is a functional conceptual-design demonstrator with three prelimina
 | Atmosphere | ISA 1976-style troposphere from 0–11 km plus manual density | Implemented and tested; manual-density Mach uses sea-level sound speed with warning |
 | Aerodynamics | Linear finite-wing lift slope, pre-stall CL, parabolic polar, forces, Mach, L/D, analytical elliptical span load | Implemented low-fidelity baseline; key coefficients are supplied assumptions |
 | Weight/CG | Four lumped component masses, longitudinal moments, CG, mismatch warning | Implemented baseline; no hierarchy, envelope, or inertia |
-| Propulsion/performance | Supplied shaft power/efficiency/energy, level-flight power, excess-power climb, endurance, still-air range | Implemented baseline; not propulsion sizing or a mission simulation |
+| Propulsion/performance | Supplied shaft power/efficiency/energy, level-flight power, excess-power climb, endurance, range, and aggregate electric/fuel preliminary sizing | Implemented baseline; no maps, derating, takeoff, or segment mission simulation |
 | Stability | Tail area/volume, neutral point, static margin from supplied tail/downwash assumptions | Implemented baseline; no trim, control authority, lateral or dynamic stability |
 | Flight envelope | Simplified aerodynamic/structural maneuver envelope | Implemented baseline; no gust or dynamic effects |
 | Structures | Half-wing Euler–Bernoulli cantilever, constant EI, elliptical limit load, shear/moment/stress/deflection/safety factor | Implemented benchmark model; no wing box, materials workflow, self-weight, torsion, buckling, or FEA |
-| Tests | 35 automated tests in ten files, including mission/constraint benchmarks, boundaries, intersections, version contracts, and unit conversions | Useful V1/V2 analytical evidence; limited external aircraft validation |
+| Tests | 45 automated tests in eleven files, including mission/constraint benchmarks, mass/energy closure, convergence sensitivity, failure states, version contracts, and unit conversions | Useful V1/V2 analytical evidence; limited external aircraft validation |
 | Optimization, 6-DOF, controls | No implementation found | Planned |
 | Save/load, reports, geometry/data export, public release workflow | No implementation found | Planned |
 
 ## Verification performed at this checkpoint
 
 - `npm.cmd run typecheck`: **passed**.
-- `npm.cmd test`: **passed**, 35 tests across ten files.
+- `npm.cmd test`: **passed**, 45 tests across eleven files.
 - `npm.cmd run build`: **passed**.
-- Vite reports the existing production chunk warning: approximately 1.06 MB minified / 292 kB gzip for the main JavaScript asset.
+- Vite reports the existing production chunk warning: approximately 1.08 MB minified / 297 kB gzip for the main JavaScript asset.
 
 ## Phase status against the long-term objective
 
 | Phase | Status | Principal gap |
 |---:|---|---|
-| 1. Mission requirements and preliminary sizing | M4.2–M4.3 complete; broader phase partial | Mission definition and constraint diagram exist; no mass closure, takeoff model, or automatic design-point iteration |
+| 1. Mission requirements and preliminary sizing | M4.2–M4.4 complete; broader phase partial | Mission, constraints and preliminary mass closure exist; no takeoff model, sourced statistical empty-mass correlation, or segment mission sizing |
 | 2. Advanced parametric geometry | Partial | Single trapezoids/circular fuselage only; no multi-section surfaces, controls, analysis discretization, or schema migration |
 | 3. Airfoil analysis and VLM | Partial precursor | NACA coordinates and analytical lift model only; no polar import or VLM |
 | 4. Structures and materials | Partial precursor | Constant-EI beam only; no load transfer, wing box, materials, or advanced failure modes |
-| 5. Propulsion sizing | Partial precursor | Supplied aggregate power/energy only; no component maps, derating, or sizing loop |
-| 6. Weight and CG | Partial | Four lumped masses; no component hierarchy, loading envelope, inertia, or mass closure |
+| 5. Propulsion sizing | Partial precursor | Aggregate electric/fuel cruise sizing exists; no component maps, electrical details, derating, or operating-point coverage |
+| 6. Weight and CG | Partial | Fixed-mass closure and four lumped CG masses exist; no hierarchy, loading envelope, inertia, or consumable CG changes |
 | 7. Static and dynamic stability | Partial static precursor | Static margin only; no trim, control derivatives, lateral/directional or dynamic modes |
 | 8. Performance and mission analysis | Partial | Fixed-condition estimates; no takeoff/landing, ceiling, turns, gusts, or segment mission |
 | 9. 6-DOF simulation | Not started | Requires validated force/moment tables, inertia, frames, trim, and integration |
@@ -83,7 +96,7 @@ The codebase is a functional conceptual-design demonstrator with three prelimina
 - Range assumes constant mass, speed, altitude, efficiency, and no wind; mission requirements are not simulated as segments.
 - Static stability depends on supplied tail/downwash data and does not establish trim or control authority.
 - The beam model has constant stiffness and omits self-weight, torsion, shear stress, buckling, joints, and aeroelasticity.
-- No traceable material, airfoil polar, propeller, motor, engine, or empirical sizing dataset is integrated.
+- No traceable material, airfoil polar, propeller, motor, engine, battery, fuel-consumption, or empirical sizing dataset is integrated; M4.4 therefore requires explicit user properties.
 - No project persistence means edits are session-only; the header correctly identifies the project as unsaved.
 - Advanced computations may require Web Workers and code splitting before adding a backend; a Python service is not yet justified.
 
@@ -96,4 +109,4 @@ The codebase is a functional conceptual-design demonstrator with three prelimina
 
 ## Current stop point
 
-M4.3 is complete. Development stops here pending owner review. Iterative mass closure, automatic geometry changes, takeoff analysis, VLM, and optimization have not been started.
+M4.4 is complete. Development stops here pending owner review. Results remain separate from current geometry. Takeoff analysis, mission-segment integration, propulsion maps, VLM, automatic geometry changes, and optimization have not been started.

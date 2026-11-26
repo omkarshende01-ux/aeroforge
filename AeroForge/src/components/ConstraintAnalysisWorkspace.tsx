@@ -54,9 +54,10 @@ function formatAxis(value: number, quantity: 'wingLoading' | 'shaftPowerLoading'
 
 export function ConstraintAnalysisWorkspace() {
   const design = useDesignStore((state) => state.design);
+  const selected = useDesignStore((state) => state.selectedSizingPoint);
+  const setSelected = useDesignStore((state) => state.selectSizingPoint);
   const result = useMemo(() => analyzeAircraftConstraints(design), [design]);
   const [units, setUnits] = useState<MissionUnitSystem>('si');
-  const [selected, setSelected] = useState<ConstraintPoint>();
   const fallback = result.currentPoint ?? {
     wingLoadingNm2: (result.domain.minWingLoadingNm2 + result.domain.maxWingLoadingNm2) / 2,
     shaftPowerLoadingWPerN: result.domain.maxShaftPowerLoadingWPerN / 2,

@@ -1,5 +1,5 @@
 export type MissionUnitSystem = 'si' | 'aviation';
-export type MissionQuantity = 'mass' | 'distance' | 'length' | 'speed' | 'altitude' | 'climbRate' | 'wingLoading' | 'shaftPowerLoading';
+export type MissionQuantity = 'mass' | 'distance' | 'length' | 'speed' | 'altitude' | 'climbRate' | 'wingLoading' | 'shaftPowerLoading' | 'area' | 'power' | 'energy' | 'specificEnergy' | 'fuelConsumption';
 
 type UnitDefinition = {
   label: string;
@@ -28,6 +28,11 @@ const definitions: Record<MissionUnitSystem, Record<MissionQuantity, UnitDefinit
     climbRate: { label: 'm/s', fromSi: identity, toSi: identity, step: 0.1 },
     wingLoading: { label: 'N/m²', fromSi: identity, toSi: identity, step: 10 },
     shaftPowerLoading: { label: 'W/N', fromSi: identity, toSi: identity, step: 0.1 },
+    area: { label: 'm²', fromSi: identity, toSi: identity, step: 0.1 },
+    power: { label: 'kW', fromSi: (value) => value / 1000, toSi: (value) => value * 1000, step: 1 },
+    energy: { label: 'MJ', fromSi: (value) => value / 1e6, toSi: (value) => value * 1e6, step: 1 },
+    specificEnergy: { label: 'MJ/kg', fromSi: (value) => value / 1e6, toSi: (value) => value * 1e6, step: 0.1 },
+    fuelConsumption: { label: 'kg/kWh', fromSi: (value) => value * 3.6e6, toSi: (value) => value / 3.6e6, step: 0.01 },
   },
   aviation: {
     mass: { label: 'lb', fromSi: (value) => value / kilogramsPerPound, toSi: (value) => value * kilogramsPerPound, step: 5 },
@@ -46,6 +51,21 @@ const definitions: Record<MissionUnitSystem, Record<MissionQuantity, UnitDefinit
       label: 'hp/lbf',
       fromSi: (value) => value * newtonsPerPoundForce / wattsPerHorsepower,
       toSi: (value) => value * wattsPerHorsepower / newtonsPerPoundForce,
+      step: 0.01,
+    },
+    area: { label: 'ft²', fromSi: (value) => value / squareMetresPerSquareFoot, toSi: (value) => value * squareMetresPerSquareFoot, step: 1 },
+    power: { label: 'hp', fromSi: (value) => value / wattsPerHorsepower, toSi: (value) => value * wattsPerHorsepower, step: 1 },
+    energy: { label: 'kWh', fromSi: (value) => value / 3.6e6, toSi: (value) => value * 3.6e6, step: 1 },
+    specificEnergy: {
+      label: 'Wh/lb',
+      fromSi: (value) => value * kilogramsPerPound / 3600,
+      toSi: (value) => value * 3600 / kilogramsPerPound,
+      step: 1,
+    },
+    fuelConsumption: {
+      label: 'lb/(hp·h)',
+      fromSi: (value) => value * wattsPerHorsepower * 3600 / kilogramsPerPound,
+      toSi: (value) => value * kilogramsPerPound / (wattsPerHorsepower * 3600),
       step: 0.01,
     },
   },
