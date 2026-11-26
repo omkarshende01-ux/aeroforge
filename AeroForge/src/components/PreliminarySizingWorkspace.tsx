@@ -1,5 +1,7 @@
 import { useMemo, useState } from 'react';
 import { analyzeAircraftConstraints, type ConstraintPoint } from '../engineering/constraints';
+import { generateProvisionalAircraftCandidate, isProvisionalCandidateStale, type CandidateGenerationInputs, type ProvisionalAircraftCandidate } from '../engineering/candidateGeneration';
+import { calculateMetrics } from '../engineering/metrics';
 import {
   calculateSizingSensitivity,
   createDefaultSizingInputs,
@@ -8,6 +10,7 @@ import {
 } from '../engineering/preliminarySizing';
 import { convertFromSi, convertToSi, missionUnit, type MissionQuantity, type MissionUnitSystem } from '../engineering/units';
 import { useDesignStore } from '../state/useDesignStore';
+import { Viewport } from './Viewport';
 
 function numeric(value: string): number { return value === '' ? Number.NaN : Number(value); }
 
@@ -50,14 +53,29 @@ export function PreliminarySizingWorkspace() {
   const [units, setUnits] = useState<MissionUnitSystem>('si');
   const [settings, setSettings] = useState<PreliminarySizingInputs>(() => createDefaultSizingInputs(design, designPoint));
   const [alternateInitialMassKg, setAlternateInitialMassKg] = useState(settings.initialTakeoffMassKg * 1.5);
+  const [candidateInputs, setCandidateInputs] = useState<CandidateGenerationInputs>(() => ({ aspectRatio: calculateMetrics(design).aspectRatio, taperRatio: design.wing.taperRatio, energyStorageKind: settings.propulsionModel.kind }));
+  const [candidate, setCandidate] = useState<ProvisionalAircraftCandidate>();
+  const [candidateError, setCandidateError] = useState<string>();
   const inputs = useMemo(() => ({ ...settings, designPoint }), [settings, designPoint]);
   const sensitivity = useMemo(() => calculateSizingSensitivity(design, inputs, alternateInitialMassKg), [design, inputs, alternateInitialMassKg]);
   const result = sensitivity.primary;
+  const currentMetrics = useMemo(() => calculateMetrics(design), [design]);
+  const resolvedCandidateInputs = useMemo(() => ({ ...candidateInputs, energyStorageKind: inputs.propulsionModel.kind }), [candidateInputs, inputs.propulsionModel.kind]);
+  const candidateStale = candidate ? isProvisionalCandidateStale(candidate, design, result, resolvedCandidateInputs) : false;
 
   const update = <K extends keyof PreliminarySizingInputs>(key: K, value: PreliminarySizingInputs[K]) => setSettings((current) => ({ ...current, [key]: value }));
   const setPropulsionKind = (kind: SizingPropulsionModel['kind']) => update('propulsionModel', kind === 'electric'
     ? { kind, batteryUsableShaftSpecificEnergyJPerKg: design.massModel.energyMassKg > 0 ? design.propulsion.usableShaftEnergyJ / design.massModel.energyMassKg : 0 }
     : { kind, brakeSpecificFuelConsumptionKgPerJ: 0 });
+  const generateCandidate = () => {
+    try {
+      setCandidate(generateProvisionalAircraftCandidate(design, result, resolvedCandidateInputs));
+      setCandidateError(undefined);
+    } catch (error) {
+      setCandidate(undefined);
+      setCandidateError(error instanceof Error ? error.message : 'Candidate generation failed.');
+    }
+  };
   const massItems = result.finalTakeoffMassKg ? [
     { label: 'Airframe', value: inputs.airframeMassKg, color: '#65a9dd' },
     { label: 'Propulsion', value: inputs.propulsionMassKg, color: '#bd8ee5' },
@@ -124,6 +142,35 @@ export function PreliminarySizingWorkspace() {
             <div><small>STORAGE MASS FRACTION</small><strong>{result.energyMassFraction === undefined ? '—' : `${(100 * result.energyMassFraction).toFixed(2)} %`}</strong></div>
             <div><small>STORAGE CAPACITY</small><strong>{display(result.totalShaftEnergyCapacityJ, 'energy', units, 1)}</strong></div>
           </div>
+        </section>
+        <section className="sizing-card sizing-candidate-card">
+          <div className="sizing-card-head"><div><strong>M4.6 provisional aircraft candidate</strong><span>Isolated preview only - no authoritative design values are changed</span></div><i className={candidateStale ? 'warn' : candidate ? 'pass' : 'warn'}>{candidateStale ? 'STALE' : candidate ? 'CURRENT DRAFT' : 'NOT GENERATED'}</i></div>
+          <div className="candidate-controls">
+            <SizingInput label="Candidate aspect ratio" value={candidateInputs.aspectRatio} units={units} note="3-20" min={3} max={20} onChange={(aspectRatio) => setCandidateInputs((current) => ({ ...current, aspectRatio }))} />
+            <SizingInput label="Candidate taper ratio" value={candidateInputs.taperRatio} units={units} note="0-1" min={0.01} max={1} onChange={(taperRatio) => setCandidateInputs((current) => ({ ...current, taperRatio }))} />
+            <button className="candidate-action" disabled={result.status !== 'converged'} onClick={generateCandidate}>{candidate ? 'REGENERATE' : 'GENERATE CANDIDATE'}</button>
+            <button className="candidate-action secondary" disabled={!candidate} onClick={() => { setCandidate(undefined); setCandidateError(undefined); }}>DISCARD</button>
+          </div>
+          {result.status !== 'converged' && <div className="candidate-message invalid">Generation is blocked until the sizing result is converged.</div>}
+          {candidateError && <div className="candidate-message invalid">{candidateError}</div>}
+          {candidateStale && <div className="candidate-message stale">Mission, sizing, design, or candidate inputs changed. This draft is retained for comparison but must be regenerated.</div>}
+          {candidate && <>
+            <div className="candidate-comparison">
+              <div className="candidate-table"><div className="candidate-row heading"><span>PARAMETER</span><span>CURRENT</span><span>PROVISIONAL</span></div>
+                <div className="candidate-row"><span>Wing area</span><strong>{display(currentMetrics.wingAreaM2, 'area', units)}</strong><strong>{display(candidate.geometry.wingAreaM2, 'area', units)}</strong></div>
+                <div className="candidate-row"><span>Wing span</span><strong>{display(design.wing.spanM, 'length', units)}</strong><strong>{display(candidate.geometry.spanM, 'length', units)}</strong></div>
+                <div className="candidate-row"><span>Root chord</span><strong>{display(design.wing.rootChordM, 'length', units)}</strong><strong>{display(candidate.geometry.rootChordM, 'length', units)}</strong></div>
+                <div className="candidate-row"><span>Tip chord</span><strong>{display(currentMetrics.tipChordM, 'length', units)}</strong><strong>{display(candidate.geometry.tipChordM, 'length', units)}</strong></div>
+                <div className="candidate-row"><span>Aspect ratio</span><strong>{currentMetrics.aspectRatio.toFixed(2)}</strong><strong>{candidate.geometry.aspectRatio.toFixed(2)}</strong></div>
+                <div className="candidate-row"><span>Takeoff mass</span><strong>{display(design.massKg, 'mass', units)}</strong><strong>{display(candidate.takeoffMassKg, 'mass', units)}</strong></div>
+                <div className="candidate-row"><span>Installed shaft power</span><strong>{display(design.propulsion.shaftPowerW, 'power', units)}</strong><strong>{display(candidate.installedShaftPowerW, 'power', units)}</strong></div>
+                <div className="candidate-row"><span>{candidate.energyStorage.kind === 'electric' ? 'Battery' : 'Fuel'} mass</span><strong>{display(design.massModel.energyMassKg, 'mass', units)}</strong><strong>{display(candidate.energyStorage.massKg, 'mass', units)}</strong></div>
+              </div>
+              <div className="candidate-preview"><Viewport designOverride={candidate.previewDesign} /><span>NON-DESTRUCTIVE 3D PREVIEW</span></div>
+            </div>
+            <div className="candidate-statuses"><div><small>MISSION STATUS</small><strong>{candidate.missionStatus.toUpperCase()}</strong></div>{candidate.constraintStatuses.map((constraint) => <div key={constraint.id}><small>{constraint.label}</small><strong className={constraint.status}>{constraint.status.toUpperCase()}</strong>{constraint.margin !== undefined && <span>margin {constraint.margin.toFixed(3)} {constraint.unit}</span>}{constraint.limitation && <span>{constraint.limitation}</span>}</div>)}</div>
+            <div className="candidate-notes"><details open><summary>Assumptions and provenance</summary>{candidate.assumptions.map((item) => <p key={item}>{item}</p>)}{candidate.provenance.map((item) => <p key={item}>{item}</p>)}</details><details open><summary>Limitations</summary>{candidate.limitations.map((item) => <p key={item}>{item}</p>)}</details></div>
+          </>}
         </section>
         <div className="sizing-limitations"><div><small>MODEL BOUNDARY</small><p>Cruise-only constant-mass energy estimate. No takeoff, climb, descent, taxi, loiter, wind, fuel-mass depletion, propulsion map, or altitude derating model.</p></div><div><small>FEASIBILITY</small><p>Convergence is only mass/energy closure. Takeoff remains mandatory and unevaluated, so a converged sizing result is mission-indeterminate.</p></div></div>
         {result.contract.warnings.length > 0 && <div className="warning sizing-warning">⚠ {result.contract.warnings.join(' ')}</div>}

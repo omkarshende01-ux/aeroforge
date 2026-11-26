@@ -73,6 +73,14 @@ For a symmetric, single trapezoidal wing, span b, root chord cr, tip chord ct, t
 - NASA's parametric battery study includes climb/descent/reserve segments and state-of-charge, voltage, current, and end-of-mission power limits. M4.4 is deliberately a simpler effective-energy model and must not inherit the NASA study's feasibility claims.
 - No production equation was tuned to benchmark data. The only production refactor extracts `S=W/(W/S)` and `P=(P/W)W` into a pure helper reused by the sizing solver and regression tests.
 
+## M4.6 provisional aircraft candidate
+
+- Generation requires a converged M4.4 result tied to the current design revision. Takeoff mass, required wing area, installed shaft power, and fuel/battery mass must be positive and finite. Non-converged, infeasible, incomplete, stale-revision, or invalid results are blocked.
+- For required wing area `S`, user-selected aspect ratio `AR`, and taper `lambda`, the trapezoidal preview uses `b=sqrt(AR*S)`, `c_root=2S/[b(1+lambda)]`, and `c_tip=lambda*c_root`. The provisional validity bounds are `3 <= AR <= 20` and `0 < lambda <= 1`; these are input guards, not certification limits.
+- Only span, root chord, taper, takeoff mass, installed shaft power, payload mass, and energy-storage mass are populated from sizing. Existing sweep, dihedral, twist, airfoil, placement, fuselage, empennage, structure, propulsion efficiency, component stations, and other unsupported properties are copied unchanged rather than synthesized.
+- The preview is a detached `AircraftDesign` copy and is never written to authoritative state. A source fingerprint covers design revision and mission, sizing model/status/results/design point, propulsion branch, aspect ratio, and taper ratio; any change marks an existing candidate stale.
+- M4.3 constraint margins/statuses and M4.4 assumptions, sources, warnings, and mission status are preserved. Mandatory unevaluated takeoff therefore keeps the candidate mission-indeterminate. The preview is not a validated complete aircraft, and no integration, structural, stability, control, landing-gear, or packaging checks are implied.
+
 ## Later physics
 - Aerodynamics: add sourced airfoil polars, lifting-line or VLM, geometry-sensitive spanwise loads and component drag buildup. VLM is inviscid and is not a stall/viscous drag model.
 - Structures: add geometry-varying stiffness, wing self-weight, torsion, shear stress and validated aerodynamic load transfer; later buckling, modal, fatigue and FEA comparison.

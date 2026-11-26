@@ -15,6 +15,7 @@ Milestone status as of 2026-11-26:
 - **M4.3 complete:** interactive W/S versus installed shaft P/W analysis with stall, cruise, climb, supported service ceiling, candidate selection, margins, governing constraint, and explicitly unevaluated takeoff.
 - **M4.4 complete:** damped preliminary mass closure, explicit fixed masses, electric/fuel cruise-energy branches, wing/power sizing, residual history, sensitivity to two initial guesses, and explicit incomplete/infeasible/non-converged states.
 - **M4.5 complete:** independent analytical fixture, published NASA TERA wing/power sanity check, convergence/robustness matrix, unit invariance, benchmark ledger, and conditional M4.6 readiness decision.
+- **M4.6 complete:** gated provisional candidate generation, analytical trapezoid sizing, isolated 3D preview, current/candidate comparison, provenance and constraint status display, discard, and deterministic stale-result detection. No authoritative apply path exists.
 
 ## Twelve-week MVP backlog
 
@@ -27,6 +28,7 @@ Milestone status as of 2026-11-26:
 | MIS-01 | 2 | P0 | Mission schema/editor with payload, cruise, stall, climb, ceiling, takeoff, reserve | ARC-01 | 1.5 d | Invalid or dimensionally inconsistent inputs are blocked |
 | MIS-02 | 2 | P0 | Wing-loading/power-loading constraints and design-point plot | MIS-01 | 2.0 d | **Complete (M4.3):** independent stall, cruise, climb, boundary, intersection, and infeasible-domain tests pass |
 | MIS-03 | 2 | P0 | Iterative mass/wing/power/energy closure with residual history | MIS-02, WGT baseline | 2.0 d | **Complete (M4.4):** two initial guesses converge to the same closure or fail explicitly; takeoff keeps mission status indeterminate |
+| MIS-04 | 2 | P0 | Provisional candidate geometry preview from verified sizing | MIS-03, VAL-01 | 1.0 d | **Complete (M4.6):** candidate is isolated, reviewable/discardable, stale-aware, and never labeled mission-feasible |
 | GEO-01 | 3 | P0 | Multi-section lifting-surface domain model and migration | ARC-01 | 1.5 d | Existing trapezoid becomes equivalent two-section data |
 | GEO-02 | 3 | P0 | Piecewise wing/tail lofts and independent reference-property integration | GEO-01 | 2.0 d | Area/MAC/span and mesh invariants pass analytic cases |
 | GEO-03 | 3 | P1 | Control-surface definitions and overlap diagnostics | GEO-01 | 1.5 d | Invalid sections/control overlaps block dependent analyses |

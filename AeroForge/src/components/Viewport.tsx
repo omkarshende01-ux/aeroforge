@@ -4,11 +4,11 @@ import { Canvas, useThree } from '@react-three/fiber';
 import { OrbitControls, OrthographicCamera } from '@react-three/drei';
 import { useDesignStore } from '../state/useDesignStore';
 import { fuselageGeometry, horizontalTailMesh, verticalTailMesh, wingMesh } from '../engineering/geometry';
+import type { AircraftDesign } from '../domain/types';
 
 type StandardView = 'isometric' | 'top' | 'side' | 'front';
 
-function Aircraft() {
-  const design = useDesignStore((state) => state.design);
+function Aircraft({ design }: { design: AircraftDesign }) {
   const geometries = useMemo(() => ({ wing: wingMesh(design), fuselage: fuselageGeometry(design), horizontalTail: horizontalTailMesh(design), verticalTail: verticalTailMesh(design) }), [design]);
   useEffect(() => () => Object.values(geometries).forEach((geometry) => geometry.dispose()), [geometries]);
   return <>
@@ -35,14 +35,16 @@ function ViewController({ view, centerX }: { view: StandardView; centerX: number
   return null;
 }
 
-export function Viewport() {
-  const [view, setView] = useState<StandardView>('isometric'); const fuselageLength = useDesignStore((state) => state.design.fuselage.lengthM); const centerX = fuselageLength / 2;
+export function Viewport({ designOverride }: { designOverride?: AircraftDesign } = {}) {
+  const storedDesign = useDesignStore((state) => state.design);
+  const design = designOverride ?? storedDesign;
+  const [view, setView] = useState<StandardView>('isometric'); const centerX = design.fuselage.lengthM / 2;
   return <div className="viewport">
     <Canvas resize={{ scroll: false, debounce: { scroll: 0, resize: 80 } }} gl={{ antialias: true }}>
       <OrthographicCamera makeDefault position={[centerX - 10, -12, 8]} up={[0, 0, 1]} zoom={28} near={0.1} far={100} />
       <ViewController view={view} centerX={centerX} />
       <color attach="background" args={['#0d121a']} /><hemisphereLight args={['#d9e7f5', '#202833', 1.7]} /><directionalLight position={[-4, -6, 10]} intensity={2.6} />
-      <Aircraft /><gridHelper args={[30, 30, '#405469', '#253343']} rotation={[Math.PI / 2, 0, 0]} position={[centerX, 0, -0.72]} /><axesHelper args={[1.2]} position={[0, 0, -0.7]} />
+      <Aircraft design={design} /><gridHelper args={[30, 30, '#405469', '#253343']} rotation={[Math.PI / 2, 0, 0]} position={[centerX, 0, -0.72]} /><axesHelper args={[1.2]} position={[0, 0, -0.7]} />
       <OrbitControls makeDefault target={[centerX, 0, 0]} enableDamping dampingFactor={0.08} screenSpacePanning />
     </Canvas>
     <div className="view-toolbar" aria-label="Standard aircraft views">{(['isometric', 'top', 'side', 'front'] as StandardView[]).map((name) => <button key={name} className={view === name ? 'active' : ''} onClick={() => setView(name)}>{name}</button>)}</div>

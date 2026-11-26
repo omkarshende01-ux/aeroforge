@@ -30,6 +30,8 @@ M4.3 establishes the first versioned contract: `AircraftDesign` schema version 1
 
 M4.4 reuses that contract for preliminary sizing results and adds convergence metadata through a complete iteration history. The selected W/S and installed shaft P/W point is shared as transient workflow state, while sizing assumptions and results remain separate from `AircraftDesign`; no sizing result mutates geometry or authoritative mass until a future explicit apply workflow is approved.
 
+M4.6 adds a pure provisional-candidate boundary. It copies the current design and replaces only sizing-produced wing planform values, takeoff mass, installed shaft power, payload and storage mass for rendering. Candidate state lives locally in the sizing workspace; the renderer accepts the isolated design as an override and the Zustand store exposes no candidate-apply action. A deterministic fingerprint binds the candidate to the design revision, mission, sizing outputs, propulsion branch and planform inputs so changed sources are shown as stale.
+
 ## Milestone 1 acceptance
 - Local app opens; parameter edits visibly update mathematically generated geometry.
 - Orbit/pan/zoom and standard orthographic views work.

@@ -1,5 +1,20 @@
 # AeroForge progress
 
+## M4.6 checkpoint — 2026-11-26
+
+The repository is on the `development` branch. M4.6, Provisional Aircraft Candidate Generation, is complete. Candidate data remains transient and isolated from the authoritative aircraft design; no apply workflow, takeoff model, advanced geometry, VLM, or optimization was added.
+
+## M4.6 completed
+
+- Added a pure, versioned provisional-candidate generator gated on a converged, current-revision M4.4 result with positive finite mass, wing area, installed shaft power, and energy-storage mass.
+- Derived trapezoidal wing span and root/tip chords from required area plus user-selected aspect and taper ratios. Existing sweep, dihedral, twist, airfoil, placement, fuselage, empennage, structure, and propulsion configuration remain unchanged.
+- Included calculated takeoff mass, installed shaft power, payload and fuel/battery mass in an isolated preview design without adding an authoritative-state mutation path.
+- Added side-by-side current/provisional parameters, a reusable non-destructive 3D preview, sizing assumptions, provenance, limitations, and copied M4.3 constraint statuses.
+- Preserved mission-indeterminate status and explicitly unevaluated takeoff. The UI never claims full aircraft validation or feasibility.
+- Added deterministic source fingerprints and stale warnings for mission/design revisions, sizing outputs, propulsion type, aspect ratio, and taper ratio. Candidates can be discarded locally.
+- Added focused geometry, state-isolation, status-preservation, staleness, revision-mismatch, missing-result, non-convergence, and invalid-input regression tests.
+- Verification passes: strict typecheck, 60 automated tests across 13 files, and the production build. The existing bundle-size warning remains non-blocking.
+
 ## M4.5 checkpoint — 2026-11-26
 
 The repository is on the `development` branch. M4.5, Independent Engineering Verification and Validation, is complete. No aircraft generation, geometry modification, mission-segment solver, propulsion map, VLM, optimization, or takeoff model was added.
@@ -119,4 +134,4 @@ The codebase is a functional conceptual-design demonstrator with three prelimina
 
 ## Current stop point
 
-M4.5 is complete. Development stops here pending owner review. The sizing equations are independently verified within their stated scope, but unqualified M4.6 automatic aircraft generation is not yet recommended. Results remain separate from current geometry; takeoff and full segment mission analysis remain unavailable.
+M4.6 is complete. Development stops here pending owner review. Provisional candidates can be generated and reviewed without modifying current geometry, but there is intentionally no apply action. Takeoff and full segment mission analysis remain unavailable, so mission feasibility remains indeterminate.

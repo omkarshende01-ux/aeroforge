@@ -30,6 +30,7 @@ Priority: **P0** is required for a releasable MVP, **P1** is desired if it does 
 | MIS-002 | Plot applicable wing-loading versus power/thrust-loading constraints and identify feasible regions and the selected design point. | P0 | Implemented | M4.3 |
 | MIS-003 | Iterate takeoff mass, empty mass, energy/fuel, wing area, and installed power to a reported residual or an infeasibility result. | P0 | Implemented | M4.4 |
 | MIS-004 | Preserve the source, applicability range, and uncertainty of empirical sizing correlations. | P0 | Partial | M4.4 uses explicit user inputs and provenance; sourced statistical correlations remain planned |
+| MIS-005 | Generate a stale-aware, non-destructive provisional geometry candidate from converged sizing while preserving unsupported constraints and requiring user review. | P0 | Implemented | M4.6 |
 
 ### Parametric geometry
 

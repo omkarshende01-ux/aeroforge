@@ -21,9 +21,9 @@ At the end of week 12, a user should be able to define a mission, size and edit 
 
 ### 1. Mission requirements and preliminary aircraft sizing — partial, MVP
 
-- **Completed:** M4.2 mission definition/current-design feasibility, M4.3 interactive W/S versus installed shaft P/W constraints, M4.4 damped mass/wing/power/cruise-energy closure, and M4.5 independent analytical/published-data verification. Takeoff remains explicitly unevaluated.
+- **Completed:** M4.2 mission definition/current-design feasibility, M4.3 interactive W/S versus installed shaft P/W constraints, M4.4 damped mass/wing/power/cruise-energy closure, M4.5 independent analytical/published-data verification, and M4.6 isolated provisional candidate generation. Takeoff remains explicitly unevaluated and there is no authoritative candidate-apply action.
 - **Objective:** translate payload, range, endurance, cruise, stall, climb, ceiling, and takeoff constraints into a traceable design point and initial mass/wing/power estimates.
-- **Milestones:** mission schema and editor; unit-aware requirement validation; constraint diagram; iterative mass closure; candidate design-point selection; sizing summary.
+- **Milestones:** mission schema and editor; unit-aware requirement validation; constraint diagram; iterative mass closure; candidate design-point selection; sizing summary; stale-aware provisional geometry preview.
 - **Engineering methods:** wing-loading/power-loading constraints, dynamic-pressure stall relation, excess-power climb, statistical empty-mass fractions with cited applicability, and damped fixed-point iteration. Keep electric energy and fuel-energy models distinct.
 - **Dependencies:** atmosphere, unit system, aerodynamic assumptions, propulsion efficiency, and weight model. Existing range/climb margins are inputs to this phase, not full sizing.
 - **Acceptance:** a documented reference mission converges from two initial guesses; infeasible requirements are identified; selected wing area and installed power reproduce the plotted constraint intersection within tolerance.

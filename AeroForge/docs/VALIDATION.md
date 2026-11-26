@@ -71,7 +71,10 @@ The M4.5 suite contains 55 tests across twelve test files. Detailed M4.5 evidenc
 - Area, power, energy, specific-energy, and fuel-consumption conversions have independent aviation-unit benchmarks or round-trip tests.
 - M4.5 independently verifies all preceding equations with a versioned fixture and declared tolerances; see `docs/BENCHMARKS.md`.
 - M4.5 compares direct wing/power sizing against NASA's published TERA MTOW, wing area, and motor power. Battery fraction is context only and is not fitted because the NASA source uses a materially higher-fidelity mission and battery model.
-- M4.6 remains blocked from unqualified automatic application. A provisional user-reviewed candidate generator may proceed only while geometry remains unapplied and unsupported mission requirements remain explicit.
+- M4.6 provisional generation is verified for the trapezoid identities `S=b(cr+ct)/2`, `AR=b²/S`, and `lambda=ct/cr`; required area and selected aspect/taper are reproduced to floating-point tolerance.
+- Candidate isolation tests prove the source design is unchanged and unsupported configuration values are preserved. Constraint statuses, including unevaluated takeoff and mission-indeterminate, are copied without promotion.
+- Fingerprint regressions cover mission/design revision, sizing-output, aspect-ratio, and taper changes. Non-converged, revision-mismatched, incomplete, non-finite, and out-of-bound inputs are blocked.
+- M4.6 remains blocked from authoritative or automatic application. It validates only candidate transformation and isolation, not full-aircraft geometry, packaging, structures, stability, propulsion integration, or mission feasibility.
 
 ### 2. Advanced parametric geometry
 
