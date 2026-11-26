@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { analyzeAircraftConstraints, type ConstraintPoint } from '../engineering/constraints';
 import { generateProvisionalAircraftCandidate, isProvisionalCandidateStale, type CandidateGenerationInputs, type ProvisionalAircraftCandidate } from '../engineering/candidateGeneration';
 import { calculateMetrics } from '../engineering/metrics';
+import { legacyWingView } from '../engineering/wingGeometry';
 import {
   calculateSizingSensitivity,
   createDefaultSizingInputs,
@@ -53,7 +54,8 @@ export function PreliminarySizingWorkspace() {
   const [units, setUnits] = useState<MissionUnitSystem>('si');
   const [settings, setSettings] = useState<PreliminarySizingInputs>(() => createDefaultSizingInputs(design, designPoint));
   const [alternateInitialMassKg, setAlternateInitialMassKg] = useState(settings.initialTakeoffMassKg * 1.5);
-  const [candidateInputs, setCandidateInputs] = useState<CandidateGenerationInputs>(() => ({ aspectRatio: calculateMetrics(design).aspectRatio, taperRatio: design.wing.taperRatio, energyStorageKind: settings.propulsionModel.kind }));
+  const wingView = legacyWingView(design.wing);
+  const [candidateInputs, setCandidateInputs] = useState<CandidateGenerationInputs>(() => ({ aspectRatio: calculateMetrics(design).aspectRatio, taperRatio: wingView.taperRatio, energyStorageKind: settings.propulsionModel.kind }));
   const [candidate, setCandidate] = useState<ProvisionalAircraftCandidate>();
   const [candidateError, setCandidateError] = useState<string>();
   const inputs = useMemo(() => ({ ...settings, designPoint }), [settings, designPoint]);
@@ -158,8 +160,8 @@ export function PreliminarySizingWorkspace() {
             <div className="candidate-comparison">
               <div className="candidate-table"><div className="candidate-row heading"><span>PARAMETER</span><span>CURRENT</span><span>PROVISIONAL</span></div>
                 <div className="candidate-row"><span>Wing area</span><strong>{display(currentMetrics.wingAreaM2, 'area', units)}</strong><strong>{display(candidate.geometry.wingAreaM2, 'area', units)}</strong></div>
-                <div className="candidate-row"><span>Wing span</span><strong>{display(design.wing.spanM, 'length', units)}</strong><strong>{display(candidate.geometry.spanM, 'length', units)}</strong></div>
-                <div className="candidate-row"><span>Root chord</span><strong>{display(design.wing.rootChordM, 'length', units)}</strong><strong>{display(candidate.geometry.rootChordM, 'length', units)}</strong></div>
+                <div className="candidate-row"><span>Wing span</span><strong>{display(wingView.spanM, 'length', units)}</strong><strong>{display(candidate.geometry.spanM, 'length', units)}</strong></div>
+                <div className="candidate-row"><span>Root chord</span><strong>{display(wingView.rootChordM, 'length', units)}</strong><strong>{display(candidate.geometry.rootChordM, 'length', units)}</strong></div>
                 <div className="candidate-row"><span>Tip chord</span><strong>{display(currentMetrics.tipChordM, 'length', units)}</strong><strong>{display(candidate.geometry.tipChordM, 'length', units)}</strong></div>
                 <div className="candidate-row"><span>Aspect ratio</span><strong>{currentMetrics.aspectRatio.toFixed(2)}</strong><strong>{candidate.geometry.aspectRatio.toFixed(2)}</strong></div>
                 <div className="candidate-row"><span>Takeoff mass</span><strong>{display(design.massKg, 'mass', units)}</strong><strong>{display(candidate.takeoffMassKg, 'mass', units)}</strong></div>

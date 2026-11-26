@@ -1,17 +1,19 @@
 import type { AircraftDesign, DesignMetrics } from '../domain/types';
 import { standardAtmosphere } from './atmosphere';
+import { calculateWingReferenceProperties, validateWingGeometry } from './wingGeometry';
 
 const g = 9.80665;
 const msToKt = 1.943844492;
 
 export function calculateMetrics(design: AircraftDesign): DesignMetrics {
-  const { spanM: b, rootChordM: cr, taperRatio: lambda } = design.wing;
-  const ct = cr * lambda;
-  const area = b * (cr + ct) / 2;
-  const ar = area > 0 ? b * b / area : 0;
-  const mac = (2 / 3) * cr * (1 + lambda + lambda * lambda) / (1 + lambda);
+  const geometryValidation = validateWingGeometry(design.wing);
+  const geometry = geometryValidation.valid ? calculateWingReferenceProperties(design.wing) : undefined;
+  const area = geometry?.projectedAreaM2 ?? 0;
+  const ar = geometry?.aspectRatio ?? 0;
+  const mac = geometry?.meanAerodynamicChordM ?? 0;
+  const ct = geometry?.tipChordM ?? 0;
   const wingLoading = area > 0 ? design.massKg * g / area : 0;
-  const warnings: string[] = [];
+  const warnings: string[] = [...geometryValidation.errors];
   let rho = design.flightCondition.densityKgM3;
   if (design.flightCondition.densitySource === 'isa') {
     try { rho = standardAtmosphere(design.flightCondition.altitudeM).densityKgM3; }

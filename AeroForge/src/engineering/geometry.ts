@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import type { AircraftDesign } from '../domain/types';
 import { naca4SurfaceCoordinates } from './airfoil';
+import { physicalWingStations } from './wingGeometry';
 
 type HorizontalSurface = {
   spanM: number; rootChordM: number; taperRatio: number; sweepDeg: number;
@@ -38,7 +39,30 @@ function horizontalSurfaceGeometry(surface: HorizontalSurface): THREE.BufferGeom
 }
 
 export function wingMesh(design: AircraftDesign): THREE.BufferGeometry {
-  return horizontalSurfaceGeometry({ ...design.wing, incidenceDeg: 0 });
+  const stations = physicalWingStations(design.wing);
+  const vertices: number[] = []; const indices: number[] = [];
+  const stationSections = stations.map((station) => naca4SurfaceCoordinates(station.airfoilId, 36));
+  const ringSize = stationSections[0].length;
+  for (let stationIndex = 0; stationIndex < stations.length; stationIndex += 1) {
+    const station = stations[stationIndex]; const angle = THREE.MathUtils.degToRad(station.geometricTwistDeg);
+    for (const [xNormalized, zNormalized] of stationSections[stationIndex]) {
+      const dx = (xNormalized - 0.25) * station.chordM; const dz = zNormalized * station.chordM;
+      vertices.push(station.leadingEdgeXM + 0.25 * station.chordM + dx * Math.cos(angle) + dz * Math.sin(angle), station.spanPositionM, station.verticalPositionM - dx * Math.sin(angle) + dz * Math.cos(angle));
+    }
+  }
+  for (let stationIndex = 0; stationIndex < stations.length - 1; stationIndex += 1) for (let index = 0; index < ringSize; index += 1) {
+    const next = (index + 1) % ringSize; const a = stationIndex * ringSize + index; const b = stationIndex * ringSize + next; const c = (stationIndex + 1) * ringSize + index; const d = (stationIndex + 1) * ringSize + next;
+    indices.push(a, c, b, b, c, d);
+  }
+  for (const stationIndex of [0, stations.length - 1]) {
+    const station = stations[stationIndex]; const center = vertices.length / 3;
+    vertices.push(station.leadingEdgeXM + 0.4 * station.chordM, station.spanPositionM, station.verticalPositionM);
+    for (let index = 0; index < ringSize; index += 1) {
+      const next = (index + 1) % ringSize; const a = stationIndex * ringSize + index; const b = stationIndex * ringSize + next;
+      if (stationIndex === 0) indices.push(center, b, a); else indices.push(center, a, b);
+    }
+  }
+  const geometry = new THREE.BufferGeometry(); geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3)); geometry.setIndex(indices); geometry.computeVertexNormals(); geometry.computeBoundingBox(); return geometry;
 }
 
 export function horizontalTailMesh(design: AircraftDesign): THREE.BufferGeometry {

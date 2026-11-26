@@ -7,6 +7,7 @@ import {
   isProvisionalCandidateStale,
   type CandidateGenerationInputs,
 } from './candidateGeneration';
+import { legacyWingView } from './wingGeometry';
 
 function convergedSizing(design: AircraftDesign = defaultDesign) {
   const constraints = analyzeAircraftConstraints(design);
@@ -36,7 +37,7 @@ describe('M4.6 provisional aircraft candidate generation', () => {
     expect(candidate.previewDesign.fuselage).not.toBe(defaultDesign.fuselage);
     expect(candidate.previewDesign.fuselage).toEqual(defaultDesign.fuselage);
     expect(candidate.previewDesign.horizontalTail).toEqual(defaultDesign.horizontalTail);
-    expect(candidate.previewDesign.wing.sweepDeg).toBe(defaultDesign.wing.sweepDeg);
+    expect(legacyWingView(candidate.previewDesign.wing).sweepDeg).toBeCloseTo(legacyWingView(defaultDesign.wing).sweepDeg);
     expect(candidate.previewDesign.massKg).toBe(sizing.finalTakeoffMassKg);
     expect(candidate.previewDesign.propulsion.shaftPowerW).toBe(sizing.requiredInstalledShaftPowerW);
     expect(candidate.energyStorage.massKg).toBe(sizing.energyStorageMassKg);

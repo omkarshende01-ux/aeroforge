@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { AIRCRAFT_DESIGN_SCHEMA_VERSION } from '../domain/contracts';
 import { defaultDesign } from '../domain/types';
+import { legacyWingView } from '../engineering/wingGeometry';
 import { useDesignStore } from './useDesignStore';
 
 describe('versioned aircraft design state', () => {
@@ -20,5 +21,20 @@ describe('versioned aircraft design state', () => {
     useDesignStore.getState().selectSizingPoint({ wingLoadingNm2: 720, shaftPowerLoadingWPerN: 14 });
     expect(useDesignStore.getState().selectedSizingPoint).toEqual({ wingLoadingNm2: 720, shaftPowerLoadingWPerN: 14 });
     expect(useDesignStore.getState().design.revision).toBe(defaultDesign.revision);
+  });
+
+  it('routes the existing wing inspector fields through the authoritative station model', () => {
+    useDesignStore.setState({ design: defaultDesign });
+    useDesignStore.getState().update('wing.spanM', 14);
+    const design = useDesignStore.getState().design;
+    expect(legacyWingView(design.wing).spanM).toBeCloseTo(14);
+    expect(design.wing.stations.at(-1)?.spanPositionM).toBeCloseTo(7);
+    expect(design.revision).toBe(defaultDesign.revision + 1);
+  });
+
+  it('rejects physically invalid legacy wing edits without changing the design revision', () => {
+    useDesignStore.setState({ design: defaultDesign });
+    useDesignStore.getState().update('wing.rootChordM', 0);
+    expect(useDesignStore.getState().design).toBe(defaultDesign);
   });
 });

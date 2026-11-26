@@ -1,6 +1,7 @@
 import type { AircraftDesign } from '../domain/types';
 import { calculateMassProperties } from './massProperties';
 import { calculateMetrics } from './metrics';
+import { calculateWingReferenceProperties } from './wingGeometry';
 
 export type StabilityResult = { tailAreaM2: number; horizontalTailVolume: number; neutralPointXM: number | undefined; staticMargin: number | undefined; warnings: string[] };
 
@@ -12,7 +13,7 @@ function quarterChordStation(rootLeadingEdgeXM: number, spanM: number, rootChord
 
 export function calculateStability(design: AircraftDesign): StabilityResult {
   const metrics = calculateMetrics(design); const mass = calculateMassProperties(design); const input = design.stability; const tail = design.horizontalTail; const warnings = [...mass.warnings];
-  const wingAcXM = quarterChordStation(design.wing.rootLeadingEdgeXM, design.wing.spanM, design.wing.rootChordM, design.wing.taperRatio, design.wing.sweepDeg);
+  const wingAcXM = calculateWingReferenceProperties(design.wing).meanAerodynamicChordQuarterChordXM;
   const tailAcXM = quarterChordStation(tail.rootLeadingEdgeXM, tail.spanM, tail.rootChordM, tail.taperRatio, tail.sweepDeg);
   const tailAreaM2 = tail.spanM * tail.rootChordM * (1 + tail.taperRatio) / 2; const tailArmM = tailAcXM - wingAcXM;
   const wingLiftSlope = design.flightCondition.sectionLiftSlopePerRad / (1 + design.flightCondition.sectionLiftSlopePerRad / (Math.PI * design.flightCondition.oswaldEfficiency * metrics.aspectRatio));

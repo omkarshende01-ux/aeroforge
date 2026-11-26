@@ -17,12 +17,38 @@ export type MissionRequirements = {
   designObjective: DesignObjective;
 };
 
+export type WingSymmetry = 'symmetric' | 'asymmetric';
+
+export type WingStation = {
+  id: string;
+  spanPositionM: number;
+  chordM: number;
+  leadingEdgeXM: number;
+  geometricTwistDeg: number;
+  airfoilId: string;
+};
+
+export type WingSection = {
+  id: string;
+  fromStationId: string;
+  toStationId: string;
+  dihedralDeg: number;
+};
+
+export type WingGeometry = {
+  modelVersion: 2;
+  symmetry: WingSymmetry;
+  verticalPositionM: number;
+  stations: WingStation[];
+  sections: WingSection[];
+};
+
 export type AircraftDesign = {
   schemaVersion: typeof AIRCRAFT_DESIGN_SCHEMA_VERSION;
   revision: number;
   name: string;
   massKg: number;
-  wing: { spanM: number; rootChordM: number; taperRatio: number; sweepDeg: number; dihedralDeg: number; twistDeg: number; airfoil: string; rootLeadingEdgeXM: number; verticalPositionM: number };
+  wing: WingGeometry;
   fuselage: { lengthM: number; maxDiameterM: number; noseLengthM: number; cabinLengthM: number };
   horizontalTail: { spanM: number; rootChordM: number; taperRatio: number; sweepDeg: number; incidenceDeg: number; rootLeadingEdgeXM: number; verticalPositionM: number };
   verticalTail: { heightM: number; rootChordM: number; taperRatio: number; sweepDeg: number; rootLeadingEdgeXM: number; basePositionM: number };
@@ -57,7 +83,16 @@ export const defaultDesign: AircraftDesign = {
   schemaVersion: AIRCRAFT_DESIGN_SCHEMA_VERSION,
   revision: 0,
   name: 'AeroForge demonstrator', massKg: 1200,
-  wing: { spanM: 12, rootChordM: 2, taperRatio: 0.5, sweepDeg: 3, dihedralDeg: 3, twistDeg: -1.5, airfoil: 'NACA 2412', rootLeadingEdgeXM: 2.35, verticalPositionM: 0.48 },
+  wing: {
+    modelVersion: 2,
+    symmetry: 'symmetric',
+    verticalPositionM: 0.48,
+    stations: [
+      { id: 'wing-root', spanPositionM: 0, chordM: 2, leadingEdgeXM: 2.35, geometricTwistDeg: 0, airfoilId: 'NACA 2412' },
+      { id: 'wing-tip', spanPositionM: 6, chordM: 1, leadingEdgeXM: 2.35 + 6 * Math.tan(3 * Math.PI / 180), geometricTwistDeg: -1.5, airfoilId: 'NACA 2412' },
+    ],
+    sections: [{ id: 'wing-panel', fromStationId: 'wing-root', toStationId: 'wing-tip', dihedralDeg: 3 }],
+  },
   fuselage: { lengthM: 9, maxDiameterM: 1.4, noseLengthM: 1.45, cabinLengthM: 3.3 },
   horizontalTail: { spanM: 4.2, rootChordM: 1.15, taperRatio: 0.55, sweepDeg: 8, incidenceDeg: 0, rootLeadingEdgeXM: 7.15, verticalPositionM: 0.3 },
   verticalTail: { heightM: 1.9, rootChordM: 1.7, taperRatio: 0.4, sweepDeg: 24, rootLeadingEdgeXM: 6.85, basePositionM: 0.12 },

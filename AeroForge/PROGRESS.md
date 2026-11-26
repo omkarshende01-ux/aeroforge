@@ -1,5 +1,21 @@
 # AeroForge progress
 
+## M5.1 checkpoint — 2026-11-26
+
+The repository is on the `development` branch. M5.1, Multi-Section Aircraft Geometry Foundation, is complete. The authoritative aircraft schema is version 2 and the wing is represented once as validated spanwise stations and connecting piecewise-trapezoidal sections. No advanced editor, control surfaces, VLM, takeoff model, optimization, or project persistence was added.
+
+## M5.1 completed
+
+- Added strongly typed wing stations with span position, chord, leading-edge x, geometric twist, and airfoil identifier; connecting sections carry local dihedral and explicit adjacency.
+- Added symmetric half-wing and asymmetric full-span configurations. Symmetric source stations are mirrored analytically; asymmetric stations use signed `y` positions and an explicit root station.
+- Added pure validation for model version, station order, unique identifiers, positive chords, finite positions, nonempty airfoils, bounded twist/dihedral, symmetry topology, and complete adjacent section connectivity.
+- Added pure piecewise-linear calculations for full projected span, projected planform area, aspect ratio, mean aerodynamic chord, reference leading-edge/quarter-chord locations, spanwise interpolation, physical station height, and section-level area/taper/sweep/MAC properties.
+- Migrated the former schema-v1 trapezoid to an equivalent schema-v2 two-station symmetric wing. The existing simple geometry inspector edits the same authoritative station model through validated whole-wing transforms.
+- Updated the wing renderer to loft all physical stations while keeping analytical properties independent of tessellation. Existing aerodynamics, structures, stability, metrics, sizing, and isolated M4.6 candidate generation now consume the shared station geometry.
+- Preserved M4.6 behavior: a candidate remains a detached, two-station trapezoid sized from area/aspect/taper and retains the source wing's global sweep, dihedral, tip twist, root airfoil, and placement.
+- Added independent rectangular, trapezoidal, multi-section, symmetric/asymmetric, MAC/reference-location, interpolation, invalid-definition, and v1-migration tests. Existing M4 sizing and candidate regressions pass.
+- Verification passes: strict typecheck, 69 automated tests across 14 files, and the production build. Vite's existing non-blocking main-chunk warning remains (approximately 1.095 MB minified / 302 kB gzip).
+
 ## M4.6 checkpoint — 2026-11-26
 
 The repository is on the `development` branch. M4.6, Provisional Aircraft Candidate Generation, is complete. Candidate data remains transient and isolated from the authoritative aircraft design; no apply workflow, takeoff model, advanced geometry, VLM, or optimization was added.
@@ -74,9 +90,9 @@ The codebase is a functional conceptual-design demonstrator with three prelimina
 | Capability | Evidence in repository | Assessment |
 |---|---|---|
 | Frontend foundation | React 18, strict TypeScript, Vite, Zustand, Three.js/React Three Fiber, Vitest; CAD-style navigation and inspector | Implemented baseline |
-| Shared design state | Typed `AircraftDesign` schema version 1 with incrementing revision and mission, geometry, mass, propulsion, stability, and structure groups | Versioned in memory; shallow path updater and no persistence/migration |
-| Geometry | Single trapezoidal wing and tails, NACA four-digit sections, circular-section fuselage loft, component stations, standard views, orbit/pan/zoom | Implemented baseline; not advanced/multi-section CAD |
-| Geometry metrics | Area, aspect ratio, tip chord, MAC, wing loading, conditional stall speed | Implemented and tested |
+| Shared design state | Typed `AircraftDesign` schema version 2 with incrementing revision and mission, geometry, mass, propulsion, stability, and structure groups | Versioned in memory; v1 wing migration exists, but project persistence is not implemented |
+| Geometry | Validated multi-section symmetric/asymmetric wing, trapezoidal tails, NACA four-digit sections, circular-section fuselage loft, component stations, standard views, orbit/pan/zoom | M5.1 wing foundation implemented; no advanced editor, control surfaces, or generalized tail/fuselage stations |
+| Geometry metrics | Piecewise projected area, span, aspect ratio, tip chord, MAC/reference locations, section properties, wing loading, conditional stall speed | Implemented and analytically tested |
 | Atmosphere | ISA 1976-style troposphere from 0–11 km plus manual density | Implemented and tested; manual-density Mach uses sea-level sound speed with warning |
 | Aerodynamics | Linear finite-wing lift slope, pre-stall CL, parabolic polar, forces, Mach, L/D, analytical elliptical span load | Implemented low-fidelity baseline; key coefficients are supplied assumptions |
 | Weight/CG | Four lumped component masses, longitudinal moments, CG, mismatch warning | Implemented baseline; no hierarchy, envelope, or inertia |
@@ -84,7 +100,7 @@ The codebase is a functional conceptual-design demonstrator with three prelimina
 | Stability | Tail area/volume, neutral point, static margin from supplied tail/downwash assumptions | Implemented baseline; no trim, control authority, lateral or dynamic stability |
 | Flight envelope | Simplified aerodynamic/structural maneuver envelope | Implemented baseline; no gust or dynamic effects |
 | Structures | Half-wing Euler–Bernoulli cantilever, constant EI, elliptical limit load, shear/moment/stress/deflection/safety factor | Implemented benchmark model; no wing box, materials workflow, self-weight, torsion, buckling, or FEA |
-| Tests | 55 automated tests in twelve files, including independent analytical fixtures, published-data sanity checks, mission/constraint benchmarks, mass/energy closure, robustness, version contracts, and unit conversions | M4.2–M4.4 equations V2-verified in their declared scope; full-aircraft external validation remains incomplete |
+| Tests | 69 automated tests in 14 files, including independent geometry cases, analytical fixtures, published-data sanity checks, mission/constraint benchmarks, mass/energy closure, robustness, version contracts, and unit conversions | Geometry reference equations and M4.2–M4.4 equations are independently verified in their declared scope; full-aircraft external validation remains incomplete |
 | Optimization, 6-DOF, controls | No implementation found | Planned |
 | Save/load, reports, geometry/data export, public release workflow | No implementation found | Planned |
 
@@ -100,7 +116,7 @@ The codebase is a functional conceptual-design demonstrator with three prelimina
 | Phase | Status | Principal gap |
 |---:|---|---|
 | 1. Mission requirements and preliminary sizing | M4.2–M4.5 complete; broader phase partial | Analytical pipeline independently verified; no takeoff model, matched full-aircraft closure validation, sourced empty-mass correlation, or segment mission sizing |
-| 2. Advanced parametric geometry | Partial | Single trapezoids/circular fuselage only; no multi-section surfaces, controls, analysis discretization, or schema migration |
+| 2. Advanced parametric geometry | M5.1 foundation complete; broader phase partial | Multi-section wing schema/calculations/loft and v1 migration exist; no advanced editor, controls, generalized tail/fuselage stations, or analysis lattice |
 | 3. Airfoil analysis and VLM | Partial precursor | NACA coordinates and analytical lift model only; no polar import or VLM |
 | 4. Structures and materials | Partial precursor | Constant-EI beam only; no load transfer, wing box, materials, or advanced failure modes |
 | 5. Propulsion sizing | Partial precursor | Aggregate electric/fuel cruise sizing exists; no component maps, electrical details, derating, or operating-point coverage |
@@ -114,7 +130,7 @@ The codebase is a functional conceptual-design demonstrator with three prelimina
 
 ## Key technical debt and risks
 
-- The in-memory schema and constraint result are versioned, but persistence, migration, uncertainty, and common contracts for the older analysis results remain.
+- The in-memory schema and constraint result are versioned and v1 wing migration exists, but project persistence, a serialized envelope, uncertainty, and common contracts for older analysis results remain.
 - Input validation is distributed and largely warning-based; UI fields accept values that may make geometry or downstream analysis invalid.
 - Aerodynamic lift slope omits sweep and compressibility; `CD0`, Oswald efficiency, section slope, zero-lift angle, and `CLmax` are supplied.
 - Elliptical span loading does not respond to taper, twist, sweep, tails, or fuselage.
@@ -134,4 +150,4 @@ The codebase is a functional conceptual-design demonstrator with three prelimina
 
 ## Current stop point
 
-M4.6 is complete. Development stops here pending owner review. Provisional candidates can be generated and reviewed without modifying current geometry, but there is intentionally no apply action. Takeoff and full segment mission analysis remain unavailable, so mission feasibility remains indeterminate.
+M5.1 is complete. Development stops here pending owner review. The geometry foundation is analysis-ready for later advanced editing and VLM discretization, but neither is implemented. Provisional candidates remain isolated with no apply action; takeoff and full segment mission analysis remain unavailable, so mission feasibility remains indeterminate.

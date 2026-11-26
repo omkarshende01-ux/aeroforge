@@ -17,7 +17,7 @@ The portfolio MVP requires V2 for its primary reference workflow and at least V1
 
 | Area | Existing evidence found | Level | Limitation |
 |---|---|---:|---|
-| Geometry/metrics | Tests for trapezoidal area, AR, MAC, stall relation, mesh bounds, symmetry, finite normals, NACA coordinates | V1 | No multi-section geometry, mesh snapshots, or external CAD comparison |
+| Geometry/metrics | Independent rectangular, trapezoidal, multi-section and asymmetric span/area/AR/MAC/reference-location cases; invalid topology, v1 migration, mesh bounds, finite normals, and NACA coordinates | V2 for analytical reference properties; V1 for loft | No external CAD comparison, generalized tail stations, or mesh snapshot/round-trip evidence |
 | Atmosphere | 1976 Standard Atmosphere source plus independent 3000 m and boundary regressions | V2 | Troposphere only; altitude is treated as geopotential in the implemented equation |
 | Analytical aerodynamics | Independent coefficient/force formulas, span-load symmetry/tip behavior, CLmax warning | V1 | No numerical span-load integral test, sweep correction, polar data, or external aero benchmark |
 | Mass/CG | Independent four-component mass-moment calculation | V1 | Longitudinal CG only; no hierarchy, envelope, or inertia |
@@ -25,9 +25,9 @@ The portfolio MVP requires V2 for its primary reference workflow and at least V1
 | Preliminary sizing | Closed-form electric/fuel mass, energy, reserve, wing, and power benchmarks; convergence matrix; NASA TERA direct sizing sanity check | V2 for declared equations | Published full-aircraft mass/battery closure not reproduced; NASA case has a higher-fidelity battery/mission model |
 | Static stability | Independent tail-volume/neutral-point/static-margin calculation | V1 | Relies on supplied derivatives; no trim or lateral/dynamic modes |
 | Structures | Elliptical-load root shear/moment compared with analytical values | V1/V2 | Constant EI; no self-weight/torsion/buckling/material library/load-transfer evidence |
-| Build quality | Typecheck, 55 tests, and the production build complete successfully on Windows | V1 | Existing Vite main-chunk size warning remains; CI/clean-clone evidence is still planned |
+| Build quality | Typecheck, 69 tests across 14 files, and the production build complete successfully on Windows | V1 | Existing Vite main-chunk size warning remains (approximately 1.095 MB minified / 302 kB gzip); CI/clean-clone evidence is still planned |
 
-The M4.5 suite contains 55 tests across twelve test files. Detailed M4.5 evidence and source links are recorded in `docs/BENCHMARKS.md`. This count is inventory, not proof of completeness. Each release must reproduce tests and build from a clean checkout and record tool versions and environment.
+The current suite contains 69 tests across 14 test files. Detailed M4.5 evidence and source links are recorded in `docs/BENCHMARKS.md`; M5.1 geometry evidence is recorded below. This count is inventory, not proof of completeness. Each release must reproduce tests and build from a clean checkout and record tool versions and environment.
 
 ## Validation process
 
@@ -78,8 +78,13 @@ The M4.5 suite contains 55 tests across twelve test files. Detailed M4.5 evidenc
 
 ### 2. Advanced parametric geometry
 
-- Existing checks: for `b=12 m`, `cr=2 m`, `ct=1 m`, require `S=18 m²`, `AR=8`, and `MAC=14/9 m`.
-- Multi-section area, first moment, MAC, and volume against independent numerical integration; target relative error below 0.1%.
+- M5.1 rectangular check: `b=10 m`, constant `c=2 m` requires `S=20 m²`, `AR=5`, `MAC=2 m`, and quarter-chord `0.5 m` aft of its leading edge.
+- M5.1 trapezoid check: `b=12 m`, `cr=2 m`, `ct=1 m` requires `S=18 m²`, `AR=8`, and `MAC=14/9 m`; zero sweep requires `x_LE,MAC=0` and `x_MAC/4=7/18 m` for a root leading edge at zero.
+- M5.1 multi-section check independently sums half-wing panels `(y,c)=(0,4),(2,3),(5,1)`: `S=26 m²`, `AR=100/26`, and `MAC=113/39 m`. Section areas and sweeps are checked separately.
+- M5.1 asymmetric check uses `(-4,2),(0,3),(6,1)` and requires `b=10 m`, `S=22 m²`, `AR=100/22`, and `MAC=7/3 m`; independent port/starboard dihedral signs produce upward tips without implicit mirroring.
+- Spanwise manufactured interpolation verifies chord, leading edge, quarter chord, twist, and integrated height. Invalid ordering, zero/negative chord, broken adjacency, empty airfoil, and 90-degree dihedral are rejected.
+- Schema-v1 migration must preserve the established 12 m trapezoid's area, AR, MAC, sweep-derived tip leading edge, dihedral, twist, airfoil, and placement. M4.6 regression tests must continue to reproduce candidate area/aspect/taper and state isolation.
+- Multi-section volume and independent numerical-integration comparison remain planned because M5.1 defines a reference surface, not a closed wing volume model. Target relative error for later numerical comparisons remains below 0.1%.
 - NACA symmetric/cambered section properties, cosine spacing, finite normals, winding, closure, section continuity, and mirrored topology.
 - Translation/rotation/reference-frame invariance where applicable; render tessellation changes must not change analytical reference properties.
 - Exported mesh reopens in an independent viewer with correct scale and axes.

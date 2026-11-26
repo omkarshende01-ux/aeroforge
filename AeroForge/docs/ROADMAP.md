@@ -34,6 +34,8 @@ At the end of week 12, a user should be able to define a mission, size and edit 
 
 - **Objective:** evolve the current single-trapezoid assembly into analysis-ready, editable geometry without coupling mesh rendering to physics.
 - **Milestones:** versioned geometry schema; multi-section wing and tail; per-section airfoil/twist/dihedral; control-surface definitions; generalized fuselage stations; geometry validation; reference areas and aerodynamic reference frame. Nacelles, landing gear, and arbitrary configurations are stretch.
+- **Completed (M5.1):** schema-v2 multi-section wing stations/sections, symmetric and asymmetric definitions, v1 trapezoid migration, topology/dimension validation, piecewise wing loft, spanwise interpolation, and analytical span/area/AR/MAC/reference/section properties. Existing simple editing and M4.6 candidate generation remain compatible with the shared authoritative geometry.
+- **Still planned:** multi-section tails, advanced section editor, control surfaces, generalized fuselage stations, analysis discretization, and geometry export.
 - **Engineering methods:** piecewise lofted sections, cosine airfoil sampling, consistent quarter-chord transforms, watertight surface checks, and separate render/analysis discretizations.
 - **Dependencies:** shared design schema, units, coordinate convention, migration for existing projects.
 - **Acceptance:** symmetric and asymmetric section definitions produce finite, correctly oriented meshes; derived area/MAC/volume agree with independent integration; invalid topology is rejected before analysis.

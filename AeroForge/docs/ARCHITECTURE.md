@@ -32,6 +32,12 @@ M4.4 reuses that contract for preliminary sizing results and adds convergence me
 
 M4.6 adds a pure provisional-candidate boundary. It copies the current design and replaces only sizing-produced wing planform values, takeoff mass, installed shaft power, payload and storage mass for rendering. Candidate state lives locally in the sizing workspace; the renderer accepts the isolated design as an override and the Zustand store exposes no candidate-apply action. A deterministic fingerprint binds the candidate to the design revision, mission, sizing outputs, propulsion branch and planform inputs so changed sources are shown as stale.
 
+M5.1 advances `AircraftDesign` to schema version 2. `wing` is the sole authoritative wing geometry and contains a wing-model version, symmetry mode, vertical root position, ordered stations, and adjacent sections. A station stores signed span position, local chord, leading-edge `x`, geometric twist, and airfoil identifier. A section connects two named adjacent stations and stores local dihedral. Symmetric wings store only the `y >= 0` source half beginning at `y=0`; asymmetric wings store the complete ordered port-to-starboard chain and must include `y=0`. Render meshes, analytical properties, stability references, structures, aerodynamics, and metrics derive from this contract rather than maintaining parallel planforms.
+
+The pure v1 migration converts the old scalar trapezoid to two symmetric stations without changing span, root/tip chord, leading-edge sweep, dihedral, tip twist, root placement, or airfoil. The existing simple inspector remains a compatibility view over schema v2 and applies validated whole-wing transforms to the same stations. It is not a second stored model. Persisted project envelopes and automatic load-time routing remain deferred because project persistence does not yet exist.
+
+M5.1 geometry calculations are independent of the render tessellation. The geometry module expands symmetry, integrates piecewise-linear chord and leading-edge functions, and exposes physical stations and reference properties for future analysis discretization. The renderer consumes expanded stations only to produce the visual loft. Control surfaces, a separate VLM lattice, generalized tail stations, and the advanced editor remain future contracts.
+
 ## Milestone 1 acceptance
 - Local app opens; parameter edits visibly update mathematically generated geometry.
 - Orbit/pan/zoom and standard orthographic views work.

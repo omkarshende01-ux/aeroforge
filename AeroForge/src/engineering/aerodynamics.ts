@@ -1,6 +1,7 @@
 import type { AircraftDesign } from '../domain/types';
 import { calculateMetrics } from './metrics';
 import { standardAtmosphere } from './atmosphere';
+import { calculateWingReferenceProperties } from './wingGeometry';
 
 export type SpanLoadStation = { spanPositionM: number; liftPerSpanNm: number };
 export type AerodynamicResult = {
@@ -37,6 +38,7 @@ export function ellipticalSpanLoad(totalLiftN: number, spanM: number, stationCou
 
 export function calculateAerodynamics(design: AircraftDesign): AerodynamicResult {
   const metrics = calculateMetrics(design);
+  const wingGeometry = metrics.wingAreaM2 > 0 ? calculateWingReferenceProperties(design.wing) : undefined;
   const fc = design.flightCondition;
   const warnings: string[] = [];
   let densityKgM3 = 0;
@@ -73,6 +75,6 @@ export function calculateAerodynamics(design: AircraftDesign): AerodynamicResult
   const mach = speedOfSoundMs > 0 ? fc.speedMs / speedOfSoundMs : 0;
   if (fc.clMax > 0 && Math.abs(liftCoefficient) > fc.clMax) warnings.push('Calculated |CL| exceeds supplied CLmax; the linear pre-stall model is outside its declared range.');
   if (mach > 0.3) warnings.push('Compressibility is not modeled; use this result only at Mach 0.3 or below.');
-  if (Math.abs(design.wing.sweepDeg) > 0.01) warnings.push('Finite-wing lift slope does not include a sweep correction.');
-  return { densityKgM3, dynamicPressurePa, mach, finiteWingLiftSlopePerRad, liftCoefficient, inducedDragCoefficient, dragCoefficient, liftN, dragN, liftToDrag, spanLoad: ellipticalSpanLoad(liftN, design.wing.spanM), warnings, model: 'linear-finite-wing-plus-parabolic-drag' };
+  if (wingGeometry!.sections.some((section) => Math.abs(section.leadingEdgeSweepDeg) > 0.01)) warnings.push('Finite-wing lift slope does not include a sweep correction.');
+  return { densityKgM3, dynamicPressurePa, mach, finiteWingLiftSlopePerRad, liftCoefficient, inducedDragCoefficient, dragCoefficient, liftN, dragN, liftToDrag, spanLoad: ellipticalSpanLoad(liftN, wingGeometry!.totalSpanM), warnings, model: 'linear-finite-wing-plus-parabolic-drag' };
 }

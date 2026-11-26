@@ -29,8 +29,8 @@ Milestone status as of 2026-11-26:
 | MIS-02 | 2 | P0 | Wing-loading/power-loading constraints and design-point plot | MIS-01 | 2.0 d | **Complete (M4.3):** independent stall, cruise, climb, boundary, intersection, and infeasible-domain tests pass |
 | MIS-03 | 2 | P0 | Iterative mass/wing/power/energy closure with residual history | MIS-02, WGT baseline | 2.0 d | **Complete (M4.4):** two initial guesses converge to the same closure or fail explicitly; takeoff keeps mission status indeterminate |
 | MIS-04 | 2 | P0 | Provisional candidate geometry preview from verified sizing | MIS-03, VAL-01 | 1.0 d | **Complete (M4.6):** candidate is isolated, reviewable/discardable, stale-aware, and never labeled mission-feasible |
-| GEO-01 | 3 | P0 | Multi-section lifting-surface domain model and migration | ARC-01 | 1.5 d | Existing trapezoid becomes equivalent two-section data |
-| GEO-02 | 3 | P0 | Piecewise wing/tail lofts and independent reference-property integration | GEO-01 | 2.0 d | Area/MAC/span and mesh invariants pass analytic cases |
+| GEO-01 | 3 | P0 | Multi-section lifting-surface domain model and migration | ARC-01 | 1.5 d | **Complete (M5.1 wing scope):** schema-v1 trapezoid becomes an equivalent schema-v2 two-station symmetric wing; asymmetric full-span definitions and validation are tested |
+| GEO-02 | 3 | P0 | Piecewise wing/tail lofts and independent reference-property integration | GEO-01 | 2.0 d | **Partial (M5.1 wing scope):** piecewise wing loft plus area/MAC/span/reference properties pass analytic cases; multi-section tail and broader mesh validation remain |
 | GEO-03 | 3 | P1 | Control-surface definitions and overlap diagnostics | GEO-01 | 1.5 d | Invalid sections/control overlaps block dependent analyses |
 | AFL-01 | 4 | P0 | Airfoil coordinate and polar import parser with provenance/license fields | ARC-01 | 1.5 d | Valid fixtures round-trip; malformed files produce diagnostics |
 | AFL-02 | 4 | P0 | Reynolds/Mach/alpha polar interpolation with strict domain checks | AFL-01 | 2.0 d | Tabulated points and interpolation cases meet tolerance |

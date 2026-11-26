@@ -1,6 +1,7 @@
 import type { AircraftDesign } from '../domain/types';
 import type { ConstraintMargin } from './constraints';
 import type { PreliminarySizingResult, SizingPropulsionModel } from './preliminarySizing';
+import { legacyWingView, migrateLegacyWing } from './wingGeometry';
 
 export const PROVISIONAL_CANDIDATE_MODEL_VERSION = '1.0.0';
 
@@ -84,9 +85,10 @@ export function generateProvisionalAircraftCandidate(
   const spanM = Math.sqrt(inputs.aspectRatio * sizing.requiredWingAreaM2);
   const rootChordM = 2 * sizing.requiredWingAreaM2 / (spanM * (1 + inputs.taperRatio));
   const tipChordM = inputs.taperRatio * rootChordM;
+  const sourceWing = legacyWingView(design.wing);
   const previewDesign: AircraftDesign = {
     ...design,
-    wing: { ...design.wing, spanM, rootChordM, taperRatio: inputs.taperRatio },
+    wing: migrateLegacyWing({ ...sourceWing, spanM, rootChordM, taperRatio: inputs.taperRatio }),
     fuselage: { ...design.fuselage },
     horizontalTail: { ...design.horizontalTail },
     verticalTail: { ...design.verticalTail },
@@ -114,7 +116,7 @@ export function generateProvisionalAircraftCandidate(
     assumptions: [
       ...sizing.contract.assumptions,
       'The wing is a straight-edged trapezoid sized from area, aspect ratio, and taper ratio.',
-      'Existing sweep, dihedral, twist, airfoil, wing station, fuselage, empennage, structure, and propulsion configuration are preserved.',
+      'Existing sweep, dihedral, tip twist, root airfoil and wing placement are preserved; the provisional wing remains a two-station trapezoid.',
     ],
     provenance: [
       `M4.4 sizing model ${sizing.contract.modelVersion}, design revision ${sizing.contract.designRevision}.`,

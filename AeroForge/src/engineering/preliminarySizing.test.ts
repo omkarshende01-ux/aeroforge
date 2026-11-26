@@ -38,7 +38,7 @@ describe('M4.4 iterative preliminary aircraft sizing', () => {
     expect(result.status).toBe('converged');
     expect(result.contract.designRevision).toBe(defaultDesign.revision);
     expect(result.contract.sources.length).toBeGreaterThan(0);
-    expect(defaultDesign.wing.spanM).toBe(12);
+    expect(defaultDesign.wing.stations.at(-1)?.spanPositionM).toBe(6);
   });
 
   it('closes the component mass balance and reports signed residuals', () => {

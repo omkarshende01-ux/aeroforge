@@ -9,6 +9,7 @@ import {
   type PreliminarySizingInputs,
 } from '../engineering/preliminarySizing';
 import { convertFromSi, convertToSi } from '../engineering/units';
+import { legacyWingView, migrateLegacyWing } from '../engineering/wingGeometry';
 import fixture from './fixtures/m4-5-benchmarks.json';
 
 const analytical = fixture.analyticalCase;
@@ -18,7 +19,7 @@ const expected = analytical.expected;
 function benchmarkDesign(): AircraftDesign {
   return {
     ...defaultDesign,
-    wing: { ...defaultDesign.wing, spanM: input.spanM, rootChordM: 2, taperRatio: 0.5 },
+    wing: migrateLegacyWing({ ...legacyWingView(defaultDesign.wing), spanM: input.spanM, rootChordM: 2, taperRatio: 0.5 }),
     flightCondition: {
       ...defaultDesign.flightCondition,
       clMax: input.clMax,
