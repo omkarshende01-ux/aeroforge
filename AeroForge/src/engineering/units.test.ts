@@ -8,12 +8,15 @@ describe('mission unit conversions', () => {
     expect(convertFromSi(0.3048, 'altitude', 'aviation')).toBeCloseTo(1, 12);
     expect(convertFromSi(0.00508, 'climbRate', 'aviation')).toBeCloseTo(1, 12);
     expect(convertFromSi(0.45359237, 'mass', 'aviation')).toBeCloseTo(1, 12);
+    expect(convertFromSi(47.88025898033584, 'wingLoading', 'aviation')).toBeCloseTo(1, 10);
+    expect(convertFromSi(745.6998715822702 / 4.4482216152605, 'shaftPowerLoading', 'aviation')).toBeCloseTo(1, 10);
   });
 
   it('round-trips every mission quantity', () => {
     const cases = [
       ['mass', 172.5], ['distance', 1_250_000], ['length', 420],
       ['speed', 53.2], ['altitude', 3048], ['climbRate', 3.4],
+      ['wingLoading', 650], ['shaftPowerLoading', 15.3],
     ] as const;
     for (const [quantity, value] of cases) {
       expect(convertToSi(convertFromSi(value, quantity, 'aviation'), quantity, 'aviation')).toBeCloseTo(value, 10);

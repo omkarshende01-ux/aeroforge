@@ -36,6 +36,21 @@ For a symmetric, single trapezoidal wing, span b, root chord cr, tip chord ct, t
 - Takeoff distance is always not evaluated because no ground-roll, thrust-versus-speed, rolling-resistance, rotation or obstacle-clearance model exists. Aircraft category and design objective are recorded context only; no category-specific regulations, statistical sizing, or optimization are performed.
 - Invalid mission inputs make all dependent feasibility results not evaluated. Unsupported requirements remain visible with a limitation instead of receiving fabricated values.
 
+## M4.3 aircraft constraint analysis
+
+- The analysis uses wing loading `x=W/S` in N/m² on the horizontal axis and installed shaft power loading `Pshaft/W` in W/N on the vertical axis. SI is authoritative. Aviation display units are lbf/ft² and hp/lbf.
+- Design inputs and results use schema version 1. Each edit increments an in-memory design revision. Constraint results identify the schema, design revision, model ID/version, validity, assumptions, warnings, and sources. Project persistence and schema migration are not implemented yet.
+- The stall constraint is `W/S <= 0.5*rho0*Vs,max^2*CLmax`, using ISA sea-level density and the supplied aircraft `CLmax`.
+- For a flight condition with `q=0.5*rho*V²`, `CL=x/q`, induced factor `k=1/(pi*e*AR)`, and `CD=CD0+k*CL²`, the level-flight drag ratio is `D/W=q*CD/x`.
+- Required propulsive power loading is `Pprop/W=V*D/W`. Required installed shaft power loading is `Pshaft/W=(Pprop/W)/eta_p`. The minimum climb constraint adds `ROCmin/eta_p` to the level-flight shaft-power loading. Cruise and climb use the requested cruise true airspeed and ISA altitude.
+- The service-ceiling constraint follows the FAA convention of a 100 ft/min (0.508 m/s) steady climb. For constant shaft power and the parabolic polar, minimum power occurs at `CL_mp=sqrt(3*CD0/k)`; `V_mp=sqrt(2*x/(rho*CL_mp))`. Required shaft `P/W` is level-flight shaft `P/W + 0.508/eta_p` at the requested service-ceiling altitude. The curve is not evaluated if `CL_mp` exceeds supplied `CLmax`.
+- Installed shaft power is assumed fully available at altitude because AeroForge has no engine/motor/propeller derating map. Altitude changes ISA density and aerodynamic power required; it does not change available shaft power in this model. This is an explicit limitation, not an inferred propulsion capability.
+- The attached-flow domain is limited to Mach 0.3, positive bounded inputs, and the supplied `CLmax`. The displayed conceptual search domain is 100–3000 N/m² and 0–30 W/N. “No region” means no evaluated-feasible point in that displayed domain, not proof that no aircraft can satisfy the mission.
+- The shaded region satisfies every evaluated constraint: it lies left of the stall limit and above the maximum cruise, climb, and supported service-ceiling power curve. A point's governing constraint is stall when the stall limit is violated; otherwise it is the evaluated power curve requiring the greatest shaft `P/W`.
+- Positive numerical margin passes: stall margin is `(W/S)_max-x`; power margin is selected installed shaft `P/W` minus required shaft `P/W`.
+- Takeoff distance remains not evaluated because thrust-versus-speed, rolling resistance, rotation, and obstacle-clearance models do not exist. Therefore a point that passes every plotted constraint is labeled evaluated-feasible but overall indeterminate, never overall feasible.
+- Service-ceiling provenance: FAA Airplane Flying Handbook glossary, “Service ceiling,” https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/airplane_handbook/20_afh_glossary.pdf.
+
 ## Later physics
 - Aerodynamics: add sourced airfoil polars, lifting-line or VLM, geometry-sensitive spanwise loads and component drag buildup. VLM is inviscid and is not a stall/viscous drag model.
 - Structures: add geometry-varying stiffness, wing self-weight, torsion, shear stress and validated aerodynamic load transfer; later buckling, modal, fatigue and FEA comparison.

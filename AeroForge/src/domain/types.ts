@@ -1,3 +1,5 @@
+import { AIRCRAFT_DESIGN_SCHEMA_VERSION } from './contracts';
+
 export type AircraftCategory = 'light-aircraft' | 'uncrewed-aircraft' | 'glider' | 'transport';
 export type DesignObjective = 'balanced' | 'minimum-mass' | 'maximum-range' | 'minimum-energy';
 
@@ -7,6 +9,7 @@ export type MissionRequirements = {
   requiredRangeM: number;
   cruiseSpeedMs: number;
   cruiseAltitudeM: number;
+  serviceCeilingM: number;
   maximumStallSpeedMs: number;
   maximumTakeoffDistanceM: number;
   minimumClimbRateMs: number;
@@ -15,6 +18,8 @@ export type MissionRequirements = {
 };
 
 export type AircraftDesign = {
+  schemaVersion: typeof AIRCRAFT_DESIGN_SCHEMA_VERSION;
+  revision: number;
   name: string;
   massKg: number;
   wing: { spanM: number; rootChordM: number; taperRatio: number; sweepDeg: number; dihedralDeg: number; twistDeg: number; airfoil: string; rootLeadingEdgeXM: number; verticalPositionM: number };
@@ -49,6 +54,8 @@ export type AircraftDesign = {
 export type DesignMetrics = { wingAreaM2: number; aspectRatio: number; macM: number; tipChordM: number; wingLoadingNm2: number; stallSpeedMs?: number; stallSpeedKt?: number; warnings: string[] };
 
 export const defaultDesign: AircraftDesign = {
+  schemaVersion: AIRCRAFT_DESIGN_SCHEMA_VERSION,
+  revision: 0,
   name: 'AeroForge demonstrator', massKg: 1200,
   wing: { spanM: 12, rootChordM: 2, taperRatio: 0.5, sweepDeg: 3, dihedralDeg: 3, twistDeg: -1.5, airfoil: 'NACA 2412', rootLeadingEdgeXM: 2.35, verticalPositionM: 0.48 },
   fuselage: { lengthM: 9, maxDiameterM: 1.4, noseLengthM: 1.45, cabinLengthM: 3.3 },
@@ -73,6 +80,7 @@ export const defaultDesign: AircraftDesign = {
     requiredRangeM: 1_000_000,
     cruiseSpeedMs: 50,
     cruiseAltitudeM: 0,
+    serviceCeilingM: 3_000,
     maximumStallSpeedMs: 35,
     maximumTakeoffDistanceM: 500,
     minimumClimbRateMs: 2,

@@ -21,6 +21,7 @@ At the end of week 12, a user should be able to define a mission, size and edit 
 
 ### 1. Mission requirements and preliminary aircraft sizing — partial, MVP
 
+- **Completed:** M4.2 mission definition/current-design feasibility and M4.3 interactive W/S versus installed shaft P/W constraints. Takeoff remains explicitly unevaluated.
 - **Objective:** translate payload, range, endurance, cruise, stall, climb, ceiling, and takeoff constraints into a traceable design point and initial mass/wing/power estimates.
 - **Milestones:** mission schema and editor; unit-aware requirement validation; constraint diagram; iterative mass closure; candidate design-point selection; sizing summary.
 - **Engineering methods:** wing-loading/power-loading constraints, dynamic-pressure stall relation, excess-power climb, statistical empty-mass fractions with cited applicability, and damped fixed-point iteration. Keep electric energy and fuel-energy models distinct.

@@ -1,8 +1,21 @@
 # AeroForge progress
 
-## Phase 4A checkpoint — 2026-11-26
+## M4.3 checkpoint — 2026-11-26
 
-The repository is on the `development` branch. Phase 4A, Mission Requirements and Design Feasibility, is complete. No optimization, new aerodynamic solver, advanced sizing loop, or takeoff model was added.
+The repository is on the `development` branch. M4.3, Aircraft Constraint Analysis, is complete. No iterative mass closure, geometry modification, VLM, optimization, or takeoff model was added.
+
+## M4.3 completed
+
+- Added schema version 1, an incrementing in-memory design revision, and a versioned constraint-result contract with model ID/version, validity, assumptions, warnings, and sources. Persistence and migration remain future work.
+- Added a pure aircraft constraint solver using wing loading `W/S` and installed shaft power loading `P/W`.
+- Added maximum-stall-speed, cruise shaft-power, minimum-rate-of-climb, and supported service-ceiling constraints.
+- Reused ISA atmosphere, planform metrics, mass warnings, mission validation, the parabolic drag polar, and a shared level-flight power calculation.
+- Distinguished installed shaft power, propulsive power, and available propulsive power. Propulsive efficiency is applied once; shaft-power altitude derating is explicitly unavailable and assumed unity.
+- Added an interactive SVG diagram, evaluated-feasible shading, current design point, click-selected candidate, governing constraint, and signed numerical margins.
+- Added SI and aviation axis conversions: N/m² ↔ lbf/ft² and W/N ↔ hp/lbf.
+- Added the mission service-ceiling input and the FAA 100 ft/min criterion at the parabolic-polar minimum-power point.
+- Takeoff remains not evaluated. Passing plotted constraints produces an overall indeterminate label, never overall feasible.
+- Added independent stall, cruise, climb, service-ceiling conversion, boundary, intersection, infeasible-domain, invalid-input, unit, and contract tests.
 
 ## Phase 4A completed
 
@@ -23,7 +36,7 @@ The codebase is a functional conceptual-design demonstrator with three prelimina
 | Capability | Evidence in repository | Assessment |
 |---|---|---|
 | Frontend foundation | React 18, strict TypeScript, Vite, Zustand, Three.js/React Three Fiber, Vitest; CAD-style navigation and inspector | Implemented baseline |
-| Shared design state | One typed `AircraftDesign` with geometry, flight condition, mission, mass, propulsion, stability, and structure groups | Implemented but unversioned; shallow path updater and no persistence/migration |
+| Shared design state | Typed `AircraftDesign` schema version 1 with incrementing revision and mission, geometry, mass, propulsion, stability, and structure groups | Versioned in memory; shallow path updater and no persistence/migration |
 | Geometry | Single trapezoidal wing and tails, NACA four-digit sections, circular-section fuselage loft, component stations, standard views, orbit/pan/zoom | Implemented baseline; not advanced/multi-section CAD |
 | Geometry metrics | Area, aspect ratio, tip chord, MAC, wing loading, conditional stall speed | Implemented and tested |
 | Atmosphere | ISA 1976-style troposphere from 0–11 km plus manual density | Implemented and tested; manual-density Mach uses sea-level sound speed with warning |
@@ -33,22 +46,22 @@ The codebase is a functional conceptual-design demonstrator with three prelimina
 | Stability | Tail area/volume, neutral point, static margin from supplied tail/downwash assumptions | Implemented baseline; no trim, control authority, lateral or dynamic stability |
 | Flight envelope | Simplified aerodynamic/structural maneuver envelope | Implemented baseline; no gust or dynamic effects |
 | Structures | Half-wing Euler–Bernoulli cantilever, constant EI, elliptical limit load, shear/moment/stress/deflection/safety factor | Implemented benchmark model; no wing box, materials workflow, self-weight, torsion, buckling, or FEA |
-| Tests | 26 automated tests in eight files, including mission validation, feasibility states/margins, model-validity gating, and SI/aviation conversion round trips | Useful V1 evidence; limited system/external validation |
+| Tests | 35 automated tests in ten files, including mission/constraint benchmarks, boundaries, intersections, version contracts, and unit conversions | Useful V1/V2 analytical evidence; limited external aircraft validation |
 | Optimization, 6-DOF, controls | No implementation found | Planned |
 | Save/load, reports, geometry/data export, public release workflow | No implementation found | Planned |
 
 ## Verification performed at this checkpoint
 
 - `npm.cmd run typecheck`: **passed**.
-- `npm.cmd test`: **passed**, 26 tests across eight files.
+- `npm.cmd test`: **passed**, 35 tests across ten files.
 - `npm.cmd run build`: **passed**.
-- Vite reports the existing production chunk warning: approximately 1.04 MB minified / 287 kB gzip for the main JavaScript asset.
+- Vite reports the existing production chunk warning: approximately 1.06 MB minified / 292 kB gzip for the main JavaScript asset.
 
 ## Phase status against the long-term objective
 
 | Phase | Status | Principal gap |
 |---:|---|---|
-| 1. Mission requirements and preliminary sizing | Phase 4A complete; broader phase partial | Typed requirements and feasibility exist; no constraint diagram, mass closure, takeoff model, or design-point iteration |
+| 1. Mission requirements and preliminary sizing | M4.2–M4.3 complete; broader phase partial | Mission definition and constraint diagram exist; no mass closure, takeoff model, or automatic design-point iteration |
 | 2. Advanced parametric geometry | Partial | Single trapezoids/circular fuselage only; no multi-section surfaces, controls, analysis discretization, or schema migration |
 | 3. Airfoil analysis and VLM | Partial precursor | NACA coordinates and analytical lift model only; no polar import or VLM |
 | 4. Structures and materials | Partial precursor | Constant-EI beam only; no load transfer, wing box, materials, or advanced failure modes |
@@ -63,7 +76,7 @@ The codebase is a functional conceptual-design demonstrator with three prelimina
 
 ## Key technical debt and risks
 
-- The schema has no version, migration, provenance, uncertainty, analysis revision, or solver-result contract.
+- The in-memory schema and constraint result are versioned, but persistence, migration, uncertainty, and common contracts for the older analysis results remain.
 - Input validation is distributed and largely warning-based; UI fields accept values that may make geometry or downstream analysis invalid.
 - Aerodynamic lift slope omits sweep and compressibility; `CD0`, Oswald efficiency, section slope, zero-lift angle, and `CLmax` are supplied.
 - Elliptical span loading does not respond to taper, twist, sweep, tails, or fuselage.
@@ -83,16 +96,4 @@ The codebase is a functional conceptual-design demonstrator with three prelimina
 
 ## Current stop point
 
-Phase 4A is complete. Development stops here pending owner review. The next roadmap work remains the design-constraint and preliminary sizing loop, but it is not part of this milestone and has not been started.
-
-## Previously recommended broader milestone
-
-**M4: Traceable mission sizing and versioned design contract (weeks 1–2, approximately 10–11 person-days).**
-
-1. Restore reproducible tests/typecheck/build and create the validation ledger.
-2. Freeze a versioned project and result contract with units, provenance, validity, warnings, and migrations.
-3. Add the complete mission requirements model and wing-loading/power-loading constraint diagram.
-4. Add bounded iterative mass, wing area, installed power, and energy/fuel closure.
-5. Validate one reference mission by independent hand/textbook calculations and demonstrate an infeasible case.
-
-This is the recommended next milestone because it turns the existing collection of useful calculators into the start of a coherent aircraft-design workflow and supplies stable inputs to geometry, VLM, propulsion, structures, performance, and optimization. Implementation remains paused until the owner approves the plan and chooses the primary MVP propulsion demonstration (electric, fuel-powered, or one primary path with the other schema-only).
+M4.3 is complete. Development stops here pending owner review. Iterative mass closure, automatic geometry changes, takeoff analysis, VLM, and optimization have not been started.

@@ -13,7 +13,7 @@ Priority: **P0** is required for a releasable MVP, **P1** is desired if it does 
 | SYS-001 | Use a versioned, serializable aircraft/project schema shared by geometry, analyses, UI, persistence, and exports. Provide explicit migrations. | P0 | Partial | Schema round-trip and migration tests |
 | SYS-002 | Store physical quantities in SI units; label UI conversions; document axes, signs, reference points, and angle conventions. | P0 | Partial | Unit and frame contract tests |
 | SYS-003 | Keep domain types, pure engineering calculations, rendering, state, and UI separable. Rendering meshes must not be the sole engineering definition. | P0 | Partial | Architecture review and dependency checks |
-| SYS-004 | Every analysis result shall include model/version, inputs or design revision, assumptions, warnings, validity status, convergence metadata where applicable, and source provenance. | P0 | Planned | Result-contract tests and report inspection |
+| SYS-004 | Every analysis result shall include model/version, inputs or design revision, assumptions, warnings, validity status, convergence metadata where applicable, and source provenance. | P0 | Partial | Constraint-analysis contract tests; remaining result types still need migration |
 | SYS-005 | Reject non-finite, physically invalid, or topologically invalid inputs before dependent analysis; do not silently invent missing coefficients. | P0 | Partial | Boundary/property tests |
 | SYS-006 | Deterministic calculations shall reproduce from the same versioned project and run settings. Optimization randomness shall use recorded seeds. | P0 | Partial | Repeat-run equality tests |
 | SYS-007 | The UI shall distinguish user inputs, illustrative defaults, estimated values, imported data, unavailable results, and validated results. | P0 | Partial | UX review and accessibility tests |
@@ -27,7 +27,7 @@ Priority: **P0** is required for a releasable MVP, **P1** is desired if it does 
 | ID | Requirement | Priority | Status |
 |---|---|---:|---|
 | MIS-001 | Define payload, crew, range/endurance, cruise speed/altitude, stall speed, climb, ceiling, takeoff/landing, reserve, and propulsion type with units. | P0 | Partial |
-| MIS-002 | Plot applicable wing-loading versus power/thrust-loading constraints and identify feasible regions and the selected design point. | P0 | Planned |
+| MIS-002 | Plot applicable wing-loading versus power/thrust-loading constraints and identify feasible regions and the selected design point. | P0 | Implemented | M4.3 |
 | MIS-003 | Iterate takeoff mass, empty mass, energy/fuel, wing area, and installed power to a reported residual or an infeasibility result. | P0 | Planned |
 | MIS-004 | Preserve the source, applicability range, and uncertainty of empirical sizing correlations. | P0 | Planned |
 

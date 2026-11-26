@@ -48,6 +48,7 @@ export const missionBounds: Record<NumericMissionField, { min: number; max: numb
   requiredRangeM: { min: 1_000, max: 20_000_000 },
   cruiseSpeedMs: { min: 5, max: 250 },
   cruiseAltitudeM: { min: 0, max: 11_000 },
+  serviceCeilingM: { min: 0, max: 11_000 },
   maximumStallSpeedMs: { min: 5, max: 120 },
   maximumTakeoffDistanceM: { min: 10, max: 5_000 },
   minimumClimbRateMs: { min: 0, max: 50 },

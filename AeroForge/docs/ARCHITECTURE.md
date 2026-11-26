@@ -26,6 +26,8 @@ src/
 ## Contracts
 Architect must define one typed AircraftDesign schema: mission, mass, wing, fuselage, horizontal tail, vertical tail, flight condition and optional future model inputs. Use explicit names/units, validation and sensible bounds. Keep geometry definition independent of rendered mesh. Engineering functions should be pure where practical and return typed results with assumptions, model identifier and validity warnings. Missing parameters should not silently become invented constants. Use a consistent coordinate convention (proposed x aft, y starboard, z up for geometry, with explicit transforms for any flight-dynamics convention); architect must document it before implementation. Store SI and radians internally or explicitly document any alternative. Do not mix mass and weight. Shared state is the single source of truth for 3D and metrics.
 
+M4.3 establishes the first versioned contract: `AircraftDesign` schema version 1 and an incrementing in-memory revision. Constraint-analysis results include schema/model versions, design revision, validity, assumptions, warnings, and sources. This is sufficient for traceable in-session analysis; serialized project envelopes, migrations, and conversion of older analysis result types remain future work.
+
 ## Milestone 1 acceptance
 - Local app opens; parameter edits visibly update mathematically generated geometry.
 - Orbit/pan/zoom and standard orthographic views work.

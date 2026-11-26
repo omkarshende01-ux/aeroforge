@@ -8,16 +8,22 @@ This backlog implements the roadmap in dependency order. **P0** items form the p
 
 The repository already contains the browser shell, parametric single-section wing/fuselage/tails, NACA four-digit sections, ISA atmosphere, analytical finite-wing aerodynamics, component mass/CG, simplified power/range/climb, static margin, maneuver envelope, and constant-EI beam. These are foundations to preserve and regression-test, not backlog items to reimplement.
 
+Milestone status as of 2026-11-26:
+
+- **M4.1 prerequisite complete for constraint analysis:** schema version, design revision, and versioned constraint-result contract exist in memory. Persistence and migration remain in ARC-01.
+- **M4.2 complete:** typed mission definition, validation, unit conversion, and current-design feasibility.
+- **M4.3 complete:** interactive W/S versus installed shaft P/W analysis with stall, cruise, climb, supported service ceiling, candidate selection, margins, governing constraint, and explicitly unevaluated takeoff.
+
 ## Twelve-week MVP backlog
 
 | ID | Week | Pri | Deliverable | Depends on | Effort | Done when |
 |---|---:|---:|---|---|---:|---|
-| ARC-01 | 1 | P0 | Versioned project/design/result contracts; model metadata and validity types | Current schema | 2.0 d | Contract review passes; current default migrates losslessly |
+| ARC-01 | 1 | P0 | Versioned project/design/result contracts; model metadata and validity types | Current schema | 2.0 d | **Partial:** in-memory design/result contract complete; persistence and lossless migrations remain |
 | VAL-01 | 1 | P0 | Machine-readable validation ledger and benchmark fixtures | ARC-01 | 1.5 d | Current model benchmarks have source, tolerance, status, and version |
 | TST-01 | 1 | P0 | Restore reproducible clean-clone test/typecheck/build workflow and CI skeleton | None | 1.5 d | All three commands run in CI and a clean Windows checkout |
 | UX-01 | 1 | P1 | Global input/error/status conventions and units component | ARC-01 | 1.0 d | Input/estimate/warning/invalid states are visually distinct |
 | MIS-01 | 2 | P0 | Mission schema/editor with payload, cruise, stall, climb, ceiling, takeoff, reserve | ARC-01 | 1.5 d | Invalid or dimensionally inconsistent inputs are blocked |
-| MIS-02 | 2 | P0 | Wing-loading/power-loading constraints and design-point plot | MIS-01 | 2.0 d | Reference constraints reproduce hand calculations |
+| MIS-02 | 2 | P0 | Wing-loading/power-loading constraints and design-point plot | MIS-01 | 2.0 d | **Complete (M4.3):** independent stall, cruise, climb, boundary, intersection, and infeasible-domain tests pass |
 | MIS-03 | 2 | P0 | Iterative mass/wing/power/energy closure with residual history | MIS-02, WGT baseline | 2.0 d | Two initial guesses converge to the same feasible result or fail explicitly |
 | GEO-01 | 3 | P0 | Multi-section lifting-surface domain model and migration | ARC-01 | 1.5 d | Existing trapezoid becomes equivalent two-section data |
 | GEO-02 | 3 | P0 | Piecewise wing/tail lofts and independent reference-property integration | GEO-01 | 2.0 d | Area/MAC/span and mesh invariants pass analytic cases |

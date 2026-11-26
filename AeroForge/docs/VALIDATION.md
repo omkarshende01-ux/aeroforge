@@ -26,7 +26,7 @@ The portfolio MVP requires V2 for its primary reference workflow and at least V1
 | Structures | Elliptical-load root shear/moment compared with analytical values | V1/V2 | Constant EI; no self-weight/torsion/buckling/material library/load-transfer evidence |
 | Build quality | Current typecheck completed successfully | V1 | In this audit, Vitest and production build were blocked by Windows `EPERM` writes to generated Vite/TypeScript cache files; historical progress claims a prior clean run |
 
-The current automated suite contains 19 tests across six test files. This count is inventory, not proof of completeness. Before new physics, reproduce tests and build from a clean checkout and record tool versions and environment.
+The M4.3 suite contains 35 tests across ten test files. This count is inventory, not proof of completeness. Each release must reproduce tests and build from a clean checkout and record tool versions and environment.
 
 ## Validation process
 
@@ -52,6 +52,13 @@ The current automated suite contains 19 tests across six test files. This count 
 ### 1. Mission requirements and preliminary sizing
 
 - Rectangular/trapezoidal wing-loading constraint calculations against hand solutions.
+- M4.3 stall benchmark independently evaluates `0.5*rho0*Vs,max²*CLmax`.
+- M4.3 cruise benchmark independently evaluates `CL`, `CD`, `D/W`, propulsive `P/W`, and shaft `P/W` without calling the shared power helper.
+- M4.3 climb benchmark independently adds `ROCmin/eta_p`; service ceiling verifies the FAA 100 ft/min conversion.
+- Exact power and stall boundary points pass; immediately lower power or higher W/S points fail. Manufactured crossing curves verify interpolated constraint intersections.
+- An excessive but valid climb requirement produces no evaluated-feasible region in the plotted domain.
+- Invalid efficiency/input cases return an invalid versioned result; takeoff remains not evaluated and prevents an overall feasible label.
+- W/S and shaft P/W aviation conversions have independent one-unit benchmarks and round-trip tests.
 - A textbook sizing case with matched propulsion and empirical assumptions; cite exact source and edition.
 - Mass closure from two separated initial guesses; report iteration residual and convergence rate.
 - Deliberately infeasible stall/climb/takeoff combinations must return no feasible region.

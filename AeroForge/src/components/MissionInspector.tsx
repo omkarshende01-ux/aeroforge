@@ -71,6 +71,7 @@ export function MissionInspector() {
       <MissionField field="requiredRangeM" label="Required range" quantity="distance" units={units} />
       <MissionField field="cruiseSpeedMs" label="Cruise speed" quantity="speed" units={units} />
       <MissionField field="cruiseAltitudeM" label="Cruise altitude" quantity="altitude" units={units} />
+      <MissionField field="serviceCeilingM" label="Service ceiling" quantity="altitude" units={units} />
     </section>
     <section>
       <h3>Performance constraints</h3>
