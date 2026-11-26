@@ -67,6 +67,25 @@ export type SizingSensitivityResult = {
   insensitiveToInitialGuess: boolean;
 };
 
+export type SizedGeometryAndPower = {
+  weightN: number;
+  requiredWingAreaM2: number;
+  requiredInstalledShaftPowerW: number;
+};
+
+/** Direct dimensional conversion from takeoff mass and an M4.3 loading design point. */
+export function calculateSizedGeometryAndPower(massKg: number, designPoint: ConstraintPoint): SizedGeometryAndPower {
+  if (!finitePositive(massKg) || !finitePositive(designPoint.wingLoadingNm2) || !finitePositive(designPoint.shaftPowerLoadingWPerN)) {
+    throw new RangeError('Mass and loading design point must be finite and positive.');
+  }
+  const weightN = massKg * gravityMs2;
+  return {
+    weightN,
+    requiredWingAreaM2: weightN / designPoint.wingLoadingNm2,
+    requiredInstalledShaftPowerW: designPoint.shaftPowerLoadingWPerN * weightN,
+  };
+}
+
 function contract(design: AircraftDesign, validity: EngineeringResultContract['validity'], warnings: string[]): EngineeringResultContract {
   return {
     schemaVersion: AIRCRAFT_DESIGN_SCHEMA_VERSION,
@@ -121,7 +140,7 @@ function validateInputs(design: AircraftDesign, inputs: PreliminarySizingInputs)
   return errors;
 }
 
-function storageMassForEnergy(model: SizingPropulsionModel, missionShaftEnergyJ: number, reserveFraction: number): number {
+export function calculateEnergyStorageMass(model: SizingPropulsionModel, missionShaftEnergyJ: number, reserveFraction: number): number {
   const nominalFraction = 1 - reserveFraction;
   return model.kind === 'electric'
     ? missionShaftEnergyJ / (model.batteryUsableShaftSpecificEnergyJPerKg * nominalFraction)
@@ -218,7 +237,7 @@ export function calculatePreliminarySizing(design: AircraftDesign, inputs: Preli
 
   for (let iteration = 1; iteration <= inputs.maximumIterations; iteration += 1) {
     const missionShaftEnergyJ = energyPerMassJPerKg * massEstimateKg;
-    const energyStorageMassKg = storageMassForEnergy(inputs.propulsionModel, missionShaftEnergyJ, inputs.reserveFraction);
+    const energyStorageMassKg = calculateEnergyStorageMass(inputs.propulsionModel, missionShaftEnergyJ, inputs.reserveFraction);
     const targetMassKg = fixedEmptyMassKg + payloadMassKg + energyStorageMassKg;
     const residualKg = targetMassKg - massEstimateKg;
     iterations.push({ iteration, massEstimateKg, targetMassKg, residualKg, missionShaftEnergyJ, energyStorageMassKg });
@@ -233,7 +252,7 @@ export function calculatePreliminarySizing(design: AircraftDesign, inputs: Preli
 
   const finalMassKg = converged ? finalTargetMassKg : massEstimateKg;
   const finalMissionShaftEnergyJResolved = energyPerMassJPerKg * finalMassKg;
-  const finalEnergyStorageMassKgResolved = storageMassForEnergy(inputs.propulsionModel, finalMissionShaftEnergyJResolved, inputs.reserveFraction);
+  const finalEnergyStorageMassKgResolved = calculateEnergyStorageMass(inputs.propulsionModel, finalMissionShaftEnergyJResolved, inputs.reserveFraction);
   const massResidualKg = fixedEmptyMassKg + payloadMassKg + finalEnergyStorageMassKgResolved - finalMassKg;
   const totalShaftCapacityJ = finalMissionShaftEnergyJResolved / (1 - inputs.reserveFraction);
   const reserveShaftEnergyJ = totalShaftCapacityJ - finalMissionShaftEnergyJResolved;
@@ -243,6 +262,7 @@ export function calculatePreliminarySizing(design: AircraftDesign, inputs: Preli
     'Mission energy includes cruise only and excludes takeoff, climb, descent, taxi, loiter, wind, and propulsion derating.',
   ];
   if (!converged) warnings.unshift('The fixed-point iteration did not meet the requested mass tolerance.');
+  const sizedGeometryAndPower = calculateSizedGeometryAndPower(finalMassKg, designPoint);
 
   return {
     contract: contract(design, converged ? 'partial' : 'invalid', warnings),
@@ -252,8 +272,8 @@ export function calculatePreliminarySizing(design: AircraftDesign, inputs: Preli
     designPointEvaluation: pointEvaluation,
     iterations,
     finalTakeoffMassKg: finalMassKg,
-    requiredWingAreaM2: finalMassKg * gravityMs2 / designPoint.wingLoadingNm2,
-    requiredInstalledShaftPowerW: designPoint.shaftPowerLoadingWPerN * finalMassKg * gravityMs2,
+    requiredWingAreaM2: sizedGeometryAndPower.requiredWingAreaM2,
+    requiredInstalledShaftPowerW: sizedGeometryAndPower.requiredInstalledShaftPowerW,
     requiredCruiseShaftPowerW: cruisePowerLoadingWPerN * finalMassKg * gravityMs2,
     missionShaftEnergyJ: finalMissionShaftEnergyJResolved,
     reserveShaftEnergyJ,

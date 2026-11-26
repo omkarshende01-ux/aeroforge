@@ -1,0 +1,80 @@
+{
+  "schemaVersion": 1,
+  "analyticalCase": {
+    "id": "AF-M45-AN-001",
+    "description": "Independent conventional subsonic analytical benchmark",
+    "inputs": {
+      "atmosphereAltitudeM": 3000,
+      "serviceCeilingM": 5000,
+      "spanM": 12,
+      "wingAreaM2": 18,
+      "wingLoadingNm2": 700,
+      "installedShaftPowerLoadingWPerN": 18,
+      "maximumStallSpeedMs": 30,
+      "clMax": 1.5,
+      "cruiseSpeedMs": 55,
+      "cd0": 0.025,
+      "oswaldEfficiency": 0.8,
+      "propulsiveEfficiency": 0.82,
+      "minimumClimbRateMs": 3,
+      "requiredRangeM": 400000,
+      "airframeMassKg": 500,
+      "propulsionMassKg": 120,
+      "fixedEquipmentMassKg": 30,
+      "payloadMassKg": 170,
+      "reserveFraction": 0.2,
+      "batteryUsableShaftSpecificEnergyJPerKg": 3600000,
+      "brakeSpecificFuelConsumptionKgPerJ": 6.944444444444445e-8
+    },
+    "expected": {
+      "temperatureK": 268.65,
+      "pressurePa": 70108.52649606044,
+      "densityKgM3": 0.90912186121629,
+      "speedOfSoundMs": 328.577928254014,
+      "stallWingLoadingLimitNm2": 826.875,
+      "cruiseLiftCoefficient": 0.5090735764908247,
+      "cruiseDragCoefficient": 0.03788935734878329,
+      "cruiseShaftPowerLoadingWPerN": 4.992125798176082,
+      "climbShaftPowerLoadingWPerN": 8.650662383541937,
+      "serviceCeilingSpeedMs": 39.35439543031129,
+      "serviceCeilingShaftPowerLoadingWPerN": 4.527775703591646,
+      "electricTakeoffMassKg": 935.6739448006492,
+      "electricBatteryMassKg": 115.67394480064927,
+      "electricMissionShaftEnergyJ": 333140961.02586985,
+      "electricReserveShaftEnergyJ": 83285240.25646746,
+      "electricWingAreaM2": 13.108324129684695,
+      "electricInstalledShaftPowerW": 165164.88403402714,
+      "fuelTakeoffMassKg": 846.1516580454147,
+      "fuelMassKg": 26.151658045414674,
+      "fuelMissionShaftEnergyJ": 301267100.68317705,
+      "fuelReserveShaftEnergyJ": 75316775.17079425,
+      "fuelWingAreaM2": 11.854161653387237,
+      "fuelInstalledShaftPowerW": 149362.43683267917
+    }
+  },
+  "publishedCase": {
+    "id": "NASA-TERA-2024",
+    "description": "NASA Twin Engine Regional Aircraft electric retrofit sizing case",
+    "source": "https://ntrs.nasa.gov/api/citations/20240009153/downloads/Aviation_PBM_Presentation_strives.pdf?attachment=true",
+    "inputs": {
+      "maximumTakeoffWeightLb": 6850,
+      "wingAreaFt2": 225.8,
+      "motorPowerKw": 242,
+      "reportedBatteryMassFraction": 0.16
+    },
+    "independentlyDerived": {
+      "maximumTakeoffMassKg": 3107.1077345,
+      "wingAreaM2": 20.977506432,
+      "wingLoadingNm2": 1452.523357020817,
+      "installedShaftPowerLoadingWPerN": 7.942155362062764
+    },
+    "limitations": "Direct published-data sanity check only. NASA models climb, descent, reserve and power-limited battery behavior; AeroForge M4.4 is a cruise-only effective-energy closure and is not asserted to reproduce NASA mission range or battery sizing."
+  },
+  "publishedBatteryArithmetic": {
+    "id": "NASA-SBM-2024",
+    "source": "https://ntrs.nasa.gov/api/citations/20240007599/downloads/A_Parametric_Battery_Model_Hallock_6_20_24.pdf?attachment=true",
+    "batteryMassKg": 100,
+    "specificEnergyWhPerKg": 150,
+    "publishedCapacityKWh": 15
+  }
+}

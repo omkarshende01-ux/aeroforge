@@ -1,8 +1,18 @@
 # AeroForge progress
 
-## M4.4 checkpoint — 2026-11-26
+## M4.5 checkpoint — 2026-11-26
 
-The repository is on the `development` branch. M4.4, Iterative Preliminary Aircraft Sizing, is complete. No geometry modification, mission-segment solver, propulsion map, VLM, optimization, or takeoff model was added.
+The repository is on the `development` branch. M4.5, Independent Engineering Verification and Validation, is complete. No aircraft generation, geometry modification, mission-segment solver, propulsion map, VLM, optimization, or takeoff model was added.
+
+## M4.5 completed
+
+- Added a versioned, reproducible benchmark fixture and `docs/BENCHMARKS.md` with equations, sources, inputs, independent expectations, AeroForge results, differences, tolerances, status, and limitations.
+- Independently verified the 1976 standard atmosphere, stall W/S, cruise/climb/service-ceiling shaft P/W, wing area, installed shaft power, mass closure, electric battery mass, fuel mass, mission energy, reserve, and dimensional consistency.
+- Verified convergence from three initial masses and three relaxation factors; tolerance behavior, residuals, impossible fractions, infeasible points, extreme ranges, unit invariance, and explicit non-convergence all pass.
+- Added published NASA TERA electric regional-aircraft sanity checks for MTOW conversion, wing area, wing loading, motor power, installed shaft P/W, and a simple battery specific-energy example.
+- Preserved the boundary between analytical verification and published-data comparison. NASA's complete battery/mission model is not claimed to be reproduced.
+- Found no production-equation defect. Corrected one benchmark fixture to the cited sea-level density precision and extracted direct wing/power algebra into a reusable pure helper without changing equations.
+- M4.6 is not approved for unqualified automatic geometry application. A provisional, user-reviewed candidate workflow may be considered only with all indeterminate/unsupported statuses preserved.
 
 ## M4.4 completed
 
@@ -59,14 +69,14 @@ The codebase is a functional conceptual-design demonstrator with three prelimina
 | Stability | Tail area/volume, neutral point, static margin from supplied tail/downwash assumptions | Implemented baseline; no trim, control authority, lateral or dynamic stability |
 | Flight envelope | Simplified aerodynamic/structural maneuver envelope | Implemented baseline; no gust or dynamic effects |
 | Structures | Half-wing Euler–Bernoulli cantilever, constant EI, elliptical limit load, shear/moment/stress/deflection/safety factor | Implemented benchmark model; no wing box, materials workflow, self-weight, torsion, buckling, or FEA |
-| Tests | 45 automated tests in eleven files, including mission/constraint benchmarks, mass/energy closure, convergence sensitivity, failure states, version contracts, and unit conversions | Useful V1/V2 analytical evidence; limited external aircraft validation |
+| Tests | 55 automated tests in twelve files, including independent analytical fixtures, published-data sanity checks, mission/constraint benchmarks, mass/energy closure, robustness, version contracts, and unit conversions | M4.2–M4.4 equations V2-verified in their declared scope; full-aircraft external validation remains incomplete |
 | Optimization, 6-DOF, controls | No implementation found | Planned |
 | Save/load, reports, geometry/data export, public release workflow | No implementation found | Planned |
 
 ## Verification performed at this checkpoint
 
 - `npm.cmd run typecheck`: **passed**.
-- `npm.cmd test`: **passed**, 45 tests across eleven files.
+- `npm.cmd test`: **passed**, 55 tests across twelve files.
 - `npm.cmd run build`: **passed**.
 - Vite reports the existing production chunk warning: approximately 1.08 MB minified / 297 kB gzip for the main JavaScript asset.
 
@@ -74,7 +84,7 @@ The codebase is a functional conceptual-design demonstrator with three prelimina
 
 | Phase | Status | Principal gap |
 |---:|---|---|
-| 1. Mission requirements and preliminary sizing | M4.2–M4.4 complete; broader phase partial | Mission, constraints and preliminary mass closure exist; no takeoff model, sourced statistical empty-mass correlation, or segment mission sizing |
+| 1. Mission requirements and preliminary sizing | M4.2–M4.5 complete; broader phase partial | Analytical pipeline independently verified; no takeoff model, matched full-aircraft closure validation, sourced empty-mass correlation, or segment mission sizing |
 | 2. Advanced parametric geometry | Partial | Single trapezoids/circular fuselage only; no multi-section surfaces, controls, analysis discretization, or schema migration |
 | 3. Airfoil analysis and VLM | Partial precursor | NACA coordinates and analytical lift model only; no polar import or VLM |
 | 4. Structures and materials | Partial precursor | Constant-EI beam only; no load transfer, wing box, materials, or advanced failure modes |
@@ -109,4 +119,4 @@ The codebase is a functional conceptual-design demonstrator with three prelimina
 
 ## Current stop point
 
-M4.4 is complete. Development stops here pending owner review. Results remain separate from current geometry. Takeoff analysis, mission-segment integration, propulsion maps, VLM, automatic geometry changes, and optimization have not been started.
+M4.5 is complete. Development stops here pending owner review. The sizing equations are independently verified within their stated scope, but unqualified M4.6 automatic aircraft generation is not yet recommended. Results remain separate from current geometry; takeoff and full segment mission analysis remain unavailable.

@@ -14,13 +14,14 @@ Milestone status as of 2026-11-26:
 - **M4.2 complete:** typed mission definition, validation, unit conversion, and current-design feasibility.
 - **M4.3 complete:** interactive W/S versus installed shaft P/W analysis with stall, cruise, climb, supported service ceiling, candidate selection, margins, governing constraint, and explicitly unevaluated takeoff.
 - **M4.4 complete:** damped preliminary mass closure, explicit fixed masses, electric/fuel cruise-energy branches, wing/power sizing, residual history, sensitivity to two initial guesses, and explicit incomplete/infeasible/non-converged states.
+- **M4.5 complete:** independent analytical fixture, published NASA TERA wing/power sanity check, convergence/robustness matrix, unit invariance, benchmark ledger, and conditional M4.6 readiness decision.
 
 ## Twelve-week MVP backlog
 
 | ID | Week | Pri | Deliverable | Depends on | Effort | Done when |
 |---|---:|---:|---|---|---:|---|
 | ARC-01 | 1 | P0 | Versioned project/design/result contracts; model metadata and validity types | Current schema | 2.0 d | **Partial:** in-memory design/result contract complete; persistence and lossless migrations remain |
-| VAL-01 | 1 | P0 | Machine-readable validation ledger and benchmark fixtures | ARC-01 | 1.5 d | Current model benchmarks have source, tolerance, status, and version |
+| VAL-01 | 1 | P0 | Machine-readable validation ledger and benchmark fixtures | ARC-01 | 1.5 d | **Complete for M4.2–M4.4 (M4.5):** independent expectations, sources, tolerances, results, and limitations are versioned; later models require new entries |
 | TST-01 | 1 | P0 | Restore reproducible clean-clone test/typecheck/build workflow and CI skeleton | None | 1.5 d | All three commands run in CI and a clean Windows checkout |
 | UX-01 | 1 | P1 | Global input/error/status conventions and units component | ARC-01 | 1.0 d | Input/estimate/warning/invalid states are visually distinct |
 | MIS-01 | 2 | P0 | Mission schema/editor with payload, cruise, stall, climb, ceiling, takeoff, reserve | ARC-01 | 1.5 d | Invalid or dimensionally inconsistent inputs are blocked |

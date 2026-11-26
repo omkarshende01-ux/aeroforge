@@ -31,5 +31,6 @@ npm run build
 - A dedicated mission workspace with typed requirements, SI/aviation-unit editing, validation, and pass/fail/not-evaluated feasibility margins from existing models.
 - An interactive wing-loading versus installed shaft-power-loading constraint diagram with stall, cruise, climb, supported service-ceiling curves, candidate selection, and explicit takeoff limitations.
 - A preliminary sizing workspace with damped mass closure, electric/fuel cruise-energy bookkeeping, required wing area and installed shaft power, convergence/sensitivity plots, mass breakdown, and explicit limitations.
+- Reproducible analytical and published-data verification fixtures documented in `docs/BENCHMARKS.md`.
 
 All models are preliminary conceptual estimates. AeroForge does not provide CFD, viscous airfoil polars, lifting-line/VLM results, detailed FEA, aeroelasticity or certification evidence. Model equations and limitations are documented in `docs/ENGINEERING_MODELS.md`; milestone status is tracked in `PROGRESS.md`.

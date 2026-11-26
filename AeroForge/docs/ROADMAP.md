@@ -21,13 +21,13 @@ At the end of week 12, a user should be able to define a mission, size and edit 
 
 ### 1. Mission requirements and preliminary aircraft sizing — partial, MVP
 
-- **Completed:** M4.2 mission definition/current-design feasibility, M4.3 interactive W/S versus installed shaft P/W constraints, and M4.4 damped mass/wing/power/cruise-energy closure with electric and fuel branches. Takeoff remains explicitly unevaluated.
+- **Completed:** M4.2 mission definition/current-design feasibility, M4.3 interactive W/S versus installed shaft P/W constraints, M4.4 damped mass/wing/power/cruise-energy closure, and M4.5 independent analytical/published-data verification. Takeoff remains explicitly unevaluated.
 - **Objective:** translate payload, range, endurance, cruise, stall, climb, ceiling, and takeoff constraints into a traceable design point and initial mass/wing/power estimates.
 - **Milestones:** mission schema and editor; unit-aware requirement validation; constraint diagram; iterative mass closure; candidate design-point selection; sizing summary.
 - **Engineering methods:** wing-loading/power-loading constraints, dynamic-pressure stall relation, excess-power climb, statistical empty-mass fractions with cited applicability, and damped fixed-point iteration. Keep electric energy and fuel-energy models distinct.
 - **Dependencies:** atmosphere, unit system, aerodynamic assumptions, propulsion efficiency, and weight model. Existing range/climb margins are inputs to this phase, not full sizing.
 - **Acceptance:** a documented reference mission converges from two initial guesses; infeasible requirements are identified; selected wing area and installed power reproduce the plotted constraint intersection within tolerance.
-- **Validation:** hand calculations plus one published textbook/design example with matched assumptions; mass and energy balance residuals reported.
+- **Validation:** M4.5 hand calculations and NASA TERA direct wing/power sanity checks pass; mass and energy balance residuals are reported. A fully matched published closure case remains a gate for authoritative automatic application.
 - **Remaining effort:** 3–5 days for a sourced reference-aircraft benchmark, richer empty-mass correlations, and mission-segment energy; M4.4 itself is complete.
 
 ### 2. Advanced parametric aircraft geometry — partial, MVP core; stretch extensions

@@ -18,15 +18,16 @@ The portfolio MVP requires V2 for its primary reference workflow and at least V1
 | Area | Existing evidence found | Level | Limitation |
 |---|---|---:|---|
 | Geometry/metrics | Tests for trapezoidal area, AR, MAC, stall relation, mesh bounds, symmetry, finite normals, NACA coordinates | V1 | No multi-section geometry, mesh snapshots, or external CAD comparison |
-| Atmosphere | ISA sea-level and 11 km regression tests plus invalid-altitude case | V1/V2 | Troposphere only; reference citation should be pinned |
+| Atmosphere | 1976 Standard Atmosphere source plus independent 3000 m and boundary regressions | V2 | Troposphere only; altitude is treated as geopotential in the implemented equation |
 | Analytical aerodynamics | Independent coefficient/force formulas, span-load symmetry/tip behavior, CLmax warning | V1 | No numerical span-load integral test, sweep correction, polar data, or external aero benchmark |
 | Mass/CG | Independent four-component mass-moment calculation | V1 | Longitudinal CG only; no hierarchy, envelope, or inertia |
-| Performance | Independent fixed-condition CL/drag/power/climb/range calculation; envelope cap checks | V1 | No takeoff, ceiling, changing mass, wind, or mission integration |
+| Mission constraints/performance | Independent stall, cruise, climb, and service-ceiling values plus exact boundaries and failure cases | V2 | No takeoff, changing mass, wind, or segment mission integration |
+| Preliminary sizing | Closed-form electric/fuel mass, energy, reserve, wing, and power benchmarks; convergence matrix; NASA TERA direct sizing sanity check | V2 for declared equations | Published full-aircraft mass/battery closure not reproduced; NASA case has a higher-fidelity battery/mission model |
 | Static stability | Independent tail-volume/neutral-point/static-margin calculation | V1 | Relies on supplied derivatives; no trim or lateral/dynamic modes |
 | Structures | Elliptical-load root shear/moment compared with analytical values | V1/V2 | Constant EI; no self-weight/torsion/buckling/material library/load-transfer evidence |
-| Build quality | Typecheck, 45 tests, and the production build complete successfully on Windows | V1 | Existing Vite main-chunk size warning remains; CI/clean-clone evidence is still planned |
+| Build quality | Typecheck, 55 tests, and the production build complete successfully on Windows | V1 | Existing Vite main-chunk size warning remains; CI/clean-clone evidence is still planned |
 
-The M4.4 suite contains 45 tests across eleven test files. This count is inventory, not proof of completeness. Each release must reproduce tests and build from a clean checkout and record tool versions and environment.
+The M4.5 suite contains 55 tests across twelve test files. Detailed M4.5 evidence and source links are recorded in `docs/BENCHMARKS.md`. This count is inventory, not proof of completeness. Each release must reproduce tests and build from a clean checkout and record tool versions and environment.
 
 ## Validation process
 
@@ -59,7 +60,7 @@ The M4.4 suite contains 45 tests across eleven test files. This count is invento
 - An excessive but valid climb requirement produces no evaluated-feasible region in the plotted domain.
 - Invalid efficiency/input cases return an invalid versioned result; takeoff remains not evaluated and prevents an overall feasible label.
 - W/S and shaft P/W aviation conversions have independent one-unit benchmarks and round-trip tests.
-- A textbook sizing case with matched propulsion and empirical assumptions; cite exact source and edition.
+- A complete textbook/published sizing case with matched propulsion and empirical assumptions remains required before authoritative automatic geometry application.
 - Mass closure from two separated initial guesses; report iteration residual and convergence rate.
 - Deliberately infeasible stall/climb/takeoff combinations must return no feasible region.
 - Energy/fuel and reserve balances must close within 0.1% for deterministic cases.
@@ -68,7 +69,9 @@ The M4.4 suite contains 45 tests across eleven test files. This count is invento
 - Two separated initial masses converge to the same solution within twice the requested tolerance. A one-iteration budget returns non-converged, and an energy mass fraction at least one returns infeasible.
 - Missing propulsion properties, invalid iteration controls, non-finite design points, and M4.3-infeasible points return incomplete or infeasible without fabricated outputs.
 - Area, power, energy, specific-energy, and fuel-consumption conversions have independent aviation-unit benchmarks or round-trip tests.
-- External aircraft validation remains open: no published reference aircraft is claimed because M4.4 deliberately uses user-supplied effective energy and fixed-mass assumptions.
+- M4.5 independently verifies all preceding equations with a versioned fixture and declared tolerances; see `docs/BENCHMARKS.md`.
+- M4.5 compares direct wing/power sizing against NASA's published TERA MTOW, wing area, and motor power. Battery fraction is context only and is not fitted because the NASA source uses a materially higher-fidelity mission and battery model.
+- M4.6 remains blocked from unqualified automatic application. A provisional user-reviewed candidate generator may proceed only while geometry remains unapplied and unsupported mission requirements remain explicit.
 
 ### 2. Advanced parametric geometry
 
