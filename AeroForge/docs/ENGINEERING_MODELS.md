@@ -24,6 +24,18 @@ For a symmetric, single trapezoidal wing, span b, root chord cr, tip chord ct, t
 - Horizontal-tail volume is `V_H=S_t*l_t/(S*c_bar)`. The neutral point is `x_np=x_ac_w+c_bar*eta_t*(a_t/a_w)*(1-d_epsilon/d_alpha)*V_H`, and static margin is `(x_np-x_cg)/c_bar`. Wing and tail quarter-chord stations are derived from the rendered planform placement, sweep, taper and MAC; tail slope, efficiency and downwash gradient remain supplied inputs.
 - The wing structure is a rigid-root Euler-Bernoulli cantilever with constant `E*I`. A supplied limit load factor scales an elliptical lift distribution; numerical integration gives shear, moment, curvature, slope and deflection. Root stress is `sigma=M*c/I`, compared with a supplied allowable stress. Wing self-weight, torsion, shear stress, buckling, joints and aeroelasticity are excluded.
 
+## Phase 4A mission requirements and design feasibility
+
+- Mission requirements are stored in SI as a typed part of the shared aircraft design. The editor may display kilograms or pounds, kilometres or nautical miles, metres or feet, metres per second or knots, and metres per second or feet per minute. Conversions occur only at the UI boundary.
+- Validated Phase 4A inputs are aircraft category, required payload, range, cruise speed and altitude, maximum stall speed, maximum takeoff distance, minimum climb rate, maximum operating speed and a future design objective. Cruise altitude is limited to the implemented ISA troposphere, 0–11,000 m. Maximum operating speed must exceed the maximum permitted stall speed.
+- Payload margin is `m_payload,current - m_payload,required`, using the existing component mass model. This checks the modeled payload entry; it does not estimate structural payload capacity.
+- Cruise-point, climb and range checks reuse the existing performance calculation at the requested ISA altitude and true airspeed. The cruise point passes only when inputs are valid, required level-flight `CL` does not exceed the supplied `CLmax`, and excess-power climb is nonnegative. Cruise margin is reported as excess climb capability, not maximum-speed or ceiling margin.
+- Climb margin is `ROC_calculated - ROC_required` at the requested cruise point. It is a point estimate, not an optimized climb schedule.
+- Still-air range margin is `R_calculated - R_required`. Range is not evaluated when the requested cruise point cannot sustain level flight or performance inputs are invalid. The existing constant-speed, constant-altitude, constant-mass energy model and its limitations remain unchanged.
+- Stall margin is `Vs,max - Vs_calculated`, using the existing steady 1-g sea-level true-airspeed relation and supplied `CLmax`. Positive constraint margins pass; negative margins fail.
+- Takeoff distance is always not evaluated because no ground-roll, thrust-versus-speed, rolling-resistance, rotation or obstacle-clearance model exists. Aircraft category and design objective are recorded context only; no category-specific regulations, statistical sizing, or optimization are performed.
+- Invalid mission inputs make all dependent feasibility results not evaluated. Unsupported requirements remain visible with a limitation instead of receiving fabricated values.
+
 ## Later physics
 - Aerodynamics: add sourced airfoil polars, lifting-line or VLM, geometry-sensitive spanwise loads and component drag buildup. VLM is inviscid and is not a stall/viscous drag model.
 - Structures: add geometry-varying stiffness, wing self-weight, torsion, shear stress and validated aerodynamic load transfer; later buckling, modal, fatigue and FEA comparison.

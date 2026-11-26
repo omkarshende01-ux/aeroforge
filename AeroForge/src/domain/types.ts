@@ -1,3 +1,19 @@
+export type AircraftCategory = 'light-aircraft' | 'uncrewed-aircraft' | 'glider' | 'transport';
+export type DesignObjective = 'balanced' | 'minimum-mass' | 'maximum-range' | 'minimum-energy';
+
+export type MissionRequirements = {
+  aircraftCategory: AircraftCategory;
+  payloadKg: number;
+  requiredRangeM: number;
+  cruiseSpeedMs: number;
+  cruiseAltitudeM: number;
+  maximumStallSpeedMs: number;
+  maximumTakeoffDistanceM: number;
+  minimumClimbRateMs: number;
+  maxOperatingSpeedMs: number;
+  designObjective: DesignObjective;
+};
+
 export type AircraftDesign = {
   name: string;
   massKg: number;
@@ -18,7 +34,7 @@ export type AircraftDesign = {
     cd0: number;
     oswaldEfficiency: number;
   };
-  mission: { requiredRangeM: number; minimumClimbRateMs: number; maxOperatingSpeedMs: number };
+  mission: MissionRequirements;
   massModel: {
     airframeMassKg: number; airframeXM: number;
     propulsionMassKg: number; propulsionXM: number;
@@ -51,7 +67,18 @@ export const defaultDesign: AircraftDesign = {
     cd0: 0.025,
     oswaldEfficiency: 0.8,
   },
-  mission: { requiredRangeM: 1_000_000, minimumClimbRateMs: 2, maxOperatingSpeedMs: 80 },
+  mission: {
+    aircraftCategory: 'light-aircraft',
+    payloadKg: 170,
+    requiredRangeM: 1_000_000,
+    cruiseSpeedMs: 50,
+    cruiseAltitudeM: 0,
+    maximumStallSpeedMs: 35,
+    maximumTakeoffDistanceM: 500,
+    minimumClimbRateMs: 2,
+    maxOperatingSpeedMs: 80,
+    designObjective: 'balanced',
+  },
   massModel: {
     airframeMassKg: 600, airframeXM: 3.7,
     propulsionMassKg: 180, propulsionXM: 0.9,
