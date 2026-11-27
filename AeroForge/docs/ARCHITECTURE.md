@@ -56,6 +56,10 @@ Pure fuselage engineering owns validation, smooth interpolation, cross-section g
 
 The M5.5 demonstrator refinement changes only `defaultDesign` station coordinates and renderer materials/lights. Wing/fuselage/tail attachment continuity is produced by overlapping the generated authoritative surfaces, not by adding fairing meshes. Smooth shading consumes computed vertex normals from the same loft topology; it does not introduce another geometry source.
 
+M5.6 adds a separately versioned analysis-geometry contract without changing `AircraftDesign` schema version 3. A pure discretizer queries the authoritative wing and tail station samplers and produces thin NACA mean-camber panels; it never reads the closed render meshes or fuselage mesh. Each panel records semantic corners, area, normal, centroid, local chord/span axes, panel-local quarter-chord vortex endpoints, three-quarter-chord collocation point, trailing-edge state, and parent surface/section/control identifiers.
+
+Engineering station boundaries and enabled control-surface span/hinge boundaries are inserted exactly into uniform or cosine grids. Results are deterministic in wing, horizontal-tail, vertical-tail order and are stored only as transient derived analysis state tied to the design revision. The workspace reports stale results after any authoritative design edit. Three.js consumes that result solely for wireframe, normal, collocation, and bound-vortex overlays; visualization cannot change the computational mesh. M5.6 deliberately supports neutral control geometry only and adds no wake, influence matrix, circulation, force, pressure, or aerodynamic result.
+
 ## Milestone 1 acceptance
 - Local app opens; parameter edits visibly update mathematically generated geometry.
 - Orbit/pan/zoom and standard orthographic views work.

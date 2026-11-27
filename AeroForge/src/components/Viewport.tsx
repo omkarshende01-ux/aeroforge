@@ -9,6 +9,7 @@ import { physicalWingStations } from '../engineering/wingGeometry';
 import { wingStationCrossSection } from '../engineering/wingLoft';
 import { fuselageStationCrossSection } from '../engineering/fuselageGeometry';
 import { horizontalTailPhysicalStations, verticalTailStationCrossSection } from '../engineering/tailGeometry';
+import type { AerodynamicMesh, AerodynamicPanel, AnalysisPoint3, AnalysisSurfaceId } from '../domain/analysisGeometry';
 
 type StandardView = 'isometric' | 'top' | 'side' | 'front';
 
@@ -54,8 +55,35 @@ function TailStationOverlay({ design, selectedHorizontalId, onSelectHorizontal, 
 }
 
 const controlColors = { aileron: '#55c7dd', flap: '#b27be8', elevator: '#eab45f', rudder: '#70d19a' } as const;
+const analysisColors: Record<AnalysisSurfaceId, string> = { wing: '#55d5e8', 'horizontal-tail': '#f0b45f', 'vertical-tail': '#77d69b' };
 
-function Aircraft({ design, selectedStationId, onSelectStation, selectedFuselageStationId, onSelectFuselageStation, selectedHorizontalTailStationId, onSelectHorizontalTailStation, selectedVerticalTailStationId, onSelectVerticalTailStation, selectedControlSurfaceId, onSelectControlSurface, showStationMarkers, showDimensions, showCrossSections, showGeometryGuides }: { design: AircraftDesign; selectedStationId?: string; onSelectStation?: (stationId: string) => void; selectedFuselageStationId?: string; onSelectFuselageStation?: (stationId: string) => void; selectedHorizontalTailStationId?: string; onSelectHorizontalTailStation?: (stationId: string) => void; selectedVerticalTailStationId?: string; onSelectVerticalTailStation?: (stationId: string) => void; selectedControlSurfaceId?: string; onSelectControlSurface?: (controlSurfaceId: string) => void; showStationMarkers: boolean; showDimensions: boolean; showCrossSections: boolean; showGeometryGuides: boolean }) {
+function segmentGeometry(segments: readonly (readonly [AnalysisPoint3, AnalysisPoint3])[]): THREE.BufferGeometry {
+  const geometry = new THREE.BufferGeometry(); geometry.setAttribute('position', new THREE.Float32BufferAttribute(segments.flatMap(([from, to]) => [...from, ...to]), 3)); return geometry;
+}
+
+function AnalysisSurfaceOverlay({ panels, surfaceId, showNormals, showCollocationPoints, showBoundVortices }: { panels: AerodynamicPanel[]; surfaceId: AnalysisSurfaceId; showNormals: boolean; showCollocationPoints: boolean; showBoundVortices: boolean }) {
+  const geometries = useMemo(() => {
+    const edges = panels.flatMap((panel) => { const c = panel.corners; return [[c.leadingSpanStart, c.trailingSpanStart], [c.trailingSpanStart, c.trailingSpanEnd], [c.trailingSpanEnd, c.leadingSpanEnd], [c.leadingSpanEnd, c.leadingSpanStart]] as [AnalysisPoint3, AnalysisPoint3][]; });
+    const normals = panels.map((panel) => [panel.centroidM, [panel.centroidM[0] + panel.unitNormal[0] * 0.18, panel.centroidM[1] + panel.unitNormal[1] * 0.18, panel.centroidM[2] + panel.unitNormal[2] * 0.18] as AnalysisPoint3] as const);
+    const vortices = panels.map((panel) => [panel.boundVortexStartM, panel.boundVortexEndM] as const);
+    const collocation = new THREE.BufferGeometry(); collocation.setAttribute('position', new THREE.Float32BufferAttribute(panels.flatMap((panel) => [...panel.collocationPointM]), 3));
+    return { edges: segmentGeometry(edges), normals: segmentGeometry(normals), vortices: segmentGeometry(vortices), collocation };
+  }, [panels]);
+  useEffect(() => () => Object.values(geometries).forEach((geometry) => geometry.dispose()), [geometries]);
+  const color = analysisColors[surfaceId];
+  return <group>
+    <lineSegments geometry={geometries.edges} renderOrder={8}><lineBasicMaterial color={color} transparent opacity={0.92} depthTest={false} /></lineSegments>
+    {showNormals && <lineSegments geometry={geometries.normals} renderOrder={9}><lineBasicMaterial color="#fff0a8" depthTest={false} /></lineSegments>}
+    {showBoundVortices && <lineSegments geometry={geometries.vortices} renderOrder={10}><lineBasicMaterial color="#ec6fb5" depthTest={false} /></lineSegments>}
+    {showCollocationPoints && <points geometry={geometries.collocation} renderOrder={11}><pointsMaterial color="#ffffff" size={0.045} sizeAttenuation depthTest={false} /></points>}
+  </group>;
+}
+
+function AnalysisMeshOverlay({ mesh, showNormals, showCollocationPoints, showBoundVortices }: { mesh: AerodynamicMesh; showNormals: boolean; showCollocationPoints: boolean; showBoundVortices: boolean }) {
+  return <>{mesh.surfaces.map((surface) => <AnalysisSurfaceOverlay key={surface.id} surfaceId={surface.id} panels={mesh.panels.filter((panel) => panel.parentSurfaceId === surface.id)} showNormals={showNormals} showCollocationPoints={showCollocationPoints} showBoundVortices={showBoundVortices} />)}</>;
+}
+
+function Aircraft({ design, selectedStationId, onSelectStation, selectedFuselageStationId, onSelectFuselageStation, selectedHorizontalTailStationId, onSelectHorizontalTailStation, selectedVerticalTailStationId, onSelectVerticalTailStation, selectedControlSurfaceId, onSelectControlSurface, showStationMarkers, showDimensions, showCrossSections, showGeometryGuides, analysisMesh, showPanelNormals, showCollocationPoints, showBoundVortices }: { design: AircraftDesign; selectedStationId?: string; onSelectStation?: (stationId: string) => void; selectedFuselageStationId?: string; onSelectFuselageStation?: (stationId: string) => void; selectedHorizontalTailStationId?: string; onSelectHorizontalTailStation?: (stationId: string) => void; selectedVerticalTailStationId?: string; onSelectVerticalTailStation?: (stationId: string) => void; selectedControlSurfaceId?: string; onSelectControlSurface?: (controlSurfaceId: string) => void; showStationMarkers: boolean; showDimensions: boolean; showCrossSections: boolean; showGeometryGuides: boolean; analysisMesh?: AerodynamicMesh; showPanelNormals: boolean; showCollocationPoints: boolean; showBoundVortices: boolean }) {
   const geometries = useMemo(() => ({ wing: wingMesh(design), fuselage: fuselageGeometry(design), horizontalTail: horizontalTailMesh(design), verticalTail: verticalTailMesh(design) }), [design]);
   const controls = useMemo(() => controlSurfaceMeshes(design), [design]);
   useEffect(() => () => Object.values(geometries).forEach((geometry) => geometry.dispose()), [geometries]);
@@ -72,6 +100,7 @@ function Aircraft({ design, selectedStationId, onSelectStation, selectedFuselage
     {showStationMarkers && <WingStationOverlay design={design} selectedStationId={selectedStationId} onSelectStation={onSelectStation} showDimensions={showDimensions} showCrossSections={showCrossSections} showGeometryGuides={showGeometryGuides} />}
     {showStationMarkers && <FuselageStationOverlay design={design} selectedStationId={selectedFuselageStationId} onSelectStation={onSelectFuselageStation} showCrossSections={showCrossSections} />}
     {showStationMarkers && <TailStationOverlay design={design} selectedHorizontalId={selectedHorizontalTailStationId} onSelectHorizontal={onSelectHorizontalTailStation} selectedVerticalId={selectedVerticalTailStationId} onSelectVertical={onSelectVerticalTailStation} showCrossSections={showCrossSections} />}
+    {analysisMesh && <AnalysisMeshOverlay mesh={analysisMesh} showNormals={showPanelNormals} showCollocationPoints={showCollocationPoints} showBoundVortices={showBoundVortices} />}
   </>;
 }
 
@@ -91,7 +120,7 @@ function ViewController({ view, centerX }: { view: StandardView; centerX: number
   return null;
 }
 
-export function Viewport({ designOverride, selectedStationId, onSelectStation, selectedFuselageStationId, onSelectFuselageStation, selectedHorizontalTailStationId, onSelectHorizontalTailStation, selectedVerticalTailStationId, onSelectVerticalTailStation, selectedControlSurfaceId, onSelectControlSurface, showStationMarkers = false, showDimensions = false, showCrossSections = false, showGeometryGuides = false }: { designOverride?: AircraftDesign; selectedStationId?: string; onSelectStation?: (stationId: string) => void; selectedFuselageStationId?: string; onSelectFuselageStation?: (stationId: string) => void; selectedHorizontalTailStationId?: string; onSelectHorizontalTailStation?: (stationId: string) => void; selectedVerticalTailStationId?: string; onSelectVerticalTailStation?: (stationId: string) => void; selectedControlSurfaceId?: string; onSelectControlSurface?: (controlSurfaceId: string) => void; showStationMarkers?: boolean; showDimensions?: boolean; showCrossSections?: boolean; showGeometryGuides?: boolean } = {}) {
+export function Viewport({ designOverride, selectedStationId, onSelectStation, selectedFuselageStationId, onSelectFuselageStation, selectedHorizontalTailStationId, onSelectHorizontalTailStation, selectedVerticalTailStationId, onSelectVerticalTailStation, selectedControlSurfaceId, onSelectControlSurface, showStationMarkers = false, showDimensions = false, showCrossSections = false, showGeometryGuides = false, analysisMesh, showPanelNormals = false, showCollocationPoints = false, showBoundVortices = false }: { designOverride?: AircraftDesign; selectedStationId?: string; onSelectStation?: (stationId: string) => void; selectedFuselageStationId?: string; onSelectFuselageStation?: (stationId: string) => void; selectedHorizontalTailStationId?: string; onSelectHorizontalTailStation?: (stationId: string) => void; selectedVerticalTailStationId?: string; onSelectVerticalTailStation?: (stationId: string) => void; selectedControlSurfaceId?: string; onSelectControlSurface?: (controlSurfaceId: string) => void; showStationMarkers?: boolean; showDimensions?: boolean; showCrossSections?: boolean; showGeometryGuides?: boolean; analysisMesh?: AerodynamicMesh; showPanelNormals?: boolean; showCollocationPoints?: boolean; showBoundVortices?: boolean } = {}) {
   const storedDesign = useDesignStore((state) => state.design);
   const design = designOverride ?? storedDesign;
   const [view, setView] = useState<StandardView>('isometric'); const centerX = (design.fuselage.stations[0].xPositionM + design.fuselage.stations.at(-1)!.xPositionM) / 2;
@@ -100,7 +129,7 @@ export function Viewport({ designOverride, selectedStationId, onSelectStation, s
       <OrthographicCamera makeDefault position={[centerX - 10, -12, 8]} up={[0, 0, 1]} zoom={28} near={0.1} far={100} />
       <ViewController view={view} centerX={centerX} />
       <color attach="background" args={['#0d121a']} /><hemisphereLight args={['#edf5ff', '#202833', 1.55]} /><directionalLight position={[-4, -6, 10]} intensity={2.35} /><directionalLight position={[8, 5, 3]} intensity={0.65} color="#b9d8f2" />
-      <Aircraft design={design} selectedStationId={selectedStationId} onSelectStation={onSelectStation} selectedFuselageStationId={selectedFuselageStationId} onSelectFuselageStation={onSelectFuselageStation} selectedHorizontalTailStationId={selectedHorizontalTailStationId} onSelectHorizontalTailStation={onSelectHorizontalTailStation} selectedVerticalTailStationId={selectedVerticalTailStationId} onSelectVerticalTailStation={onSelectVerticalTailStation} selectedControlSurfaceId={selectedControlSurfaceId} onSelectControlSurface={onSelectControlSurface} showStationMarkers={showStationMarkers} showDimensions={showDimensions} showCrossSections={showCrossSections} showGeometryGuides={showGeometryGuides} /><gridHelper args={[30, 30, '#405469', '#253343']} rotation={[Math.PI / 2, 0, 0]} position={[centerX, 0, -0.72]} /><axesHelper args={[1.2]} position={[0, 0, -0.7]} />
+      <Aircraft design={design} selectedStationId={selectedStationId} onSelectStation={onSelectStation} selectedFuselageStationId={selectedFuselageStationId} onSelectFuselageStation={onSelectFuselageStation} selectedHorizontalTailStationId={selectedHorizontalTailStationId} onSelectHorizontalTailStation={onSelectHorizontalTailStation} selectedVerticalTailStationId={selectedVerticalTailStationId} onSelectVerticalTailStation={onSelectVerticalTailStation} selectedControlSurfaceId={selectedControlSurfaceId} onSelectControlSurface={onSelectControlSurface} showStationMarkers={showStationMarkers} showDimensions={showDimensions} showCrossSections={showCrossSections} showGeometryGuides={showGeometryGuides} analysisMesh={analysisMesh} showPanelNormals={showPanelNormals} showCollocationPoints={showCollocationPoints} showBoundVortices={showBoundVortices} /><gridHelper args={[30, 30, '#405469', '#253343']} rotation={[Math.PI / 2, 0, 0]} position={[centerX, 0, -0.72]} /><axesHelper args={[1.2]} position={[0, 0, -0.7]} />
       <OrbitControls makeDefault target={[centerX, 0, 0]} enableDamping dampingFactor={0.08} screenSpacePanning />
     </Canvas>
     <div className="view-toolbar" aria-label="Standard aircraft views">{(['isometric', 'top', 'side', 'front'] as StandardView[]).map((name) => <button key={name} className={view === name ? 'active' : ''} onClick={() => setView(name)}>{name}</button>)}</div>

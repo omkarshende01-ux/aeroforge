@@ -3,6 +3,7 @@ import { AIRCRAFT_DESIGN_SCHEMA_VERSION } from '../domain/contracts';
 import { defaultDesign } from '../domain/types';
 import { legacyWingView } from '../engineering/wingGeometry';
 import { addControlSurface, editControlSurface } from '../engineering/controlSurfaces';
+import { DEFAULT_ANALYSIS_MESH_CONFIGURATION, generateAnalysisMesh, isAnalysisMeshStale } from '../engineering/analysisGeometry';
 import { useDesignStore } from './useDesignStore';
 
 describe('versioned aircraft design state', () => {
@@ -10,7 +11,7 @@ describe('versioned aircraft design state', () => {
     design: defaultDesign, selectedSizingPoint: undefined, wingHistory: [], fuselageHistory: [], horizontalTailHistory: [], verticalTailHistory: [],
     selectedWingStationId: defaultDesign.wing.stations[0].id, selectedFuselageStationId: defaultDesign.fuselage.stations[0].id,
     selectedHorizontalTailStationId: defaultDesign.horizontalTail.stations[0].id, selectedVerticalTailStationId: defaultDesign.verticalTail.stations[0].id,
-    selectedControlSurfaceId: undefined,
+    selectedControlSurfaceId: undefined, analysisMesh: undefined,
   }));
 
   it('preserves the schema version and increments the design revision on edits', () => {
@@ -104,5 +105,14 @@ describe('versioned aircraft design state', () => {
     const vertical = structuredClone(design.verticalTail); vertical.stations[1].spanPositionM = 0.5;
     expect(useDesignStore.getState().commitVerticalTailGeometry(vertical).join(' ')).toMatch(/conflicts.*(exceeds|crosses)/i);
     expect(useDesignStore.getState().design.verticalTail).toEqual(design.verticalTail);
+  });
+
+  it('retains a generated analysis mesh and exposes it as stale after authoritative geometry changes', () => {
+    const design = structuredClone(defaultDesign); useDesignStore.setState({ design, analysisMesh: undefined });
+    const mesh = generateAnalysisMesh(design, DEFAULT_ANALYSIS_MESH_CONFIGURATION); useDesignStore.getState().setAnalysisMesh(mesh);
+    expect(isAnalysisMeshStale(useDesignStore.getState().analysisMesh, useDesignStore.getState().design)).toBe(false);
+    const edited = structuredClone(design.wing); edited.stations[1].chordM += 0.1;
+    expect(useDesignStore.getState().commitWingGeometry(edited)).toEqual([]);
+    expect(isAnalysisMeshStale(useDesignStore.getState().analysisMesh, useDesignStore.getState().design)).toBe(true);
   });
 });

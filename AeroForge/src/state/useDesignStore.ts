@@ -5,6 +5,7 @@ import { updateWingFromLegacyField, validateWingGeometry, type LegacyWingEdit } 
 import { validateControlSurfaceModel } from '../engineering/controlSurfaces';
 import { validateFuselageGeometry } from '../engineering/fuselageGeometry';
 import { validateHorizontalTailGeometry, validateVerticalTailGeometry } from '../engineering/tailGeometry';
+import type { AerodynamicMesh } from '../domain/analysisGeometry';
 
 type SelectedSizingPoint = { wingLoadingNm2: number; shaftPowerLoadingWPerN: number };
 type Store = {
@@ -18,6 +19,7 @@ type Store = {
   selectedHorizontalTailStationId?: string;
   selectedVerticalTailStationId?: string;
   selectedControlSurfaceId?: string;
+  analysisMesh?: AerodynamicMesh;
   selectedSizingPoint?: SelectedSizingPoint;
   update: (path: string, value: number | string) => void;
   commitWingGeometry: (wing: WingGeometry, selectedStationId?: string) => string[];
@@ -38,6 +40,7 @@ type Store = {
   resetVerticalTailGeometry: () => void;
   commitControlSurfaces: (model: ControlSurfaceModel, selectedControlSurfaceId?: string) => string[];
   selectControlSurface: (controlSurfaceId: string | undefined) => void;
+  setAnalysisMesh: (analysisMesh: AerodynamicMesh | undefined) => void;
   selectSizingPoint: (point: SelectedSizingPoint | undefined) => void;
 };
 export const useDesignStore = create<Store>((set, get) => ({
@@ -49,6 +52,7 @@ export const useDesignStore = create<Store>((set, get) => ({
   selectedHorizontalTailStationId: defaultDesign.horizontalTail.stations[0].id,
   selectedVerticalTailStationId: defaultDesign.verticalTail.stations[0].id,
   selectedControlSurfaceId: undefined,
+  analysisMesh: undefined,
   selectedSizingPoint: undefined,
   selectSizingPoint: (selectedSizingPoint) => set({ selectedSizingPoint }),
   selectWingStation: (selectedWingStationId) => set({ selectedWingStationId }),
@@ -56,6 +60,7 @@ export const useDesignStore = create<Store>((set, get) => ({
   selectHorizontalTailStation: (selectedHorizontalTailStationId) => set({ selectedHorizontalTailStationId }),
   selectVerticalTailStation: (selectedVerticalTailStationId) => set({ selectedVerticalTailStationId }),
   selectControlSurface: (selectedControlSurfaceId) => set({ selectedControlSurfaceId }),
+  setAnalysisMesh: (analysisMesh) => set({ analysisMesh }),
   commitWingGeometry: (wing, selectedStationId) => {
     const validation = validateWingGeometry(wing);
     if (!validation.valid) return validation.errors;
