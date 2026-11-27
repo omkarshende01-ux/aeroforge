@@ -46,6 +46,10 @@ M5.3 introduces a pure loft boundary between local airfoil geometry and renderin
 
 Engineering stations remain the only stored geometry. Render-only rings use a fixed visualization refinement and cannot affect projected span, area, aspect ratio, MAC, reference locations, sizing, or candidate generation. Cross-section curves, chord/leading-edge/quarter-chord guides, and twist labels call the same station transform as the mesh. They are transient visualization state, not a second geometry model or an aerodynamic lattice.
 
+M5.4 adds a separately versioned `ControlSurfaceModel` to `AircraftDesign` without changing the schema-v2 wing contract. Each definition stores identity, conventional type, parent lifting surface, root-measured span interval, trailing-edge chord fraction, hinge `x/c`, deflection bounds/current command, enabled state, operation mode, and physical side. Wing controls query the existing M5.3 section interpolation and transform functions. The current scalar horizontal- and vertical-tail definitions are consumed through explicit NACA 0012 trapezoidal adapters; these adapters are compatibility geometry, not new authoritative tail models.
+
+Control-surface engineering remains pure and render-independent. Validation owns parent/type compatibility, bounds, side/operation combinations, overlaps, and the M5.4 restriction that a rigid wing control cannot cross a schema-v2 station break. Geometry samples the actual parent profile, forms a cosine-spaced trailing-edge skin, and rotates it with Rodrigues' formula around the straight three-dimensional endpoint hinge axis. The renderer triangulates only the returned vertices and displays the hinge/selection state. The undeflected aircraft stays authoritative, projected references remain unchanged, and no aerodynamic effectiveness or load is inferred. Zustand commits accepted control models atomically and rejects parent-geometry changes that would invalidate them.
+
 ## Milestone 1 acceptance
 - Local app opens; parameter edits visibly update mathematically generated geometry.
 - Orbit/pan/zoom and standard orthographic views work.

@@ -17,26 +17,35 @@ function requireNaca4(code: string): Naca4Definition {
   return definition;
 }
 
-export function naca4Coordinates(code: string, points = 32): [number, number][] {
+export type AirfoilSurfaceSide = 'upper' | 'lower';
+
+export function naca4PointAtChordFraction(code: string, chordFraction: number, side: AirfoilSurfaceSide): [number, number] {
+  if (!Number.isFinite(chordFraction) || chordFraction < 0 || chordFraction > 1) throw new RangeError('Airfoil chord fraction must be within [0, 1].');
   const { maximumCamberRatio: m, maximumCamberPositionRatio: p, thicknessRatio: t } = requireNaca4(code);
+  const x = chordFraction;
+  const yt = 5 * t * (0.2969 * Math.sqrt(x) - 0.1260 * x - 0.3516 * x ** 2 + 0.2843 * x ** 3 - 0.1015 * x ** 4);
+  let yc = 0; let dy = 0;
+  if (p > 0 && x < p) { yc = m / p ** 2 * (2 * p * x - x ** 2); dy = 2 * m / p ** 2 * (p - x); }
+  else if (p > 0) { yc = m / (1 - p) ** 2 * ((1 - 2 * p) + 2 * p * x - x ** 2); dy = 2 * m / (1 - p) ** 2 * (p - x); }
+  const theta = Math.atan(dy);
+  return side === 'upper' ? [x - yt * Math.sin(theta), yc + yt * Math.cos(theta)] : [x + yt * Math.sin(theta), yc - yt * Math.cos(theta)];
+}
+
+export function naca4Coordinates(code: string, points = 32): [number, number][] {
+  requireNaca4(code);
   const out: [number, number][] = [];
-  for (let i = 0; i <= points; i += 1) { const beta = Math.PI * i / points; const x = (1 - Math.cos(beta)) / 2; const yt = 5 * t * (0.2969 * Math.sqrt(x) - 0.1260 * x - 0.3516 * x ** 2 + 0.2843 * x ** 3 - 0.1015 * x ** 4); let yc = 0; let dy = 0; if (p > 0 && x < p) { yc = m / p ** 2 * (2 * p * x - x ** 2); dy = 2 * m / p ** 2 * (p - x); } else if (p > 0) { yc = m / (1 - p) ** 2 * ((1 - 2 * p) + 2 * p * x - x ** 2); dy = 2 * m / (1 - p) ** 2 * (p - x); } const theta = Math.atan(dy); out.push([x - yt * Math.sin(theta), yc + yt * Math.cos(theta)]); }
+  for (let i = 0; i <= points; i += 1) { const beta = Math.PI * i / points; const x = (1 - Math.cos(beta)) / 2; out.push(naca4PointAtChordFraction(code, x, 'upper')); }
   return out;
 }
 
 /** Closed counter-clockwise section in x/z coordinates: upper TE to LE, then lower LE to TE. */
 export function naca4SurfaceCoordinates(code: string, points = 32): [number, number][] {
-  const { maximumCamberRatio: m, maximumCamberPositionRatio: p, thicknessRatio: t } = requireNaca4(code);
+  requireNaca4(code);
   const upper: [number, number][] = []; const lower: [number, number][] = [];
   for (let i = 0; i <= points; i += 1) {
     const beta = Math.PI * i / points; const x = (1 - Math.cos(beta)) / 2;
-    const yt = 5 * t * (0.2969 * Math.sqrt(x) - 0.1260 * x - 0.3516 * x ** 2 + 0.2843 * x ** 3 - 0.1015 * x ** 4);
-    let yc = 0; let dy = 0;
-    if (p > 0 && x < p) { yc = m / p ** 2 * (2 * p * x - x ** 2); dy = 2 * m / p ** 2 * (p - x); }
-    else if (p > 0) { yc = m / (1 - p) ** 2 * ((1 - 2 * p) + 2 * p * x - x ** 2); dy = 2 * m / (1 - p) ** 2 * (p - x); }
-    const theta = Math.atan(dy);
-    upper.push([x - yt * Math.sin(theta), yc + yt * Math.cos(theta)]);
-    lower.push([x + yt * Math.sin(theta), yc - yt * Math.cos(theta)]);
+    upper.push(naca4PointAtChordFraction(code, x, 'upper'));
+    lower.push(naca4PointAtChordFraction(code, x, 'lower'));
   }
   return [...upper.reverse(), ...lower.slice(1, -1)];
 }

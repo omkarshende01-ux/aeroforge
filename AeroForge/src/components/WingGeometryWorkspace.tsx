@@ -15,6 +15,7 @@ import {
 } from '../engineering/wingEditor';
 import { useDesignStore } from '../state/useDesignStore';
 import { Viewport } from './Viewport';
+import { ControlSurfaceEditor } from './ControlSurfaceEditor';
 
 const airfoilOptions = ['NACA 0012', 'NACA 2412', 'NACA 4412'];
 
@@ -28,6 +29,8 @@ export function WingGeometryWorkspace() {
   const commitWing = useDesignStore((state) => state.commitWingGeometry);
   const undoWing = useDesignStore((state) => state.undoWingGeometry);
   const resetWing = useDesignStore((state) => state.resetWingGeometry);
+  const selectedControlSurfaceId = useDesignStore((state) => state.selectedControlSurfaceId);
+  const selectControlSurface = useDesignStore((state) => state.selectControlSurface);
   const [showDimensions, setShowDimensions] = useState(false);
   const [showCrossSections, setShowCrossSections] = useState(false);
   const [showGeometryGuides, setShowGeometryGuides] = useState(true);
@@ -51,7 +54,7 @@ export function WingGeometryWorkspace() {
 
   return <div className="wing-editor-workspace">
     <div className="wing-editor-viewport">
-      <Viewport selectedStationId={selectedStationId} onSelectStation={selectStation} showStationMarkers showDimensions={showDimensions} showCrossSections={showCrossSections} showGeometryGuides={showGeometryGuides} />
+      <Viewport selectedStationId={selectedStationId} onSelectStation={selectStation} selectedControlSurfaceId={selectedControlSurfaceId} onSelectControlSurface={selectControlSurface} showStationMarkers showDimensions={showDimensions} showCrossSections={showCrossSections} showGeometryGuides={showGeometryGuides} />
       <div className="geometry-display-controls">
         <button onClick={() => setShowCrossSections((current) => !current)}>{showCrossSections ? <EyeOff size={13} /> : <Eye size={13} />}{showCrossSections ? 'Hide sections' : 'Show sections'}</button>
         <button onClick={() => setShowGeometryGuides((current) => !current)}>{showGeometryGuides ? <EyeOff size={13} /> : <Eye size={13} />}{showGeometryGuides ? 'Hide guides' : 'Show guides'}</button>
@@ -102,6 +105,7 @@ export function WingGeometryWorkspace() {
         </table>
       </div>
       <div className="wing-editor-limitation"><strong>ANALYSIS LIMITATION</strong><span>{limitation}</span></div>
+      <ControlSurfaceEditor />
     </section>
   </div>;
 }

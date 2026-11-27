@@ -2,10 +2,11 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { AIRCRAFT_DESIGN_SCHEMA_VERSION } from '../domain/contracts';
 import { defaultDesign } from '../domain/types';
 import { legacyWingView } from '../engineering/wingGeometry';
+import { addControlSurface, editControlSurface } from '../engineering/controlSurfaces';
 import { useDesignStore } from './useDesignStore';
 
 describe('versioned aircraft design state', () => {
-  afterEach(() => useDesignStore.setState({ design: defaultDesign, selectedSizingPoint: undefined, wingHistory: [], selectedWingStationId: defaultDesign.wing.stations[0].id }));
+  afterEach(() => useDesignStore.setState({ design: defaultDesign, selectedSizingPoint: undefined, wingHistory: [], selectedWingStationId: defaultDesign.wing.stations[0].id, selectedControlSurfaceId: undefined }));
 
   it('preserves the schema version and increments the design revision on edits', () => {
     useDesignStore.setState({ design: defaultDesign });
@@ -51,5 +52,20 @@ describe('versioned aircraft design state', () => {
     useDesignStore.getState().resetWingGeometry();
     expect(useDesignStore.getState().design.wing).toEqual(defaultDesign.wing);
     expect(useDesignStore.getState().design.schemaVersion).toBe(AIRCRAFT_DESIGN_SCHEMA_VERSION);
+  });
+
+  it('commits valid control edits and rejects dependent wing changes that invalidate them', () => {
+    useDesignStore.setState({ design: structuredClone(defaultDesign) });
+    const added = addControlSurface(useDesignStore.getState().design, 'aileron');
+    expect(useDesignStore.getState().commitControlSurfaces(added.model!, added.selectedControlSurfaceId)).toEqual([]);
+    const edited = editControlSurface(useDesignStore.getState().design, added.selectedControlSurfaceId!, { currentDeflectionDeg: 12 });
+    expect(useDesignStore.getState().commitControlSurfaces(edited.model!, edited.selectedControlSurfaceId)).toEqual([]);
+    expect(useDesignStore.getState().design.controlSurfaces.surfaces[0].currentDeflectionDeg).toBe(12);
+
+    const shortenedWing = structuredClone(useDesignStore.getState().design.wing);
+    shortenedWing.stations[1].spanPositionM = 4;
+    const errors = useDesignStore.getState().commitWingGeometry(shortenedWing);
+    expect(errors.join(' ')).toMatch(/conflicts with a control surface.*exceeds/i);
+    expect(useDesignStore.getState().design.wing.stations[1].spanPositionM).toBe(6);
   });
 });

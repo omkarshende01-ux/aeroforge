@@ -17,10 +17,38 @@ export type WingLoftRing = {
   points: AircraftPoint3[];
 };
 
+export type WingSectionSample = {
+  station: PhysicalWingStation;
+  fromAirfoilId: string;
+  toAirfoilId: string;
+  airfoilBlendFraction: number;
+  physicalSectionIndex: number;
+};
+
 export const WING_AIRFOIL_COSINE_INTERVALS = 36;
 export const WING_LOFT_INTERVALS_PER_SECTION = 4;
 
 function interpolate(from: number, to: number, fraction: number): number { return from + fraction * (to - from); }
+
+export function sampleWingSectionAtSpan(wing: WingGeometry, spanPositionM: number): WingSectionSample {
+  const stations = physicalWingStations(wing);
+  if (!Number.isFinite(spanPositionM) || spanPositionM < stations[0].spanPositionM || spanPositionM > stations.at(-1)!.spanPositionM) throw new RangeError('Span position lies outside the physical wing.');
+  let physicalSectionIndex = stations.findIndex((station) => station.spanPositionM >= spanPositionM) - 1;
+  if (physicalSectionIndex < 0) physicalSectionIndex = 0;
+  if (physicalSectionIndex >= stations.length - 1) physicalSectionIndex = stations.length - 2;
+  const from = stations[physicalSectionIndex]; const to = stations[physicalSectionIndex + 1];
+  const fraction = (spanPositionM - from.spanPositionM) / (to.spanPositionM - from.spanPositionM);
+  const station: PhysicalWingStation = {
+    id: Math.abs(fraction) <= 1e-12 ? from.id : Math.abs(fraction - 1) <= 1e-12 ? to.id : `${from.id}--${to.id}@${spanPositionM}`,
+    spanPositionM,
+    chordM: interpolate(from.chordM, to.chordM, fraction),
+    leadingEdgeXM: interpolate(from.leadingEdgeXM, to.leadingEdgeXM, fraction),
+    verticalPositionM: interpolate(from.verticalPositionM, to.verticalPositionM, fraction),
+    geometricTwistDeg: interpolate(from.geometricTwistDeg, to.geometricTwistDeg, fraction),
+    airfoilId: fraction < 0.5 ? from.airfoilId : to.airfoilId,
+  };
+  return { station, fromAirfoilId: from.airfoilId, toAirfoilId: to.airfoilId, airfoilBlendFraction: fraction, physicalSectionIndex };
+}
 
 /**
  * Converts normalized airfoil x/z coordinates to aircraft x/y/z coordinates.

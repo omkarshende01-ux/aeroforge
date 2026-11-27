@@ -43,12 +43,40 @@ export type WingGeometry = {
   sections: WingSection[];
 };
 
+export type ControlSurfaceKind = 'aileron' | 'flap' | 'elevator' | 'rudder';
+export type ControlSurfaceParent = 'wing' | 'horizontal-tail' | 'vertical-tail';
+export type ControlSurfaceOperation = 'symmetric' | 'differential' | 'independent';
+export type ControlSurfaceSide = 'both' | 'port' | 'starboard' | 'center';
+
+export type ControlSurfaceDefinition = {
+  id: string;
+  name: string;
+  kind: ControlSurfaceKind;
+  parentSurface: ControlSurfaceParent;
+  enabled: boolean;
+  spanStartM: number;
+  spanEndM: number;
+  chordFraction: number;
+  hingeChordFraction: number;
+  minimumDeflectionDeg: number;
+  maximumDeflectionDeg: number;
+  currentDeflectionDeg: number;
+  operation: ControlSurfaceOperation;
+  side: ControlSurfaceSide;
+};
+
+export type ControlSurfaceModel = {
+  modelVersion: 1;
+  surfaces: ControlSurfaceDefinition[];
+};
+
 export type AircraftDesign = {
   schemaVersion: typeof AIRCRAFT_DESIGN_SCHEMA_VERSION;
   revision: number;
   name: string;
   massKg: number;
   wing: WingGeometry;
+  controlSurfaces: ControlSurfaceModel;
   fuselage: { lengthM: number; maxDiameterM: number; noseLengthM: number; cabinLengthM: number };
   horizontalTail: { spanM: number; rootChordM: number; taperRatio: number; sweepDeg: number; incidenceDeg: number; rootLeadingEdgeXM: number; verticalPositionM: number };
   verticalTail: { heightM: number; rootChordM: number; taperRatio: number; sweepDeg: number; rootLeadingEdgeXM: number; basePositionM: number };
@@ -93,6 +121,7 @@ export const defaultDesign: AircraftDesign = {
     ],
     sections: [{ id: 'wing-panel', fromStationId: 'wing-root', toStationId: 'wing-tip', dihedralDeg: 3 }],
   },
+  controlSurfaces: { modelVersion: 1, surfaces: [] },
   fuselage: { lengthM: 9, maxDiameterM: 1.4, noseLengthM: 1.45, cabinLengthM: 3.3 },
   horizontalTail: { spanM: 4.2, rootChordM: 1.15, taperRatio: 0.55, sweepDeg: 8, incidenceDeg: 0, rootLeadingEdgeXM: 7.15, verticalPositionM: 0.3 },
   verticalTail: { heightM: 1.9, rootChordM: 1.7, taperRatio: 0.4, sweepDeg: 24, rootLeadingEdgeXM: 6.85, basePositionM: 0.12 },

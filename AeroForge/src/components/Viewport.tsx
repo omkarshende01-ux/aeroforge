@@ -3,7 +3,7 @@ import * as THREE from 'three';
 import { Canvas, useThree } from '@react-three/fiber';
 import { Html, Line, OrbitControls, OrthographicCamera } from '@react-three/drei';
 import { useDesignStore } from '../state/useDesignStore';
-import { fuselageGeometry, horizontalTailMesh, verticalTailMesh, wingMesh } from '../engineering/geometry';
+import { controlSurfaceMeshes, fuselageGeometry, horizontalTailMesh, verticalTailMesh, wingMesh } from '../engineering/geometry';
 import type { AircraftDesign } from '../domain/types';
 import { physicalWingStations } from '../engineering/wingGeometry';
 import { wingStationCrossSection } from '../engineering/wingLoft';
@@ -37,14 +37,22 @@ function WingStationOverlay({ design, selectedStationId, onSelectStation, showDi
   })}</>;
 }
 
-function Aircraft({ design, selectedStationId, onSelectStation, showStationMarkers, showDimensions, showCrossSections, showGeometryGuides }: { design: AircraftDesign; selectedStationId?: string; onSelectStation?: (stationId: string) => void; showStationMarkers: boolean; showDimensions: boolean; showCrossSections: boolean; showGeometryGuides: boolean }) {
+const controlColors = { aileron: '#55c7dd', flap: '#b27be8', elevator: '#eab45f', rudder: '#70d19a' } as const;
+
+function Aircraft({ design, selectedStationId, onSelectStation, selectedControlSurfaceId, onSelectControlSurface, showStationMarkers, showDimensions, showCrossSections, showGeometryGuides }: { design: AircraftDesign; selectedStationId?: string; onSelectStation?: (stationId: string) => void; selectedControlSurfaceId?: string; onSelectControlSurface?: (controlSurfaceId: string) => void; showStationMarkers: boolean; showDimensions: boolean; showCrossSections: boolean; showGeometryGuides: boolean }) {
   const geometries = useMemo(() => ({ wing: wingMesh(design), fuselage: fuselageGeometry(design), horizontalTail: horizontalTailMesh(design), verticalTail: verticalTailMesh(design) }), [design]);
+  const controls = useMemo(() => controlSurfaceMeshes(design), [design]);
   useEffect(() => () => Object.values(geometries).forEach((geometry) => geometry.dispose()), [geometries]);
+  useEffect(() => () => controls.forEach((control) => control.geometry.dispose()), [controls]);
   return <>
     <mesh geometry={geometries.wing}><meshStandardMaterial color="#e35d3f" metalness={0.18} roughness={0.48} side={THREE.FrontSide} /></mesh>
     <mesh geometry={geometries.fuselage}><meshStandardMaterial color="#dce5ef" metalness={0.28} roughness={0.34} side={THREE.FrontSide} /></mesh>
     <mesh geometry={geometries.horizontalTail}><meshStandardMaterial color="#f28b4b" roughness={0.45} side={THREE.FrontSide} /></mesh>
     <mesh geometry={geometries.verticalTail}><meshStandardMaterial color="#f28b4b" roughness={0.45} side={THREE.FrontSide} /></mesh>
+    {controls.map((control) => { const selected = control.controlSurfaceId === selectedControlSurfaceId; return <group key={control.instanceKey}>
+      <mesh geometry={control.geometry} onClick={(event) => { event.stopPropagation(); onSelectControlSurface?.(control.controlSurfaceId); }}><meshStandardMaterial color={selected ? '#ffe08a' : controlColors[control.kind]} emissive={selected ? '#c9752f' : '#17242a'} emissiveIntensity={selected ? 0.8 : 0.25} roughness={0.35} side={THREE.DoubleSide} transparent opacity={0.9} polygonOffset polygonOffsetFactor={-2} /></mesh>
+      <Line points={[control.hingeStart, control.hingeEnd]} color={selected ? '#fff2b6' : '#f4f7fa'} lineWidth={selected ? 2.5 : 1.4} depthTest={false} onClick={(event) => { event.stopPropagation(); onSelectControlSurface?.(control.controlSurfaceId); }} />
+    </group>; })}
     {showStationMarkers && <WingStationOverlay design={design} selectedStationId={selectedStationId} onSelectStation={onSelectStation} showDimensions={showDimensions} showCrossSections={showCrossSections} showGeometryGuides={showGeometryGuides} />}
   </>;
 }
@@ -65,7 +73,7 @@ function ViewController({ view, centerX }: { view: StandardView; centerX: number
   return null;
 }
 
-export function Viewport({ designOverride, selectedStationId, onSelectStation, showStationMarkers = false, showDimensions = false, showCrossSections = false, showGeometryGuides = false }: { designOverride?: AircraftDesign; selectedStationId?: string; onSelectStation?: (stationId: string) => void; showStationMarkers?: boolean; showDimensions?: boolean; showCrossSections?: boolean; showGeometryGuides?: boolean } = {}) {
+export function Viewport({ designOverride, selectedStationId, onSelectStation, selectedControlSurfaceId, onSelectControlSurface, showStationMarkers = false, showDimensions = false, showCrossSections = false, showGeometryGuides = false }: { designOverride?: AircraftDesign; selectedStationId?: string; onSelectStation?: (stationId: string) => void; selectedControlSurfaceId?: string; onSelectControlSurface?: (controlSurfaceId: string) => void; showStationMarkers?: boolean; showDimensions?: boolean; showCrossSections?: boolean; showGeometryGuides?: boolean } = {}) {
   const storedDesign = useDesignStore((state) => state.design);
   const design = designOverride ?? storedDesign;
   const [view, setView] = useState<StandardView>('isometric'); const centerX = design.fuselage.lengthM / 2;
@@ -74,7 +82,7 @@ export function Viewport({ designOverride, selectedStationId, onSelectStation, s
       <OrthographicCamera makeDefault position={[centerX - 10, -12, 8]} up={[0, 0, 1]} zoom={28} near={0.1} far={100} />
       <ViewController view={view} centerX={centerX} />
       <color attach="background" args={['#0d121a']} /><hemisphereLight args={['#d9e7f5', '#202833', 1.7]} /><directionalLight position={[-4, -6, 10]} intensity={2.6} />
-      <Aircraft design={design} selectedStationId={selectedStationId} onSelectStation={onSelectStation} showStationMarkers={showStationMarkers} showDimensions={showDimensions} showCrossSections={showCrossSections} showGeometryGuides={showGeometryGuides} /><gridHelper args={[30, 30, '#405469', '#253343']} rotation={[Math.PI / 2, 0, 0]} position={[centerX, 0, -0.72]} /><axesHelper args={[1.2]} position={[0, 0, -0.7]} />
+      <Aircraft design={design} selectedStationId={selectedStationId} onSelectStation={onSelectStation} selectedControlSurfaceId={selectedControlSurfaceId} onSelectControlSurface={onSelectControlSurface} showStationMarkers={showStationMarkers} showDimensions={showDimensions} showCrossSections={showCrossSections} showGeometryGuides={showGeometryGuides} /><gridHelper args={[30, 30, '#405469', '#253343']} rotation={[Math.PI / 2, 0, 0]} position={[centerX, 0, -0.72]} /><axesHelper args={[1.2]} position={[0, 0, -0.7]} />
       <OrbitControls makeDefault target={[centerX, 0, 0]} enableDamping dampingFactor={0.08} screenSpacePanning />
     </Canvas>
     <div className="view-toolbar" aria-label="Standard aircraft views">{(['isometric', 'top', 'side', 'front'] as StandardView[]).map((name) => <button key={name} className={view === name ? 'active' : ''} onClick={() => setView(name)}>{name}</button>)}</div>

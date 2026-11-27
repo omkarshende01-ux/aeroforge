@@ -262,8 +262,8 @@ export function updateWingFromLegacyField(wing: WingGeometry, field: LegacyWingE
   return validateWingGeometry(updated).valid ? updated : wing;
 }
 
-export type LegacyAircraftDesignV1 = Omit<AircraftDesign, 'schemaVersion' | 'wing'> & { schemaVersion: 1; wing: LegacyWingDefinition };
+export type LegacyAircraftDesignV1 = Omit<AircraftDesign, 'schemaVersion' | 'wing' | 'controlSurfaces'> & { schemaVersion: 1; wing: LegacyWingDefinition; controlSurfaces?: AircraftDesign['controlSurfaces'] };
 
 export function migrateAircraftDesignV1(design: LegacyAircraftDesignV1): AircraftDesign {
-  return { ...design, schemaVersion: 2, wing: migrateLegacyWing(design.wing) };
+  return { ...design, schemaVersion: 2, wing: migrateLegacyWing(design.wing), controlSurfaces: design.controlSurfaces ?? { modelVersion: 1, surfaces: [] } };
 }

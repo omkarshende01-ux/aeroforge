@@ -86,12 +86,21 @@ export function generateProvisionalAircraftCandidate(
   const rootChordM = 2 * sizing.requiredWingAreaM2 / (spanM * (1 + inputs.taperRatio));
   const tipChordM = inputs.taperRatio * rootChordM;
   const sourceWing = legacyWingView(design.wing);
+  const sourceHalfSpan = sourceWing.spanM / 2; const candidateHalfSpan = spanM / 2;
   const previewDesign: AircraftDesign = {
     ...design,
     wing: migrateLegacyWing({ ...sourceWing, spanM, rootChordM, taperRatio: inputs.taperRatio }),
     fuselage: { ...design.fuselage },
     horizontalTail: { ...design.horizontalTail },
     verticalTail: { ...design.verticalTail },
+    controlSurfaces: {
+      ...design.controlSurfaces,
+      surfaces: design.controlSurfaces.surfaces.map((surface) => surface.parentSurface === 'wing' ? {
+        ...surface,
+        spanStartM: surface.spanStartM / sourceHalfSpan * candidateHalfSpan,
+        spanEndM: surface.spanEndM / sourceHalfSpan * candidateHalfSpan,
+      } : { ...surface }),
+    },
     flightCondition: { ...design.flightCondition },
     mission: { ...design.mission },
     massKg: sizing.finalTakeoffMassKg,

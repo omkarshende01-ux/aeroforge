@@ -1,5 +1,21 @@
 # AeroForge progress
 
+## M5.4 checkpoint - 2026-11-26
+
+The repository is on the `development` branch. M5.4, Parametric Control Surface Design, is complete. A separately versioned conventional control-surface model now derives movable geometry from the authoritative parent lifting surfaces and visualizes rigid three-dimensional hinge deflection without changing the undeflected reference aircraft. No VLM, aerodynamic control derivatives, flap corrections, trim, actuators, flight controls, complex high-lift devices, optimization, or persistence was added.
+
+## M5.4 completed
+
+- Added typed, versioned definitions for ailerons, trailing-edge plain flaps, elevators, and rudders with unique identity, parent, span interval, chord/hinge fractions, enabled state, deflection bounds/current command, operation mode, and physical side.
+- Added pure validation and editing operations for creation, edit, delete, and neutral reset. Validation rejects incompatible parent/type and side/operation combinations, nonfinite or reversed limits, invalid fractions or deflections, out-of-parent spans, enabled overlaps, and rigid controls crossing a schema-v2 wing station break.
+- Derived wing control profiles from the M5.3 span/profile interpolation and quarter-chord transform. Added compatible scalar-tail adapters for horizontal-tail elevators and vertical-tail rudders using their actual taper, sweep, placement, and incidence where applicable.
+- Added cosine-spaced trailing-edge skins, straight three-dimensional endpoint hinge axes, Rodrigues rotation, hinge-axis invariance, distinct control colors, visible hinge lines, viewport selection, and real-time deflection. Non-collinear transformed hinges report their midpoint deviation instead of silently hiding the straight-axis approximation.
+- Defined command signs explicitly: positive linked flap/elevator command is trailing-edge down on both sides; positive differential aileron command is starboard down/port up; independent horizontal surfaces affect the selected side; positive rudder moves the trailing edge starboard.
+- Added the control editor to the geometry workspace with add/select/enable/edit/delete, linked/differential/independent operation, neutral-all reset, actionable errors, and live projected area, total span, hinge fraction, and physical left/right angles.
+- Preserved undeflected wing references and existing analyses. Parent geometry changes are rejected when they invalidate controls, and M4.6 candidate previews preserve each wing control's normalized semi-span coverage.
+- Added independent area, interpolation, hinge preservation, sign, swept/dihedral rotation, operation, invalid/overlap, neutral recovery, state, and candidate regression tests. Browser smoke covered creation, selection, deflection, validation, reset, a second control type, and deletion.
+- Verification passes: strict typecheck, 96 automated tests across 17 files, and the production build. Vite's existing non-blocking main-chunk warning remains (approximately 1.161 MB minified / 321 kB gzip).
+
 ## M5.3 checkpoint — 2026-11-26
 
 The repository is on the `development` branch. M5.3, Advanced Section-Level Geometry and Airfoil Lofting, is complete. The renderer now consumes a pure section-transform and interpolated-loft layer derived from the authoritative schema-v2 wing. Projected reference definitions and existing analysis results are unchanged. No control surfaces, VLM, polar database, advanced fuselage geometry, optimization, or persistence was added.
@@ -119,7 +135,7 @@ The codebase is a functional conceptual-design demonstrator with three prelimina
 |---|---|---|
 | Frontend foundation | React 18, strict TypeScript, Vite, Zustand, Three.js/React Three Fiber, Vitest; CAD-style navigation and inspector | Implemented baseline |
 | Shared design state | Typed `AircraftDesign` schema version 2 with incrementing revision and mission, geometry, mass, propulsion, stability, and structure groups | Versioned in memory; v1 wing migration exists, but project persistence is not implemented |
-| Geometry | Validated multi-section symmetric/asymmetric wing, independent station airfoils/twist, cosine-interpolated loft, cross-section/guides, interactive station editor, trapezoidal tails, circular-section fuselage loft, component stations, standard views, orbit/pan/zoom | M5.3 wing loft implemented; no control surfaces or generalized tail/fuselage stations |
+| Geometry | Validated multi-section symmetric/asymmetric wing, independent station airfoils/twist, cosine-interpolated loft, cross-section/guides, interactive station editor, versioned conventional control surfaces with rigid 3D hinge deflection, trapezoidal tails, circular-section fuselage loft, component stations, standard views, orbit/pan/zoom | M5.4 conventional controls implemented; no generalized tail/fuselage stations, complex high-lift devices, or analysis lattice |
 | Geometry metrics | Piecewise projected area, span, aspect ratio, tip chord, MAC/reference locations, section properties, wing loading, conditional stall speed | Implemented and analytically tested |
 | Atmosphere | ISA 1976-style troposphere from 0–11 km plus manual density | Implemented and tested; manual-density Mach uses sea-level sound speed with warning |
 | Aerodynamics | Linear finite-wing lift slope, pre-stall CL, parabolic polar, forces, Mach, L/D, analytical elliptical span load | Implemented low-fidelity baseline; key coefficients are supplied assumptions |
@@ -128,14 +144,14 @@ The codebase is a functional conceptual-design demonstrator with three prelimina
 | Stability | Tail area/volume, neutral point, static margin from supplied tail/downwash assumptions | Implemented baseline; no trim, control authority, lateral or dynamic stability |
 | Flight envelope | Simplified aerodynamic/structural maneuver envelope | Implemented baseline; no gust or dynamic effects |
 | Structures | Half-wing Euler–Bernoulli cantilever, constant EI, elliptical limit load, shear/moment/stress/deflection/safety factor | Implemented benchmark model; no wing box, materials workflow, self-weight, torsion, buckling, or FEA |
-| Tests | 84 automated tests in 16 files, including section transforms/loft topology, editor operations/history, independent geometry cases, analytical fixtures, published-data sanity checks, mission/constraint benchmarks, mass/energy closure, robustness, version contracts, and unit conversions | Geometry reference equations and M4.2–M4.4 equations are independently verified in their declared scope; full-aircraft external validation remains incomplete |
-| Optimization, 6-DOF, controls | No implementation found | Planned |
+| Tests | 96 automated tests in 17 files, including control geometry/operations, section transforms/loft topology, editor operations/history, independent geometry cases, analytical fixtures, published-data sanity checks, mission/constraint benchmarks, mass/energy closure, robustness, version contracts, and unit conversions | Geometry reference equations and M4.2–M4.4 equations are independently verified in their declared scope; full-aircraft external validation remains incomplete |
+| Optimization, 6-DOF, flight controls | Conventional movable geometry only; no aerodynamic effectiveness, dynamics, or controller implementation | Planned beyond geometry |
 | Save/load, reports, geometry/data export, public release workflow | No implementation found | Planned |
 
 ## Verification performed at this checkpoint
 
 - `npm.cmd run typecheck`: **passed**.
-- `npm.cmd test`: **passed**, 55 tests across twelve files.
+- `npm.cmd test`: **passed**, 96 tests across 17 files.
 - `npm.cmd run build`: **passed**.
 - Vite reports the existing production chunk warning: approximately 1.08 MB minified / 297 kB gzip for the main JavaScript asset.
 
@@ -144,7 +160,7 @@ The codebase is a functional conceptual-design demonstrator with three prelimina
 | Phase | Status | Principal gap |
 |---:|---|---|
 | 1. Mission requirements and preliminary sizing | M4.2–M4.5 complete; broader phase partial | Analytical pipeline independently verified; no takeoff model, matched full-aircraft closure validation, sourced empty-mass correlation, or segment mission sizing |
-| 2. Advanced parametric geometry | M5.3 section loft complete; broader phase partial | Multi-section wing schema/calculations/editor, airfoil interpolation and v1 migration exist; no controls, generalized tail/fuselage stations, or analysis lattice |
+| 2. Advanced parametric geometry | M5.4 conventional control geometry complete; broader phase partial | Multi-section wing schema/calculations/editor, airfoil interpolation, v1 migration, and conventional hinged surfaces exist; no generalized tail/fuselage stations, complex mechanisms, or analysis lattice |
 | 3. Airfoil analysis and VLM | Partial precursor | NACA coordinates and analytical lift model only; no polar import or VLM |
 | 4. Structures and materials | Partial precursor | Constant-EI beam only; no load transfer, wing box, materials, or advanced failure modes |
 | 5. Propulsion sizing | Partial precursor | Aggregate electric/fuel cruise sizing exists; no component maps, electrical details, derating, or operating-point coverage |
@@ -178,4 +194,4 @@ The codebase is a functional conceptual-design demonstrator with three prelimina
 
 ## Current stop point
 
-M5.3 is complete. Development stops here pending owner review. The schema-v2 wing has independently transformed and interpolated station sections suitable for later analysis discretization, but control surfaces and VLM are not implemented. Provisional candidates remain isolated with no apply action; takeoff and full segment mission analysis remain unavailable, so mission feasibility remains indeterminate.
+M5.4 is complete. Development stops here pending owner review. Conventional control geometry is versioned, validated, parent-derived, and interactively deflectable, but no aerodynamic effectiveness, VLM, trim, actuator, or flight-control model is implemented. Provisional candidates remain isolated with no apply action; takeoff and full segment mission analysis remain unavailable, so mission feasibility remains indeterminate.

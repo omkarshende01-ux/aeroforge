@@ -2,6 +2,16 @@ import * as THREE from 'three';
 import type { AircraftDesign } from '../domain/types';
 import { naca4SurfaceCoordinates } from './airfoil';
 import { buildWingLoftRings } from './wingLoft';
+import { buildControlSurfaceGeometry } from './controlSurfaces';
+
+export type ControlSurfaceRenderMesh = {
+  controlSurfaceId: string;
+  instanceKey: string;
+  kind: 'aileron' | 'flap' | 'elevator' | 'rudder';
+  hingeStart: readonly [number, number, number];
+  hingeEnd: readonly [number, number, number];
+  geometry: THREE.BufferGeometry;
+};
 
 type HorizontalSurface = {
   spanM: number; rootChordM: number; taperRatio: number; sweepDeg: number;
@@ -57,6 +67,16 @@ export function wingMesh(design: AircraftDesign): THREE.BufferGeometry {
     }
   }
   const geometry = new THREE.BufferGeometry(); geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3)); geometry.setIndex(indices); geometry.computeVertexNormals(); geometry.computeBoundingBox(); return geometry;
+}
+
+export function controlSurfaceMeshes(design: AircraftDesign): ControlSurfaceRenderMesh[] {
+  return design.controlSurfaces.surfaces.filter((surface) => surface.enabled).flatMap((surface) => buildControlSurfaceGeometry(design, surface).map((instance) => {
+    const geometry = new THREE.BufferGeometry();
+    const vertices = instance.deflectedVertices.flatMap((point) => [...point]);
+    geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+    geometry.setIndex(instance.indices); geometry.computeVertexNormals(); geometry.computeBoundingBox();
+    return { controlSurfaceId: surface.id, instanceKey: instance.key, kind: surface.kind, hingeStart: instance.hingeStart, hingeEnd: instance.hingeEnd, geometry };
+  }));
 }
 
 export function horizontalTailMesh(design: AircraftDesign): THREE.BufferGeometry {

@@ -43,6 +43,22 @@ describe('M4.6 provisional aircraft candidate generation', () => {
     expect(candidate.energyStorage.massKg).toBe(sizing.energyStorageMassKg);
   });
 
+  it('preserves wing-control coverage as a span fraction in candidate previews', () => {
+    const source = structuredClone(defaultDesign);
+    source.controlSurfaces.surfaces.push({
+      id: 'aileron-candidate', name: 'Candidate aileron', kind: 'aileron', parentSurface: 'wing', enabled: true,
+      spanStartM: 3.6, spanEndM: 5.4, chordFraction: 0.25, hingeChordFraction: 0.75,
+      minimumDeflectionDeg: -25, maximumDeflectionDeg: 25, currentDeflectionDeg: 8,
+      operation: 'differential', side: 'both',
+    });
+    const candidate = generateProvisionalAircraftCandidate(source, convergedSizing(source), candidateInputs);
+    const preview = candidate.previewDesign.controlSurfaces.surfaces[0];
+    const previewHalfSpan = candidate.geometry.spanM / 2;
+    expect(preview.spanStartM / previewHalfSpan).toBeCloseTo(0.6, 12);
+    expect(preview.spanEndM / previewHalfSpan).toBeCloseTo(0.9, 12);
+    expect(preview.currentDeflectionDeg).toBe(8);
+  });
+
   it('preserves indeterminate feasibility and every evaluated or unevaluated constraint status', () => {
     const sizing = convergedSizing();
     const candidate = generateProvisionalAircraftCandidate(defaultDesign, sizing, candidateInputs);
