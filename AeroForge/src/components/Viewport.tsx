@@ -61,10 +61,10 @@ function Aircraft({ design, selectedStationId, onSelectStation, selectedFuselage
   useEffect(() => () => Object.values(geometries).forEach((geometry) => geometry.dispose()), [geometries]);
   useEffect(() => () => controls.forEach((control) => control.geometry.dispose()), [controls]);
   return <>
-    <mesh geometry={geometries.wing}><meshStandardMaterial color="#e35d3f" metalness={0.18} roughness={0.48} side={THREE.FrontSide} /></mesh>
-    <mesh geometry={geometries.fuselage}><meshStandardMaterial color="#dce5ef" metalness={0.28} roughness={0.34} side={THREE.FrontSide} /></mesh>
-    <mesh geometry={geometries.horizontalTail}><meshStandardMaterial color="#f28b4b" roughness={0.45} side={THREE.FrontSide} /></mesh>
-    <mesh geometry={geometries.verticalTail}><meshStandardMaterial color="#f28b4b" roughness={0.45} side={THREE.FrontSide} /></mesh>
+    <mesh geometry={geometries.wing}><meshPhysicalMaterial color="#d94f35" metalness={0.08} roughness={0.34} clearcoat={0.28} clearcoatRoughness={0.36} side={THREE.FrontSide} /></mesh>
+    <mesh geometry={geometries.fuselage}><meshPhysicalMaterial color="#e8eef4" metalness={0.06} roughness={0.28} clearcoat={0.38} clearcoatRoughness={0.3} side={THREE.FrontSide} /></mesh>
+    <mesh geometry={geometries.horizontalTail}><meshPhysicalMaterial color="#d94f35" metalness={0.08} roughness={0.34} clearcoat={0.28} clearcoatRoughness={0.36} side={THREE.FrontSide} /></mesh>
+    <mesh geometry={geometries.verticalTail}><meshPhysicalMaterial color="#d94f35" metalness={0.08} roughness={0.34} clearcoat={0.28} clearcoatRoughness={0.36} side={THREE.FrontSide} /></mesh>
     {controls.map((control) => { const selected = control.controlSurfaceId === selectedControlSurfaceId; return <group key={control.instanceKey}>
       <mesh geometry={control.geometry} onClick={(event) => { event.stopPropagation(); onSelectControlSurface?.(control.controlSurfaceId); }}><meshStandardMaterial color={selected ? '#ffe08a' : controlColors[control.kind]} emissive={selected ? '#c9752f' : '#17242a'} emissiveIntensity={selected ? 0.8 : 0.25} roughness={0.35} side={THREE.DoubleSide} transparent opacity={0.9} polygonOffset polygonOffsetFactor={-2} /></mesh>
       <Line points={[control.hingeStart, control.hingeEnd]} color={selected ? '#fff2b6' : '#f4f7fa'} lineWidth={selected ? 2.5 : 1.4} depthTest={false} onClick={(event) => { event.stopPropagation(); onSelectControlSurface?.(control.controlSurfaceId); }} />
@@ -99,7 +99,7 @@ export function Viewport({ designOverride, selectedStationId, onSelectStation, s
     <Canvas resize={{ scroll: false, debounce: { scroll: 0, resize: 80 } }} gl={{ antialias: true }}>
       <OrthographicCamera makeDefault position={[centerX - 10, -12, 8]} up={[0, 0, 1]} zoom={28} near={0.1} far={100} />
       <ViewController view={view} centerX={centerX} />
-      <color attach="background" args={['#0d121a']} /><hemisphereLight args={['#d9e7f5', '#202833', 1.7]} /><directionalLight position={[-4, -6, 10]} intensity={2.6} />
+      <color attach="background" args={['#0d121a']} /><hemisphereLight args={['#edf5ff', '#202833', 1.55]} /><directionalLight position={[-4, -6, 10]} intensity={2.35} /><directionalLight position={[8, 5, 3]} intensity={0.65} color="#b9d8f2" />
       <Aircraft design={design} selectedStationId={selectedStationId} onSelectStation={onSelectStation} selectedFuselageStationId={selectedFuselageStationId} onSelectFuselageStation={onSelectFuselageStation} selectedHorizontalTailStationId={selectedHorizontalTailStationId} onSelectHorizontalTailStation={onSelectHorizontalTailStation} selectedVerticalTailStationId={selectedVerticalTailStationId} onSelectVerticalTailStation={onSelectVerticalTailStation} selectedControlSurfaceId={selectedControlSurfaceId} onSelectControlSurface={onSelectControlSurface} showStationMarkers={showStationMarkers} showDimensions={showDimensions} showCrossSections={showCrossSections} showGeometryGuides={showGeometryGuides} /><gridHelper args={[30, 30, '#405469', '#253343']} rotation={[Math.PI / 2, 0, 0]} position={[centerX, 0, -0.72]} /><axesHelper args={[1.2]} position={[0, 0, -0.7]} />
       <OrbitControls makeDefault target={[centerX, 0, 0]} enableDamping dampingFactor={0.08} screenSpacePanning />
     </Canvas>

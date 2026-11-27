@@ -142,6 +142,7 @@ export type AircraftDesign = {
 
 export type DesignMetrics = { wingAreaM2: number; aspectRatio: number; macM: number; tipChordM: number; wingLoadingNm2: number; stallSpeedMs?: number; stallSpeedKt?: number; warnings: string[] };
 
+/** Illustrative conventional light-aircraft demonstrator; dimensions are design assumptions, not sourced aircraft data. */
 export const defaultDesign: AircraftDesign = {
   schemaVersion: AIRCRAFT_DESIGN_SCHEMA_VERSION,
   revision: 0,
@@ -149,10 +150,10 @@ export const defaultDesign: AircraftDesign = {
   wing: {
     modelVersion: 2,
     symmetry: 'symmetric',
-    verticalPositionM: 0.48,
+    verticalPositionM: -0.38,
     stations: [
-      { id: 'wing-root', spanPositionM: 0, chordM: 2, leadingEdgeXM: 2.35, geometricTwistDeg: 0, airfoilId: 'NACA 2412' },
-      { id: 'wing-tip', spanPositionM: 6, chordM: 1, leadingEdgeXM: 2.35 + 6 * Math.tan(3 * Math.PI / 180), geometricTwistDeg: -1.5, airfoilId: 'NACA 2412' },
+      { id: 'wing-root', spanPositionM: 0, chordM: 2, leadingEdgeXM: 2.2, geometricTwistDeg: 0, airfoilId: 'NACA 2412' },
+      { id: 'wing-tip', spanPositionM: 6, chordM: 1, leadingEdgeXM: 2.2 + 6 * Math.tan(3 * Math.PI / 180), geometricTwistDeg: -1.5, airfoilId: 'NACA 2412' },
     ],
     sections: [{ id: 'wing-panel', fromStationId: 'wing-root', toStationId: 'wing-tip', dihedralDeg: 3 }],
   },
@@ -160,29 +161,42 @@ export const defaultDesign: AircraftDesign = {
   fuselage: {
     modelVersion: 1,
     stations: [
-      { id: 'fuselage-nose-tip', xPositionM: 0, widthM: 0, heightM: 0, lateralCenterM: 0, verticalCenterM: 0, shape: 'circular', superellipseExponent: 2 },
-      { id: 'fuselage-nose-mid', xPositionM: 0.55, widthM: 0.78, heightM: 0.9, lateralCenterM: 0, verticalCenterM: 0, shape: 'elliptical', superellipseExponent: 2 },
-      { id: 'fuselage-cabin-front', xPositionM: 1.45, widthM: 1.4, heightM: 1.4, lateralCenterM: 0, verticalCenterM: 0, shape: 'circular', superellipseExponent: 2 },
-      { id: 'fuselage-cabin-rear', xPositionM: 4.75, widthM: 1.33, heightM: 1.33, lateralCenterM: 0, verticalCenterM: 0.02, shape: 'circular', superellipseExponent: 2 },
-      { id: 'fuselage-tail-mid', xPositionM: 7.1, widthM: 0.72, heightM: 0.82, lateralCenterM: 0, verticalCenterM: 0.12, shape: 'elliptical', superellipseExponent: 2 },
-      { id: 'fuselage-tail-tip', xPositionM: 9, widthM: 0, heightM: 0, lateralCenterM: 0, verticalCenterM: 0.22, shape: 'circular', superellipseExponent: 2 },
+      { id: 'fuselage-nose-tip', xPositionM: 0, widthM: 0, heightM: 0, lateralCenterM: 0, verticalCenterM: 0, shape: 'elliptical', superellipseExponent: 2 },
+      { id: 'fuselage-nose-fore', xPositionM: 0.28, widthM: 0.32, heightM: 0.42, lateralCenterM: 0, verticalCenterM: 0.02, shape: 'elliptical', superellipseExponent: 2 },
+      { id: 'fuselage-nose-mid', xPositionM: 0.72, widthM: 0.78, heightM: 0.96, lateralCenterM: 0, verticalCenterM: 0.04, shape: 'elliptical', superellipseExponent: 2 },
+      { id: 'fuselage-cabin-front', xPositionM: 1.35, widthM: 1.22, heightM: 1.42, lateralCenterM: 0, verticalCenterM: 0.05, shape: 'superelliptical', superellipseExponent: 2.4 },
+      { id: 'fuselage-cabin-max', xPositionM: 2.4, widthM: 1.34, heightM: 1.52, lateralCenterM: 0, verticalCenterM: 0.04, shape: 'superelliptical', superellipseExponent: 2.6 },
+      { id: 'fuselage-cabin-mid', xPositionM: 3.65, widthM: 1.34, heightM: 1.52, lateralCenterM: 0, verticalCenterM: 0.04, shape: 'superelliptical', superellipseExponent: 2.6 },
+      { id: 'fuselage-cabin-rear', xPositionM: 4.75, widthM: 1.27, heightM: 1.42, lateralCenterM: 0, verticalCenterM: 0.06, shape: 'superelliptical', superellipseExponent: 2.4 },
+      { id: 'fuselage-tail-shoulder', xPositionM: 5.65, widthM: 1.1, heightM: 1.22, lateralCenterM: 0, verticalCenterM: 0.11, shape: 'elliptical', superellipseExponent: 2 },
+      { id: 'fuselage-tail-mid', xPositionM: 6.75, widthM: 0.82, heightM: 0.92, lateralCenterM: 0, verticalCenterM: 0.2, shape: 'elliptical', superellipseExponent: 2 },
+      { id: 'fuselage-tail-aft', xPositionM: 7.8, widthM: 0.46, heightM: 0.56, lateralCenterM: 0, verticalCenterM: 0.32, shape: 'elliptical', superellipseExponent: 2 },
+      { id: 'fuselage-tail-tip', xPositionM: 9.2, widthM: 0, heightM: 0, lateralCenterM: 0, verticalCenterM: 0.48, shape: 'elliptical', superellipseExponent: 2 },
     ],
   },
   horizontalTail: {
-    modelVersion: 1, lateralPositionM: 0, verticalPositionM: 0.3, incidenceDeg: 0,
+    modelVersion: 1, lateralPositionM: 0, verticalPositionM: 0.36, incidenceDeg: 0,
     stations: [
-      { id: 'horizontal-tail-root', spanPositionM: 0, chordM: 1.15, leadingEdgeXM: 7.15, geometricTwistDeg: 0, airfoilId: 'NACA 0012' },
-      { id: 'horizontal-tail-tip', spanPositionM: 2.1, chordM: 0.6325, leadingEdgeXM: 7.15 + 2.1 * Math.tan(8 * Math.PI / 180), geometricTwistDeg: 0, airfoilId: 'NACA 0012' },
+      { id: 'horizontal-tail-root', spanPositionM: 0, chordM: 1.25, leadingEdgeXM: 7.25, geometricTwistDeg: 0, airfoilId: 'NACA 0012' },
+      { id: 'horizontal-tail-break', spanPositionM: 1.25, chordM: 0.9, leadingEdgeXM: 7.42, geometricTwistDeg: -0.5, airfoilId: 'NACA 0012' },
+      { id: 'horizontal-tail-tip', spanPositionM: 2.25, chordM: 0.52, leadingEdgeXM: 7.72, geometricTwistDeg: -1, airfoilId: 'NACA 0012' },
     ],
-    sections: [{ id: 'horizontal-tail-panel', fromStationId: 'horizontal-tail-root', toStationId: 'horizontal-tail-tip', dihedralDeg: 0 }],
+    sections: [
+      { id: 'horizontal-tail-inner', fromStationId: 'horizontal-tail-root', toStationId: 'horizontal-tail-break', dihedralDeg: 2 },
+      { id: 'horizontal-tail-outer', fromStationId: 'horizontal-tail-break', toStationId: 'horizontal-tail-tip', dihedralDeg: 2 },
+    ],
   },
   verticalTail: {
-    modelVersion: 1, lateralPositionM: 0, baseVerticalPositionM: 0.12,
+    modelVersion: 1, lateralPositionM: 0, baseVerticalPositionM: 0.62,
     stations: [
-      { id: 'vertical-tail-root', spanPositionM: 0, chordM: 1.7, leadingEdgeXM: 6.85, geometricTwistDeg: 0, airfoilId: 'NACA 0012' },
-      { id: 'vertical-tail-tip', spanPositionM: 1.9, chordM: 0.68, leadingEdgeXM: 6.85 + 1.9 * Math.tan(24 * Math.PI / 180), geometricTwistDeg: 0, airfoilId: 'NACA 0012' },
+      { id: 'vertical-tail-root', spanPositionM: 0, chordM: 1.85, leadingEdgeXM: 6.55, geometricTwistDeg: 0, airfoilId: 'NACA 0012' },
+      { id: 'vertical-tail-break', spanPositionM: 0.9, chordM: 1.15, leadingEdgeXM: 6.98, geometricTwistDeg: 0, airfoilId: 'NACA 0012' },
+      { id: 'vertical-tail-tip', spanPositionM: 2.05, chordM: 0.42, leadingEdgeXM: 7.78, geometricTwistDeg: 0, airfoilId: 'NACA 0012' },
     ],
-    sections: [{ id: 'vertical-tail-panel', fromStationId: 'vertical-tail-root', toStationId: 'vertical-tail-tip', dihedralDeg: 0 }],
+    sections: [
+      { id: 'vertical-tail-lower', fromStationId: 'vertical-tail-root', toStationId: 'vertical-tail-break', dihedralDeg: 0 },
+      { id: 'vertical-tail-upper', fromStationId: 'vertical-tail-break', toStationId: 'vertical-tail-tip', dihedralDeg: 0 },
+    ],
   },
   flightCondition: {
     altitudeM: 0,

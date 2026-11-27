@@ -32,7 +32,7 @@ describe('M5.2 wing station editing', () => {
     expect(chordEdit.wing?.stations[1]).toMatchObject({ chordM: 1.2, geometricTwistDeg: -3, airfoilId: 'NACA 0012' });
     expect(calculateWingReferenceProperties(chordEdit.wing!).projectedAreaM2).toBeCloseTo(19.2, 12);
     const sweepEdit = editWingSectionSweep(chordEdit.wing!, 'wing-panel', 10);
-    expect(sweepEdit.wing?.stations[1].leadingEdgeXM).toBeCloseTo(2.35 + 6 * Math.tan(10 * Math.PI / 180), 12);
+    expect(sweepEdit.wing?.stations[1].leadingEdgeXM).toBeCloseTo(defaultDesign.wing.stations[0].leadingEdgeXM + 6 * Math.tan(10 * Math.PI / 180), 12);
     const dihedralEdit = editWingSection(sweepEdit.wing!, 'wing-panel', { dihedralDeg: 6 });
     expect(dihedralEdit.wing?.sections[0].dihedralDeg).toBe(6);
   });

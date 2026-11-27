@@ -98,8 +98,8 @@ describe('M5.4 parametric control surfaces', () => {
   });
 
   it('supports linked elevators and an independently deflected rudder through tail adapters', () => {
-    const elevator = definition('elevator', { spanStartM: 0.2, spanEndM: 1.8, currentDeflectionDeg: -10 });
-    const rudder = definition('rudder', { spanStartM: 0.2, spanEndM: 1.5, currentDeflectionDeg: 14 });
+    const elevator = definition('elevator', { spanStartM: 0.2, spanEndM: 1.1, currentDeflectionDeg: -10 });
+    const rudder = definition('rudder', { spanStartM: 0.2, spanEndM: 0.8, currentDeflectionDeg: 14 });
     const design = withControls(elevator, rudder);
     expect(calculateControlSurfaceProperties(design, elevator).instances.map((instance) => instance.physicalDeflectionDeg)).toEqual([10, -10]);
     const rudderGeometry = buildControlSurfaceGeometry(design, rudder);

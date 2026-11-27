@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { defaultDesign } from '../domain/types';
 import { fuselageGeometry, horizontalTailMesh, verticalTailMesh, wingMesh } from './geometry';
 import { legacyWingView } from './wingGeometry';
-import { calculateFuselageProperties } from './fuselageGeometry';
+import { calculateFuselageProperties, sampleFuselageAtX } from './fuselageGeometry';
 import { calculateHorizontalTailReferenceProperties, calculateVerticalTailReferenceProperties } from './tailGeometry';
 
 function expectFiniteNormals(geometry: ReturnType<typeof wingMesh>) {
@@ -48,5 +48,20 @@ describe('parametric aircraft assembly', () => {
     expect(horizontal.boundingBox!.min.y).toBeCloseTo(defaultDesign.horizontalTail.lateralPositionM - horizontalProperties.spanM / 2, 5);
     expect(vertical.boundingBox!.max.z).toBeCloseTo(defaultDesign.verticalTail.baseVerticalPositionM + verticalProperties.spanM, 5);
     expectFiniteNormals(horizontal); expectFiniteNormals(vertical); expectWatertightIndexedMesh(horizontal); expectWatertightIndexedMesh(vertical);
+  });
+
+  it('uses the authoritative defaults to attach lifting surfaces continuously to the fuselage envelope', () => {
+    const wingRoot = defaultDesign.wing.stations[0]; const wingAttachment = sampleFuselageAtX(defaultDesign.fuselage, wingRoot.leadingEdgeXM + 0.25 * wingRoot.chordM);
+    expect(defaultDesign.wing.verticalPositionM).toBeGreaterThan(wingAttachment.verticalCenterM - wingAttachment.heightM / 2);
+    expect(defaultDesign.wing.verticalPositionM).toBeLessThan(wingAttachment.verticalCenterM + wingAttachment.heightM / 2);
+
+    const horizontalRoot = defaultDesign.horizontalTail.stations[0]; const horizontalAttachment = sampleFuselageAtX(defaultDesign.fuselage, horizontalRoot.leadingEdgeXM + 0.25 * horizontalRoot.chordM);
+    expect(defaultDesign.horizontalTail.verticalPositionM).toBeGreaterThan(horizontalAttachment.verticalCenterM - horizontalAttachment.heightM / 2);
+    expect(defaultDesign.horizontalTail.verticalPositionM).toBeLessThan(horizontalAttachment.verticalCenterM + horizontalAttachment.heightM / 2);
+
+    const verticalRoot = defaultDesign.verticalTail.stations[0]; const verticalAttachment = sampleFuselageAtX(defaultDesign.fuselage, verticalRoot.leadingEdgeXM + 0.25 * verticalRoot.chordM);
+    expect(Math.abs(defaultDesign.verticalTail.baseVerticalPositionM - (verticalAttachment.verticalCenterM + verticalAttachment.heightM / 2))).toBeLessThan(0.08);
+    expect(defaultDesign.fuselage.stations.length).toBeGreaterThanOrEqual(10);
+    expect(defaultDesign.horizontalTail.stations).toHaveLength(3); expect(defaultDesign.verticalTail.stations).toHaveLength(3);
   });
 });

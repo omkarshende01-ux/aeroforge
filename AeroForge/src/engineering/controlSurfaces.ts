@@ -300,7 +300,7 @@ export function buildControlSurfaceGeometry(design: AircraftDesign, surface: Con
       for (let index = 0; index < ringSize; index += 1) { const next = (index + 1) % ringSize; if (ringOffset === 0) indices.push(centerIndex, index, next); else indices.push(centerIndex, ringOffset + next, ringOffset + index); }
     }
     if (instance.side === 'port') for (let index = 0; index < indices.length; index += 3) [indices[index + 1], indices[index + 2]] = [indices[index + 2], indices[index + 1]];
-    const deflectedVertices = neutralVertices.map((point) => rotatePointAboutAxis(point, instance.hingeStart, instance.hingeEnd, instance.physicalDeflectionDeg));
+    const deflectedVertices = Math.abs(instance.physicalDeflectionDeg) <= tolerance ? neutralVertices.map((point) => [...point] as AircraftPoint3) : neutralVertices.map((point) => rotatePointAboutAxis(point, instance.hingeStart, instance.hingeEnd, instance.physicalDeflectionDeg));
     return { ...instance, controlSurfaceId: surface.id, kind: surface.kind, neutralVertices, deflectedVertices, indices };
   });
 }

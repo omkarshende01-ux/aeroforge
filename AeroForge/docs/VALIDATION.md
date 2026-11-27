@@ -25,9 +25,9 @@ The portfolio MVP requires V2 for its primary reference workflow and at least V1
 | Preliminary sizing | Closed-form electric/fuel mass, energy, reserve, wing, and power benchmarks; convergence matrix; NASA TERA direct sizing sanity check | V2 for declared equations | Published full-aircraft mass/battery closure not reproduced; NASA case has a higher-fidelity battery/mission model |
 | Static stability | Independent tail-volume/neutral-point/static-margin calculation | V1 | Relies on supplied derivatives; no trim or lateral/dynamic modes |
 | Structures | Elliptical-load root shear/moment compared with analytical values | V1/V2 | Constant EI; no self-weight/torsion/buckling/material library/load-transfer evidence |
-| Build quality | Typecheck, 110 tests across 19 files, production build, and M5.5 browser workflow complete successfully on Windows | V1 | Existing Vite main-chunk size warning remains (1,197.16 kB minified / 327.78 kB gzip); CI/clean-clone evidence is still planned |
+| Build quality | Typecheck, 111 tests across 19 files, production build, and M5.5 browser workflow complete successfully on Windows | V1 | Existing Vite main-chunk size warning remains (1,198.65 kB minified / 327.99 kB gzip); CI/clean-clone evidence is still planned |
 
-The current suite contains 110 tests across 19 test files. Detailed M4.5 evidence and source links are recorded in `docs/BENCHMARKS.md`; M5.1-M5.5 geometry evidence is recorded below. This count is inventory, not proof of completeness. Each release must reproduce tests and build from a clean checkout and record tool versions and environment.
+The current suite contains 111 tests across 19 test files. Detailed M4.5 evidence and source links are recorded in `docs/BENCHMARKS.md`; M5.1-M5.5 geometry evidence is recorded below. This count is inventory, not proof of completeness. Each release must reproduce tests and build from a clean checkout and record tool versions and environment.
 
 ## Validation process
 
@@ -99,6 +99,7 @@ The current suite contains 110 tests across 19 test files. Detailed M4.5 evidenc
 - M5.5 tail cases independently recover trapezoid area, aspect ratio, MAC, aerodynamic references, both tail moment arms, and `V_H`/`V_V`. Multi-panel insertion reuses the wing editor transformation and preserves analytical geometry on removal. Store tests verify fuselage/tail undo/reset and reject tail changes that invalidate attached elevators or rudders.
 - Schema-v2 migration tests preserve the prior wing metrics, fuselage length/maximum diameter, tail spans, and control model. M4.6 regression verifies detached candidate fuselage and tail station arrays are deep copies. Existing sizing, aerodynamics, stability, structures, and mission tests remain green.
 - M5.5 browser smoke covers fuselage insert and live volume/centroid changes, actionable negative-width rejection, undo recovery, horizontal-tail insertion and metric updates, vertical-tail live editing/reset, station cross-section display, and elevator/rudder preservation after compatible tail changes.
+- The refined illustrative demonstrator asserts wing and horizontal-tail reference heights lie inside the interpolated fuselage envelope, the vertical-tail base lies within `0.08 m` of the local dorsal surface, and all three component definitions remain editable multi-station models. This verifies attachment consistency, not a structural joint or aerodynamic interference model.
 - Multi-section volume and independent numerical-integration comparison remain planned because M5.1 defines a reference surface, not a closed wing volume model. Target relative error for later numerical comparisons remains below 0.1%.
 - NACA symmetric/cambered section properties, cosine spacing, finite normals, winding, closure, section continuity, and mirrored topology.
 - Translation/rotation/reference-frame invariance where applicable; render tessellation changes must not change analytical reference properties.

@@ -102,7 +102,7 @@ describe('versioned aircraft design state', () => {
     expect(useDesignStore.getState().design.horizontalTail).toEqual(design.horizontalTail);
 
     const vertical = structuredClone(design.verticalTail); vertical.stations[1].spanPositionM = 0.5;
-    expect(useDesignStore.getState().commitVerticalTailGeometry(vertical).join(' ')).toMatch(/conflicts.*exceeds/i);
+    expect(useDesignStore.getState().commitVerticalTailGeometry(vertical).join(' ')).toMatch(/conflicts.*(exceeds|crosses)/i);
     expect(useDesignStore.getState().design.verticalTail).toEqual(design.verticalTail);
   });
 });

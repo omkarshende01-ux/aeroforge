@@ -82,7 +82,7 @@ Estimated workload is 49.5 focused days for P0 and 11.5 days for P1. A one-engin
 | FCS-10 | 3 | Actuator/sensor models, PID loops, margins, scripted evaluation | SIM-10 | 10–15 d |
 | STR-10 | 4 | Torsion, shear, buckling, modal response, aeroelastic load iteration | VLM, structure MVP | 15–25 d |
 | OPT-10 | 5 | Pareto, surrogate, robust/uncertainty optimization | Stable full pipeline | 12–20 d |
-| GEO-10 | 6 | Nacelles, landing gear, nonconventional layouts, richer fuselage controls | Geometry MVP | 8–15 d |
+| GEO-10 | 6 | Parametric engine/nacelle and propeller geometry, landing gear, cockpit/cabin interiors, nonconventional layouts, and richer fuselage controls | Geometry MVP plus propulsion/packaging contracts | 8–15 d |
 | CAD-10 | 7 | STEP/IGES or CAD-kernel service and external CAD round-trip | Stable geometry | 10–20 d |
 | INF-10 | 8 | Python solver service, queued jobs, accounts/collaboration if justified | Proven browser limits | 15–30 d |
 

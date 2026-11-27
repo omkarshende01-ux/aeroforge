@@ -54,6 +54,8 @@ M5.5 advances `AircraftDesign` to schema version 3 because fuselage and empennag
 
 Pure fuselage engineering owns validation, smooth interpolation, cross-section generation, closed mesh data, volume/centroid quadrature, and wetted-area discretization. Pure tail engineering owns validation, reference integration, placement transforms, loft rings, and tail volume coefficients. Three.js only triangulates returned geometry. Store history is component-local and bounded; accepted tail commits are checked against existing elevator/rudder definitions before mutation. M4.6 previews deep-copy every component station array and never become authoritative.
 
+The M5.5 demonstrator refinement changes only `defaultDesign` station coordinates and renderer materials/lights. Wing/fuselage/tail attachment continuity is produced by overlapping the generated authoritative surfaces, not by adding fairing meshes. Smooth shading consumes computed vertex normals from the same loft topology; it does not introduce another geometry source.
+
 ## Milestone 1 acceptance
 - Local app opens; parameter edits visibly update mathematically generated geometry.
 - Orbit/pan/zoom and standard orthographic views work.

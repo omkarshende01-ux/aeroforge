@@ -1,10 +1,22 @@
 import { describe, expect, it } from 'vitest';
-import { defaultDesign } from '../domain/types';
+import { defaultDesign, type WingStation } from '../domain/types';
 import { calculateMassProperties } from './massProperties';
 import { calculatePerformance } from './performance';
 import { calculateStability } from './stability';
 import { calculateWingBeam } from './structures';
 import { standardAtmosphere } from './atmosphere';
+
+function independentReference(stations: WingStation[], symmetryFactor: number) {
+  let halfArea = 0; let chordSquared = 0; let quarterMoment = 0;
+  stations.slice(0, -1).forEach((from, index) => {
+    const to = stations[index + 1]; const span = to.spanPositionM - from.spanPositionM;
+    halfArea += span * (from.chordM + to.chordM) / 2;
+    chordSquared += span * (from.chordM ** 2 + from.chordM * to.chordM + to.chordM ** 2) / 3;
+    const fromQuarter = from.leadingEdgeXM + 0.25 * from.chordM; const toQuarter = to.leadingEdgeXM + 0.25 * to.chordM;
+    quarterMoment += span * (2 * from.chordM * fromQuarter + from.chordM * toQuarter + to.chordM * fromQuarter + 2 * to.chordM * toQuarter) / 6;
+  });
+  return { areaM2: symmetryFactor * halfArea, macM: chordSquared / halfArea, quarterChordXM: quarterMoment / halfArea };
+}
 
 describe('Phase 3 multidisciplinary baseline', () => {
   it('computes component mass and longitudinal CG from independent moments', () => {
@@ -27,16 +39,14 @@ describe('Phase 3 multidisciplinary baseline', () => {
   });
 
   it('computes tail volume, neutral point and static margin from supplied stations', () => {
-    const result = calculateStability(defaultDesign); const tailArea = 4.2 * 1.15 * 1.55 / 2; const mac = 14 / 9;
-    const wingY = 12 / 6 * (1 + 2 * 0.5) / 1.5; const wingAc = 2.35 + wingY * Math.tan(3 * Math.PI / 180) + 0.25 * mac;
-    const tailMac = (2 / 3) * 1.15 * (1 + 0.55 + 0.55 ** 2) / 1.55; const tailY = 4.2 / 6 * (1 + 2 * 0.55) / 1.55; const tailAc = 7.15 + tailY * Math.tan(8 * Math.PI / 180) + 0.25 * tailMac;
-    const volume = tailArea * (tailAc - wingAc) / (18 * mac);
+    const result = calculateStability(defaultDesign); const wing = independentReference(defaultDesign.wing.stations, 2); const tail = independentReference(defaultDesign.horizontalTail.stations, 2);
+    const volume = tail.areaM2 * (tail.quarterChordXM - wing.quarterChordXM) / (wing.areaM2 * wing.macM);
     const wingSlope = (2 * Math.PI) / (1 + (2 * Math.PI) / (Math.PI * 0.8 * 8));
-    const neutralPoint = wingAc + mac * 0.9 * (4.2 / wingSlope) * 0.65 * volume;
+    const neutralPoint = wing.quarterChordXM + wing.macM * 0.9 * (4.2 / wingSlope) * 0.65 * volume;
     expect(result.horizontalTailVolume).toBeCloseTo(volume, 10);
     expect(result.neutralPointXM).toBeCloseTo(neutralPoint, 10);
     const cg = (600 * 3.7 + 180 * 0.9 + 250 * 3.1 + 170 * 2.8) / 1200;
-    expect(result.staticMargin).toBeCloseTo((neutralPoint - cg) / mac, 10);
+    expect(result.staticMargin).toBeCloseTo((neutralPoint - cg) / wing.macM, 10);
   });
 
   it('matches analytical elliptical root shear and moment', () => {

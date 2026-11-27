@@ -47,7 +47,7 @@ describe('M5.5 multi-station empennage geometry', () => {
     const inserted = insertWingStationAfter(horizontalTailAsWing(defaultDesign.horizontalTail), 'horizontal-tail-root');
     expect(inserted.errors).toEqual([]);
     const tail = horizontalTailFromWing(defaultDesign.horizontalTail, inserted.wing!);
-    expect(tail.stations).toHaveLength(3); expect(validateHorizontalTailGeometry(tail).valid).toBe(true);
+    expect(tail.stations).toHaveLength(defaultDesign.horizontalTail.stations.length + 1); expect(validateHorizontalTailGeometry(tail).valid).toBe(true);
     const removed = removeWingStation(horizontalTailAsWing(tail), inserted.selectedStationId!);
     const restored = horizontalTailFromWing(tail, removed.wing!);
     expect(restored.stations).toEqual(defaultDesign.horizontalTail.stations);
@@ -57,8 +57,9 @@ describe('M5.5 multi-station empennage geometry', () => {
   });
 
   it('interpolates vertical stations and produces finite lofts for both tails', () => {
-    const sample = sampleVerticalTailSection(defaultDesign.verticalTail, 0.95);
-    expect(sample.station.chordM).toBeCloseTo((1.7 + 0.68) / 2, 12);
+    const sampleHeight = 0.95; const sample = sampleVerticalTailSection(defaultDesign.verticalTail, sampleHeight);
+    const from = defaultDesign.verticalTail.stations[1]; const to = defaultDesign.verticalTail.stations[2]; const fraction = (sampleHeight - from.spanPositionM) / (to.spanPositionM - from.spanPositionM);
+    expect(sample.station.chordM).toBeCloseTo(from.chordM + fraction * (to.chordM - from.chordM), 12);
     const points = [...buildHorizontalTailLoftRings(defaultDesign.horizontalTail), ...buildVerticalTailLoftRings(defaultDesign.verticalTail)].flatMap((ring) => ring.points.flat());
     expect(points.every(Number.isFinite)).toBe(true);
   });

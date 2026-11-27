@@ -15,7 +15,8 @@ The repository is on the `development` branch. M5.5, Advanced Parametric Fuselag
 - Preserved the existing preliminary sizing, analysis, and M4.6 isolation behavior. Candidate previews now deep-copy the station arrays for fuselage and both tails; no component mass or drag model is inferred from geometric volume or wetted area.
 - Added independent circle/ellipse area, cylinder/ellipsoid volume, wetted-area convergence, centroid, editing, invalid-definition, watertightness, tail-reference, volume-coefficient, migration, control-compatibility, store-history, and candidate-isolation tests.
 - Browser smoke covered fuselage insertion, live volume updates, invalid-dimension rejection, undo, horizontal-tail insertion and live reference changes, vertical-tail editing/reset, section overlays, and elevator/rudder preservation.
-- Verification passes: strict typecheck, 110 automated tests across 19 files, and production build. Vite's existing non-blocking main-chunk warning remains (approximately 1.197 MB minified / 328 kB gzip).
+- A follow-up default-design refinement now uses 11 fuselage stations, multi-panel stabilizers, and authoritative low-wing/fuselage/dorsal-fin attachment coordinates to present a coherent conventional subsonic configuration. Smooth computed normals and physically based paint materials improve visual continuity without decorative geometry. All dimensions are documented illustrative assumptions.
+- Verification passes: strict typecheck, 111 automated tests across 19 files, and production build. Vite's existing non-blocking main-chunk warning remains (approximately 1.199 MB minified / 328 kB gzip).
 
 ## M5.4 checkpoint - 2026-11-26
 
@@ -161,16 +162,16 @@ The codebase is a functional conceptual-design demonstrator with three prelimina
 | Stability | Tail area/volume, neutral point, static margin from supplied tail/downwash assumptions | Implemented baseline; no trim, control authority, lateral or dynamic stability |
 | Flight envelope | Simplified aerodynamic/structural maneuver envelope | Implemented baseline; no gust or dynamic effects |
 | Structures | Half-wing Euler–Bernoulli cantilever, constant EI, elliptical limit load, shear/moment/stress/deflection/safety factor | Implemented benchmark model; no wing box, materials workflow, self-weight, torsion, buckling, or FEA |
-| Tests | 110 automated tests in 19 files, including fuselage/tail analytical geometry, watertight topology, control compatibility, migrations/isolation, section transforms, editor history, published-data sanity checks, mission/constraint benchmarks, mass/energy closure, robustness, version contracts, and units | Geometry reference equations and M4.2–M4.4 equations are independently verified in their declared scope; full-aircraft external validation remains incomplete |
+| Tests | 111 automated tests in 19 files, including fuselage/tail analytical geometry and default attachments, watertight topology, control compatibility, migrations/isolation, section transforms, editor history, published-data sanity checks, mission/constraint benchmarks, mass/energy closure, robustness, version contracts, and units | Geometry reference equations and M4.2–M4.4 equations are independently verified in their declared scope; full-aircraft external validation remains incomplete |
 | Optimization, 6-DOF, flight controls | Conventional movable geometry only; no aerodynamic effectiveness, dynamics, or controller implementation | Planned beyond geometry |
 | Save/load, reports, geometry/data export, public release workflow | No implementation found | Planned |
 
 ## Verification performed at this checkpoint
 
 - `npm.cmd run typecheck`: **passed**.
-- `npm.cmd test`: **passed**, 110 tests across 19 files.
+- `npm.cmd test`: **passed**, 111 tests across 19 files.
 - `npm.cmd run build`: **passed**.
-- Vite reports the existing production chunk warning: approximately 1.197 MB minified / 328 kB gzip for the main JavaScript asset.
+- Vite reports the existing production chunk warning: approximately 1.199 MB minified / 328 kB gzip for the main JavaScript asset.
 
 ## Phase status against the long-term objective
 
