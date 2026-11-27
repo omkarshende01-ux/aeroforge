@@ -90,9 +90,9 @@ export function generateProvisionalAircraftCandidate(
   const previewDesign: AircraftDesign = {
     ...design,
     wing: migrateLegacyWing({ ...sourceWing, spanM, rootChordM, taperRatio: inputs.taperRatio }),
-    fuselage: { ...design.fuselage },
-    horizontalTail: { ...design.horizontalTail },
-    verticalTail: { ...design.verticalTail },
+    fuselage: structuredClone(design.fuselage),
+    horizontalTail: structuredClone(design.horizontalTail),
+    verticalTail: structuredClone(design.verticalTail),
     controlSurfaces: {
       ...design.controlSurfaces,
       surfaces: design.controlSurfaces.surfaces.map((surface) => surface.parentSurface === 'wing' ? {

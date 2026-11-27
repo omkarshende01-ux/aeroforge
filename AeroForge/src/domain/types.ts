@@ -43,6 +43,41 @@ export type WingGeometry = {
   sections: WingSection[];
 };
 
+export type FuselageCrossSectionShape = 'circular' | 'elliptical' | 'superelliptical';
+
+export type FuselageStation = {
+  id: string;
+  xPositionM: number;
+  widthM: number;
+  heightM: number;
+  lateralCenterM: number;
+  verticalCenterM: number;
+  shape: FuselageCrossSectionShape;
+  superellipseExponent: number;
+};
+
+export type FuselageGeometry = {
+  modelVersion: 1;
+  stations: FuselageStation[];
+};
+
+export type HorizontalTailGeometry = {
+  modelVersion: 1;
+  lateralPositionM: number;
+  verticalPositionM: number;
+  incidenceDeg: number;
+  stations: WingStation[];
+  sections: WingSection[];
+};
+
+export type VerticalTailGeometry = {
+  modelVersion: 1;
+  lateralPositionM: number;
+  baseVerticalPositionM: number;
+  stations: WingStation[];
+  sections: WingSection[];
+};
+
 export type ControlSurfaceKind = 'aileron' | 'flap' | 'elevator' | 'rudder';
 export type ControlSurfaceParent = 'wing' | 'horizontal-tail' | 'vertical-tail';
 export type ControlSurfaceOperation = 'symmetric' | 'differential' | 'independent';
@@ -77,9 +112,9 @@ export type AircraftDesign = {
   massKg: number;
   wing: WingGeometry;
   controlSurfaces: ControlSurfaceModel;
-  fuselage: { lengthM: number; maxDiameterM: number; noseLengthM: number; cabinLengthM: number };
-  horizontalTail: { spanM: number; rootChordM: number; taperRatio: number; sweepDeg: number; incidenceDeg: number; rootLeadingEdgeXM: number; verticalPositionM: number };
-  verticalTail: { heightM: number; rootChordM: number; taperRatio: number; sweepDeg: number; rootLeadingEdgeXM: number; basePositionM: number };
+  fuselage: FuselageGeometry;
+  horizontalTail: HorizontalTailGeometry;
+  verticalTail: VerticalTailGeometry;
   flightCondition: {
     altitudeM: number;
     densitySource: 'isa' | 'manual';
@@ -122,9 +157,33 @@ export const defaultDesign: AircraftDesign = {
     sections: [{ id: 'wing-panel', fromStationId: 'wing-root', toStationId: 'wing-tip', dihedralDeg: 3 }],
   },
   controlSurfaces: { modelVersion: 1, surfaces: [] },
-  fuselage: { lengthM: 9, maxDiameterM: 1.4, noseLengthM: 1.45, cabinLengthM: 3.3 },
-  horizontalTail: { spanM: 4.2, rootChordM: 1.15, taperRatio: 0.55, sweepDeg: 8, incidenceDeg: 0, rootLeadingEdgeXM: 7.15, verticalPositionM: 0.3 },
-  verticalTail: { heightM: 1.9, rootChordM: 1.7, taperRatio: 0.4, sweepDeg: 24, rootLeadingEdgeXM: 6.85, basePositionM: 0.12 },
+  fuselage: {
+    modelVersion: 1,
+    stations: [
+      { id: 'fuselage-nose-tip', xPositionM: 0, widthM: 0, heightM: 0, lateralCenterM: 0, verticalCenterM: 0, shape: 'circular', superellipseExponent: 2 },
+      { id: 'fuselage-nose-mid', xPositionM: 0.55, widthM: 0.78, heightM: 0.9, lateralCenterM: 0, verticalCenterM: 0, shape: 'elliptical', superellipseExponent: 2 },
+      { id: 'fuselage-cabin-front', xPositionM: 1.45, widthM: 1.4, heightM: 1.4, lateralCenterM: 0, verticalCenterM: 0, shape: 'circular', superellipseExponent: 2 },
+      { id: 'fuselage-cabin-rear', xPositionM: 4.75, widthM: 1.33, heightM: 1.33, lateralCenterM: 0, verticalCenterM: 0.02, shape: 'circular', superellipseExponent: 2 },
+      { id: 'fuselage-tail-mid', xPositionM: 7.1, widthM: 0.72, heightM: 0.82, lateralCenterM: 0, verticalCenterM: 0.12, shape: 'elliptical', superellipseExponent: 2 },
+      { id: 'fuselage-tail-tip', xPositionM: 9, widthM: 0, heightM: 0, lateralCenterM: 0, verticalCenterM: 0.22, shape: 'circular', superellipseExponent: 2 },
+    ],
+  },
+  horizontalTail: {
+    modelVersion: 1, lateralPositionM: 0, verticalPositionM: 0.3, incidenceDeg: 0,
+    stations: [
+      { id: 'horizontal-tail-root', spanPositionM: 0, chordM: 1.15, leadingEdgeXM: 7.15, geometricTwistDeg: 0, airfoilId: 'NACA 0012' },
+      { id: 'horizontal-tail-tip', spanPositionM: 2.1, chordM: 0.6325, leadingEdgeXM: 7.15 + 2.1 * Math.tan(8 * Math.PI / 180), geometricTwistDeg: 0, airfoilId: 'NACA 0012' },
+    ],
+    sections: [{ id: 'horizontal-tail-panel', fromStationId: 'horizontal-tail-root', toStationId: 'horizontal-tail-tip', dihedralDeg: 0 }],
+  },
+  verticalTail: {
+    modelVersion: 1, lateralPositionM: 0, baseVerticalPositionM: 0.12,
+    stations: [
+      { id: 'vertical-tail-root', spanPositionM: 0, chordM: 1.7, leadingEdgeXM: 6.85, geometricTwistDeg: 0, airfoilId: 'NACA 0012' },
+      { id: 'vertical-tail-tip', spanPositionM: 1.9, chordM: 0.68, leadingEdgeXM: 6.85 + 1.9 * Math.tan(24 * Math.PI / 180), geometricTwistDeg: 0, airfoilId: 'NACA 0012' },
+    ],
+    sections: [{ id: 'vertical-tail-panel', fromStationId: 'vertical-tail-root', toStationId: 'vertical-tail-tip', dihedralDeg: 0 }],
+  },
   flightCondition: {
     altitudeM: 0,
     densitySource: 'isa',

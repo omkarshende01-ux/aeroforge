@@ -9,6 +9,7 @@ import type {
 import { naca4PointAtChordFraction, type AirfoilSurfaceSide } from './airfoil';
 import { physicalWingStations } from './wingGeometry';
 import { sampleWingSectionAtSpan, transformWingAirfoilPoint, type AircraftPoint3, type AirfoilPoint2, type WingSectionSample } from './wingLoft';
+import { sampleHorizontalTailSectionAtDistance, sampleVerticalTailSection, transformVerticalTailAirfoilPoint } from './tailGeometry';
 
 export const CONTROL_SURFACE_MODEL_VERSION = 1 as const;
 const tolerance = 1e-9;
@@ -68,11 +69,13 @@ function wingSideSpan(design: AircraftDesign, side: 'port' | 'starboard'): numbe
 
 function maximumSpan(design: AircraftDesign, parent: ControlSurfaceParent, side: PhysicalControlSide): number {
   if (parent === 'wing') return side === 'center' ? 0 : wingSideSpan(design, side);
-  if (parent === 'horizontal-tail') return design.horizontalTail.spanM / 2;
-  return design.verticalTail.heightM;
+  if (parent === 'horizontal-tail') return design.horizontalTail.stations.at(-1)!.spanPositionM;
+  return design.verticalTail.stations.at(-1)!.spanPositionM;
 }
 
-function wingPanelBoundaries(design: AircraftDesign, side: 'port' | 'starboard'): number[] {
+function parentPanelBoundaries(design: AircraftDesign, parent: ControlSurfaceParent, side: PhysicalControlSide): number[] {
+  if (parent === 'horizontal-tail') return design.horizontalTail.stations.map((station) => station.spanPositionM);
+  if (parent === 'vertical-tail') return design.verticalTail.stations.map((station) => station.spanPositionM);
   const distances = physicalWingStations(design.wing)
     .filter((station) => side === 'port' ? station.spanPositionM <= tolerance : station.spanPositionM >= -tolerance)
     .map((station) => Math.abs(station.spanPositionM));
@@ -108,10 +111,8 @@ export function validateControlSurfaceModel(design: AircraftDesign, model: Contr
     for (const side of physicalSides(surface)) {
       const limit = maximumSpan(design, surface.parentSurface, side);
       if (finite(surface.spanEndM) && surface.spanEndM > limit + tolerance) errors.push(`${label} end station ${surface.spanEndM.toFixed(3)} m exceeds the ${side} ${surface.parentSurface} limit ${limit.toFixed(3)} m.`);
-      if (surface.parentSurface === 'wing' && side !== 'center') {
-        const crossesBreak = wingPanelBoundaries(design, side).some((boundary) => boundary > surface.spanStartM + tolerance && boundary < surface.spanEndM - tolerance);
-        if (crossesBreak) errors.push(`${label} crosses a wing station break. M5.4 rigid controls must remain within one parent panel.`);
-      }
+      const crossesBreak = parentPanelBoundaries(design, surface.parentSurface, side).some((boundary) => boundary > surface.spanStartM + tolerance && boundary < surface.spanEndM - tolerance);
+      if (crossesBreak) errors.push(`${label} crosses a ${surface.parentSurface} station break. A rigid control must remain within one parent panel.`);
     }
   });
   const enabled = model.surfaces.filter((surface) => surface.enabled);
@@ -138,9 +139,11 @@ function uniqueControlId(model: ControlSurfaceModel, kind: ControlSurfaceKind): 
 }
 
 function defaultSpanRange(design: AircraftDesign, kind: ControlSurfaceKind): [number, number] {
-  if (kind === 'rudder') return [0.1 * design.verticalTail.heightM, 0.9 * design.verticalTail.heightM];
-  if (kind === 'elevator') return [0.1 * design.horizontalTail.spanM / 2, 0.9 * design.horizontalTail.spanM / 2];
-  const boundaries = wingPanelBoundaries(design, 'starboard');
+  if (kind === 'rudder' || kind === 'elevator') {
+    const boundaries = kind === 'rudder' ? design.verticalTail.stations.map((station) => station.spanPositionM) : design.horizontalTail.stations.map((station) => station.spanPositionM);
+    const from = boundaries[0]; const to = boundaries[1]; return [Number(interpolate(from, to, 0.1).toFixed(6)), Number(interpolate(from, to, 0.9).toFixed(6))];
+  }
+  const boundaries = parentPanelBoundaries(design, 'wing', 'starboard');
   const panelIndex = kind === 'aileron' ? boundaries.length - 2 : 0;
   const from = boundaries[Math.max(0, panelIndex)]; const to = boundaries[Math.max(1, panelIndex + 1)];
   const singlePanel = boundaries.length === 2;
@@ -197,7 +200,7 @@ type ParentSample = {
   profilePoint: (xOverChord: number, side: AirfoilSurfaceSide) => AircraftPoint3;
 };
 
-function blendAirfoilPoint(sample: WingSectionSample, xOverChord: number, side: AirfoilSurfaceSide): AirfoilPoint2 {
+function blendAirfoilPoint(sample: Pick<WingSectionSample, 'fromAirfoilId' | 'toAirfoilId' | 'airfoilBlendFraction'>, xOverChord: number, side: AirfoilSurfaceSide): AirfoilPoint2 {
   const from = naca4PointAtChordFraction(sample.fromAirfoilId, xOverChord, side);
   const to = naca4PointAtChordFraction(sample.toAirfoilId, xOverChord, side);
   return [interpolate(from[0], to[0], sample.airfoilBlendFraction), interpolate(from[1], to[1], sample.airfoilBlendFraction)];
@@ -213,20 +216,14 @@ function parentSample(design: AircraftDesign, parent: ControlSurfaceParent, side
     };
   }
   if (parent === 'horizontal-tail') {
-    const tail = design.horizontalTail; const halfSpan = tail.spanM / 2; const fraction = distanceM / halfSpan;
-    const station = {
-      id: `horizontal-tail-${side}-${distanceM}`, spanPositionM: side === 'port' ? -distanceM : distanceM,
-      chordM: tail.rootChordM * (1 - fraction * (1 - tail.taperRatio)),
-      leadingEdgeXM: tail.rootLeadingEdgeXM + distanceM * Math.tan(tail.sweepDeg * Math.PI / 180),
-      geometricTwistDeg: tail.incidenceDeg, airfoilId: 'NACA 0012', verticalPositionM: tail.verticalPositionM,
-    };
-    return { chordM: station.chordM, point: (x, z) => transformWingAirfoilPoint(station, [x, z]), profilePoint: (x, surfaceSide) => transformWingAirfoilPoint(station, naca4PointAtChordFraction('NACA 0012', x, surfaceSide)) };
+    const sample = sampleHorizontalTailSectionAtDistance(design.horizontalTail, side as 'port' | 'starboard', distanceM);
+    return { chordM: sample.station.chordM, point: (x, z) => transformWingAirfoilPoint(sample.station, [x, z]), profilePoint: (x, surfaceSide) => transformWingAirfoilPoint(sample.station, blendAirfoilPoint(sample, x, surfaceSide)) };
   }
-  const tail = design.verticalTail; const fraction = distanceM / tail.heightM; const chordM = tail.rootChordM * (1 - fraction * (1 - tail.taperRatio)); const leadingEdgeXM = tail.rootLeadingEdgeXM + distanceM * Math.tan(tail.sweepDeg * Math.PI / 180);
+  const sample = sampleVerticalTailSection(design.verticalTail, distanceM);
   return {
-    chordM,
-    point: (x, y) => [leadingEdgeXM + x * chordM, y * chordM, tail.basePositionM + distanceM],
-    profilePoint: (x, surfaceSide) => { const point = naca4PointAtChordFraction('NACA 0012', x, surfaceSide); return [leadingEdgeXM + point[0] * chordM, point[1] * chordM, tail.basePositionM + distanceM]; },
+    chordM: sample.station.chordM,
+    point: (x, y) => transformVerticalTailAirfoilPoint(design.verticalTail, sample.station, [x, y]),
+    profilePoint: (x, surfaceSide) => transformVerticalTailAirfoilPoint(design.verticalTail, sample.station, blendAirfoilPoint(sample, x, surfaceSide)),
   };
 }
 

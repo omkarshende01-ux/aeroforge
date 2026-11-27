@@ -35,8 +35,12 @@ describe('M4.6 provisional aircraft candidate generation', () => {
     expect(defaultDesign).toEqual(original);
     expect(candidate.previewDesign).not.toBe(defaultDesign);
     expect(candidate.previewDesign.fuselage).not.toBe(defaultDesign.fuselage);
+    expect(candidate.previewDesign.fuselage.stations).not.toBe(defaultDesign.fuselage.stations);
     expect(candidate.previewDesign.fuselage).toEqual(defaultDesign.fuselage);
+    expect(candidate.previewDesign.horizontalTail).not.toBe(defaultDesign.horizontalTail);
+    expect(candidate.previewDesign.horizontalTail.stations).not.toBe(defaultDesign.horizontalTail.stations);
     expect(candidate.previewDesign.horizontalTail).toEqual(defaultDesign.horizontalTail);
+    expect(candidate.previewDesign.verticalTail).not.toBe(defaultDesign.verticalTail);
     expect(legacyWingView(candidate.previewDesign.wing).sweepDeg).toBeCloseTo(legacyWingView(defaultDesign.wing).sweepDeg);
     expect(candidate.previewDesign.massKg).toBe(sizing.finalTakeoffMassKg);
     expect(candidate.previewDesign.propulsion.shaftPowerW).toBe(sizing.requiredInstalledShaftPowerW);

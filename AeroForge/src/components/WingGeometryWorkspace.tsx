@@ -16,6 +16,8 @@ import {
 import { useDesignStore } from '../state/useDesignStore';
 import { Viewport } from './Viewport';
 import { ControlSurfaceEditor } from './ControlSurfaceEditor';
+import { FuselageEditor } from './FuselageEditor';
+import { EmpennageEditor } from './EmpennageEditor';
 
 const airfoilOptions = ['NACA 0012', 'NACA 2412', 'NACA 4412'];
 
@@ -31,6 +33,9 @@ export function WingGeometryWorkspace() {
   const resetWing = useDesignStore((state) => state.resetWingGeometry);
   const selectedControlSurfaceId = useDesignStore((state) => state.selectedControlSurfaceId);
   const selectControlSurface = useDesignStore((state) => state.selectControlSurface);
+  const selectedFuselageStationId = useDesignStore((state) => state.selectedFuselageStationId); const selectFuselageStation = useDesignStore((state) => state.selectFuselageStation);
+  const selectedHorizontalTailStationId = useDesignStore((state) => state.selectedHorizontalTailStationId); const selectHorizontalTailStation = useDesignStore((state) => state.selectHorizontalTailStation);
+  const selectedVerticalTailStationId = useDesignStore((state) => state.selectedVerticalTailStationId); const selectVerticalTailStation = useDesignStore((state) => state.selectVerticalTailStation);
   const [showDimensions, setShowDimensions] = useState(false);
   const [showCrossSections, setShowCrossSections] = useState(false);
   const [showGeometryGuides, setShowGeometryGuides] = useState(true);
@@ -54,7 +59,7 @@ export function WingGeometryWorkspace() {
 
   return <div className="wing-editor-workspace">
     <div className="wing-editor-viewport">
-      <Viewport selectedStationId={selectedStationId} onSelectStation={selectStation} selectedControlSurfaceId={selectedControlSurfaceId} onSelectControlSurface={selectControlSurface} showStationMarkers showDimensions={showDimensions} showCrossSections={showCrossSections} showGeometryGuides={showGeometryGuides} />
+      <Viewport selectedStationId={selectedStationId} onSelectStation={selectStation} selectedFuselageStationId={selectedFuselageStationId} onSelectFuselageStation={selectFuselageStation} selectedHorizontalTailStationId={selectedHorizontalTailStationId} onSelectHorizontalTailStation={selectHorizontalTailStation} selectedVerticalTailStationId={selectedVerticalTailStationId} onSelectVerticalTailStation={selectVerticalTailStation} selectedControlSurfaceId={selectedControlSurfaceId} onSelectControlSurface={selectControlSurface} showStationMarkers showDimensions={showDimensions} showCrossSections={showCrossSections} showGeometryGuides={showGeometryGuides} />
       <div className="geometry-display-controls">
         <button onClick={() => setShowCrossSections((current) => !current)}>{showCrossSections ? <EyeOff size={13} /> : <Eye size={13} />}{showCrossSections ? 'Hide sections' : 'Show sections'}</button>
         <button onClick={() => setShowGeometryGuides((current) => !current)}>{showGeometryGuides ? <EyeOff size={13} /> : <Eye size={13} />}{showGeometryGuides ? 'Hide guides' : 'Show guides'}</button>
@@ -105,6 +110,8 @@ export function WingGeometryWorkspace() {
         </table>
       </div>
       <div className="wing-editor-limitation"><strong>ANALYSIS LIMITATION</strong><span>{limitation}</span></div>
+      <FuselageEditor />
+      <EmpennageEditor />
       <ControlSurfaceEditor />
     </section>
   </div>;

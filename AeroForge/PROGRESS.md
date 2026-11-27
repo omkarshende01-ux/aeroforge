@@ -1,5 +1,22 @@
 # AeroForge progress
 
+## M5.5 checkpoint - 2026-11-27
+
+The repository is on the `development` branch. M5.5, Advanced Parametric Fuselage and Empennage Geometry, is complete. `AircraftDesign` is schema version 3; its component-versioned fuselage and conventional empennage station models are authoritative, while the schema-v2 wing remains unchanged. No VLM, CFD, new aerodynamic solver, landing gear, nacelle, cabin, FEA, unconventional tail, or optimization work was added.
+
+## M5.5 completed
+
+- Replaced the scalar fuselage with ordered longitudinal stations carrying width, height, lateral/vertical center offsets, circular/elliptical/superelliptical shape, and exponent. Schema-v1 and schema-v2 migrations preserve the prior overall dimensions and scalar tail planforms.
+- Added C1 smoothstep interpolation between fuselage stations, closed nose/tail triangulation, finite normals, circular/superellipse area evaluation, Gaussian volume and volume-centroid integration, and triangulated wetted-area estimation with documented 8-by-48 default discretization.
+- Added a full fuselage station editor with add/insert/duplicate/remove/edit, cross-section overlays, station selection/highlighting, live length/width/height/area/volume/wetted-area/centroid feedback, validation, undo, and reset. The UI explicitly distinguishes geometric centroid from aircraft CG and outer volume from usable volume.
+- Generalized the conventional horizontal and vertical tails to multi-station chord/leading-edge/twist/airfoil definitions and adjacent sections. Horizontal-tail incidence, dihedral, and three-axis placement are supported; the vertical tail supports lateral/base-height placement and explicitly rejects cant in the conventional configuration.
+- Reused the wing station operations, profile interpolation, quarter-chord transform, and lofting path for the empennage. Added live projected areas, aspect ratios, MACs, reference locations, moment arms, and horizontal/vertical tail-volume coefficients.
+- Updated elevator and rudder geometry to derive from the actual tail stations and profiles. Tail edits are rejected when they invalidate attached controls; compatible edits preserve hinge coverage and deflection behavior.
+- Preserved the existing preliminary sizing, analysis, and M4.6 isolation behavior. Candidate previews now deep-copy the station arrays for fuselage and both tails; no component mass or drag model is inferred from geometric volume or wetted area.
+- Added independent circle/ellipse area, cylinder/ellipsoid volume, wetted-area convergence, centroid, editing, invalid-definition, watertightness, tail-reference, volume-coefficient, migration, control-compatibility, store-history, and candidate-isolation tests.
+- Browser smoke covered fuselage insertion, live volume updates, invalid-dimension rejection, undo, horizontal-tail insertion and live reference changes, vertical-tail editing/reset, section overlays, and elevator/rudder preservation.
+- Verification passes: strict typecheck, 110 automated tests across 19 files, and production build. Vite's existing non-blocking main-chunk warning remains (approximately 1.197 MB minified / 328 kB gzip).
+
 ## M5.4 checkpoint - 2026-11-26
 
 The repository is on the `development` branch. M5.4, Parametric Control Surface Design, is complete. A separately versioned conventional control-surface model now derives movable geometry from the authoritative parent lifting surfaces and visualizes rigid three-dimensional hinge deflection without changing the undeflected reference aircraft. No VLM, aerodynamic control derivatives, flap corrections, trim, actuators, flight controls, complex high-lift devices, optimization, or persistence was added.
@@ -134,9 +151,9 @@ The codebase is a functional conceptual-design demonstrator with three prelimina
 | Capability | Evidence in repository | Assessment |
 |---|---|---|
 | Frontend foundation | React 18, strict TypeScript, Vite, Zustand, Three.js/React Three Fiber, Vitest; CAD-style navigation and inspector | Implemented baseline |
-| Shared design state | Typed `AircraftDesign` schema version 2 with incrementing revision and mission, geometry, mass, propulsion, stability, and structure groups | Versioned in memory; v1 wing migration exists, but project persistence is not implemented |
-| Geometry | Validated multi-section symmetric/asymmetric wing, independent station airfoils/twist, cosine-interpolated loft, cross-section/guides, interactive station editor, versioned conventional control surfaces with rigid 3D hinge deflection, trapezoidal tails, circular-section fuselage loft, component stations, standard views, orbit/pan/zoom | M5.4 conventional controls implemented; no generalized tail/fuselage stations, complex high-lift devices, or analysis lattice |
-| Geometry metrics | Piecewise projected area, span, aspect ratio, tip chord, MAC/reference locations, section properties, wing loading, conditional stall speed | Implemented and analytically tested |
+| Shared design state | Typed `AircraftDesign` schema version 3 with incrementing revision and mission, geometry, mass, propulsion, stability, and structure groups | Versioned in memory; v1/v2 geometry migrations exist, but project persistence is not implemented |
+| Geometry | Validated multi-section wing and conventional empennage, independent station airfoils/twist, cosine-interpolated lofts, generalized fuselage stations/cross-sections, component editors/history, and conventional controls with rigid 3D hinge deflection | M5.5 conventional geometry complete; no unconventional tails, complex high-lift devices, or analysis lattice |
+| Geometry metrics | Wing/tail projected area, span, aspect ratio, MAC/reference locations, tail moment arms/volume coefficients, fuselage area distribution/volume/wetted area/centroid, wing loading, and conditional stall speed | Implemented and analytically tested in declared scope |
 | Atmosphere | ISA 1976-style troposphere from 0–11 km plus manual density | Implemented and tested; manual-density Mach uses sea-level sound speed with warning |
 | Aerodynamics | Linear finite-wing lift slope, pre-stall CL, parabolic polar, forces, Mach, L/D, analytical elliptical span load | Implemented low-fidelity baseline; key coefficients are supplied assumptions |
 | Weight/CG | Four lumped component masses, longitudinal moments, CG, mismatch warning | Implemented baseline; no hierarchy, envelope, or inertia |
@@ -144,23 +161,23 @@ The codebase is a functional conceptual-design demonstrator with three prelimina
 | Stability | Tail area/volume, neutral point, static margin from supplied tail/downwash assumptions | Implemented baseline; no trim, control authority, lateral or dynamic stability |
 | Flight envelope | Simplified aerodynamic/structural maneuver envelope | Implemented baseline; no gust or dynamic effects |
 | Structures | Half-wing Euler–Bernoulli cantilever, constant EI, elliptical limit load, shear/moment/stress/deflection/safety factor | Implemented benchmark model; no wing box, materials workflow, self-weight, torsion, buckling, or FEA |
-| Tests | 96 automated tests in 17 files, including control geometry/operations, section transforms/loft topology, editor operations/history, independent geometry cases, analytical fixtures, published-data sanity checks, mission/constraint benchmarks, mass/energy closure, robustness, version contracts, and unit conversions | Geometry reference equations and M4.2–M4.4 equations are independently verified in their declared scope; full-aircraft external validation remains incomplete |
+| Tests | 110 automated tests in 19 files, including fuselage/tail analytical geometry, watertight topology, control compatibility, migrations/isolation, section transforms, editor history, published-data sanity checks, mission/constraint benchmarks, mass/energy closure, robustness, version contracts, and units | Geometry reference equations and M4.2–M4.4 equations are independently verified in their declared scope; full-aircraft external validation remains incomplete |
 | Optimization, 6-DOF, flight controls | Conventional movable geometry only; no aerodynamic effectiveness, dynamics, or controller implementation | Planned beyond geometry |
 | Save/load, reports, geometry/data export, public release workflow | No implementation found | Planned |
 
 ## Verification performed at this checkpoint
 
 - `npm.cmd run typecheck`: **passed**.
-- `npm.cmd test`: **passed**, 96 tests across 17 files.
+- `npm.cmd test`: **passed**, 110 tests across 19 files.
 - `npm.cmd run build`: **passed**.
-- Vite reports the existing production chunk warning: approximately 1.08 MB minified / 297 kB gzip for the main JavaScript asset.
+- Vite reports the existing production chunk warning: approximately 1.197 MB minified / 328 kB gzip for the main JavaScript asset.
 
 ## Phase status against the long-term objective
 
 | Phase | Status | Principal gap |
 |---:|---|---|
 | 1. Mission requirements and preliminary sizing | M4.2–M4.5 complete; broader phase partial | Analytical pipeline independently verified; no takeoff model, matched full-aircraft closure validation, sourced empty-mass correlation, or segment mission sizing |
-| 2. Advanced parametric geometry | M5.4 conventional control geometry complete; broader phase partial | Multi-section wing schema/calculations/editor, airfoil interpolation, v1 migration, and conventional hinged surfaces exist; no generalized tail/fuselage stations, complex mechanisms, or analysis lattice |
+| 2. Advanced parametric geometry | M5.5 conventional aircraft geometry complete; broader phase partial | Multi-section wing/tails, generalized fuselage stations, migration, lofts, references, and conventional hinged surfaces exist; no unconventional configurations, complex mechanisms, export, or analysis lattice |
 | 3. Airfoil analysis and VLM | Partial precursor | NACA coordinates and analytical lift model only; no polar import or VLM |
 | 4. Structures and materials | Partial precursor | Constant-EI beam only; no load transfer, wing box, materials, or advanced failure modes |
 | 5. Propulsion sizing | Partial precursor | Aggregate electric/fuel cruise sizing exists; no component maps, electrical details, derating, or operating-point coverage |

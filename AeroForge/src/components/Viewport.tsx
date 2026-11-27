@@ -7,6 +7,8 @@ import { controlSurfaceMeshes, fuselageGeometry, horizontalTailMesh, verticalTai
 import type { AircraftDesign } from '../domain/types';
 import { physicalWingStations } from '../engineering/wingGeometry';
 import { wingStationCrossSection } from '../engineering/wingLoft';
+import { fuselageStationCrossSection } from '../engineering/fuselageGeometry';
+import { horizontalTailPhysicalStations, verticalTailStationCrossSection } from '../engineering/tailGeometry';
 
 type StandardView = 'isometric' | 'top' | 'side' | 'front';
 
@@ -37,9 +39,23 @@ function WingStationOverlay({ design, selectedStationId, onSelectStation, showDi
   })}</>;
 }
 
+function FuselageStationOverlay({ design, selectedStationId, onSelectStation, showCrossSections }: { design: AircraftDesign; selectedStationId?: string; onSelectStation?: (stationId: string) => void; showCrossSections: boolean }) {
+  return <>{design.fuselage.stations.map((station) => { const selected = station.id === selectedStationId; const points = fuselageStationCrossSection(station); const closed = points.length > 1 ? [...points, points[0]] : points; return <group key={station.id}>
+    {showCrossSections && closed.length > 1 && <Line points={closed} color={selected ? '#ffe08a' : '#8ea9c7'} lineWidth={selected ? 2.3 : 1.1} depthTest={false} onClick={(event) => { event.stopPropagation(); onSelectStation?.(station.id); }} />}
+    <mesh position={[station.xPositionM, station.lateralCenterM, station.verticalCenterM]} onClick={(event) => { event.stopPropagation(); onSelectStation?.(station.id); }}><sphereGeometry args={[selected ? 0.085 : 0.045, 12, 8]} /><meshBasicMaterial color={selected ? '#fff0b3' : '#8095aa'} depthTest={false} /></mesh>
+  </group>; })}</>;
+}
+
+function TailStationOverlay({ design, selectedHorizontalId, onSelectHorizontal, selectedVerticalId, onSelectVertical, showCrossSections }: { design: AircraftDesign; selectedHorizontalId?: string; onSelectHorizontal?: (stationId: string) => void; selectedVerticalId?: string; onSelectVertical?: (stationId: string) => void; showCrossSections: boolean }) {
+  const horizontal = useMemo(() => horizontalTailPhysicalStations(design.horizontalTail), [design.horizontalTail]);
+  return <>{horizontal.map((station) => { const sourceId = station.id.replace(/-mirrored$/, ''); const selected = sourceId === selectedHorizontalId; const points = wingStationCrossSection(station); return <group key={station.id}>{showCrossSections && <Line points={[...points, points[0]]} color={selected ? '#ffe08a' : '#e8a96b'} lineWidth={selected ? 2.2 : 1.1} depthTest={false} onClick={(event) => { event.stopPropagation(); onSelectHorizontal?.(sourceId); }} />}<mesh position={[station.leadingEdgeXM + 0.25 * station.chordM, station.spanPositionM, station.verticalPositionM]} onClick={(event) => { event.stopPropagation(); onSelectHorizontal?.(sourceId); }}><sphereGeometry args={[selected ? 0.075 : 0.045, 12, 8]} /><meshBasicMaterial color={selected ? '#fff0b3' : '#e8a96b'} depthTest={false} /></mesh></group>; })}
+    {design.verticalTail.stations.map((station) => { const selected = station.id === selectedVerticalId; const points = verticalTailStationCrossSection(design.verticalTail, station.id); return <group key={station.id}>{showCrossSections && <Line points={[...points, points[0]]} color={selected ? '#ffe08a' : '#9bd3a9'} lineWidth={selected ? 2.2 : 1.1} depthTest={false} onClick={(event) => { event.stopPropagation(); onSelectVertical?.(station.id); }} />}<mesh position={[station.leadingEdgeXM + 0.25 * station.chordM, design.verticalTail.lateralPositionM, design.verticalTail.baseVerticalPositionM + station.spanPositionM]} onClick={(event) => { event.stopPropagation(); onSelectVertical?.(station.id); }}><sphereGeometry args={[selected ? 0.075 : 0.045, 12, 8]} /><meshBasicMaterial color={selected ? '#fff0b3' : '#9bd3a9'} depthTest={false} /></mesh></group>; })}
+  </>;
+}
+
 const controlColors = { aileron: '#55c7dd', flap: '#b27be8', elevator: '#eab45f', rudder: '#70d19a' } as const;
 
-function Aircraft({ design, selectedStationId, onSelectStation, selectedControlSurfaceId, onSelectControlSurface, showStationMarkers, showDimensions, showCrossSections, showGeometryGuides }: { design: AircraftDesign; selectedStationId?: string; onSelectStation?: (stationId: string) => void; selectedControlSurfaceId?: string; onSelectControlSurface?: (controlSurfaceId: string) => void; showStationMarkers: boolean; showDimensions: boolean; showCrossSections: boolean; showGeometryGuides: boolean }) {
+function Aircraft({ design, selectedStationId, onSelectStation, selectedFuselageStationId, onSelectFuselageStation, selectedHorizontalTailStationId, onSelectHorizontalTailStation, selectedVerticalTailStationId, onSelectVerticalTailStation, selectedControlSurfaceId, onSelectControlSurface, showStationMarkers, showDimensions, showCrossSections, showGeometryGuides }: { design: AircraftDesign; selectedStationId?: string; onSelectStation?: (stationId: string) => void; selectedFuselageStationId?: string; onSelectFuselageStation?: (stationId: string) => void; selectedHorizontalTailStationId?: string; onSelectHorizontalTailStation?: (stationId: string) => void; selectedVerticalTailStationId?: string; onSelectVerticalTailStation?: (stationId: string) => void; selectedControlSurfaceId?: string; onSelectControlSurface?: (controlSurfaceId: string) => void; showStationMarkers: boolean; showDimensions: boolean; showCrossSections: boolean; showGeometryGuides: boolean }) {
   const geometries = useMemo(() => ({ wing: wingMesh(design), fuselage: fuselageGeometry(design), horizontalTail: horizontalTailMesh(design), verticalTail: verticalTailMesh(design) }), [design]);
   const controls = useMemo(() => controlSurfaceMeshes(design), [design]);
   useEffect(() => () => Object.values(geometries).forEach((geometry) => geometry.dispose()), [geometries]);
@@ -54,6 +70,8 @@ function Aircraft({ design, selectedStationId, onSelectStation, selectedControlS
       <Line points={[control.hingeStart, control.hingeEnd]} color={selected ? '#fff2b6' : '#f4f7fa'} lineWidth={selected ? 2.5 : 1.4} depthTest={false} onClick={(event) => { event.stopPropagation(); onSelectControlSurface?.(control.controlSurfaceId); }} />
     </group>; })}
     {showStationMarkers && <WingStationOverlay design={design} selectedStationId={selectedStationId} onSelectStation={onSelectStation} showDimensions={showDimensions} showCrossSections={showCrossSections} showGeometryGuides={showGeometryGuides} />}
+    {showStationMarkers && <FuselageStationOverlay design={design} selectedStationId={selectedFuselageStationId} onSelectStation={onSelectFuselageStation} showCrossSections={showCrossSections} />}
+    {showStationMarkers && <TailStationOverlay design={design} selectedHorizontalId={selectedHorizontalTailStationId} onSelectHorizontal={onSelectHorizontalTailStation} selectedVerticalId={selectedVerticalTailStationId} onSelectVertical={onSelectVerticalTailStation} showCrossSections={showCrossSections} />}
   </>;
 }
 
@@ -73,16 +91,16 @@ function ViewController({ view, centerX }: { view: StandardView; centerX: number
   return null;
 }
 
-export function Viewport({ designOverride, selectedStationId, onSelectStation, selectedControlSurfaceId, onSelectControlSurface, showStationMarkers = false, showDimensions = false, showCrossSections = false, showGeometryGuides = false }: { designOverride?: AircraftDesign; selectedStationId?: string; onSelectStation?: (stationId: string) => void; selectedControlSurfaceId?: string; onSelectControlSurface?: (controlSurfaceId: string) => void; showStationMarkers?: boolean; showDimensions?: boolean; showCrossSections?: boolean; showGeometryGuides?: boolean } = {}) {
+export function Viewport({ designOverride, selectedStationId, onSelectStation, selectedFuselageStationId, onSelectFuselageStation, selectedHorizontalTailStationId, onSelectHorizontalTailStation, selectedVerticalTailStationId, onSelectVerticalTailStation, selectedControlSurfaceId, onSelectControlSurface, showStationMarkers = false, showDimensions = false, showCrossSections = false, showGeometryGuides = false }: { designOverride?: AircraftDesign; selectedStationId?: string; onSelectStation?: (stationId: string) => void; selectedFuselageStationId?: string; onSelectFuselageStation?: (stationId: string) => void; selectedHorizontalTailStationId?: string; onSelectHorizontalTailStation?: (stationId: string) => void; selectedVerticalTailStationId?: string; onSelectVerticalTailStation?: (stationId: string) => void; selectedControlSurfaceId?: string; onSelectControlSurface?: (controlSurfaceId: string) => void; showStationMarkers?: boolean; showDimensions?: boolean; showCrossSections?: boolean; showGeometryGuides?: boolean } = {}) {
   const storedDesign = useDesignStore((state) => state.design);
   const design = designOverride ?? storedDesign;
-  const [view, setView] = useState<StandardView>('isometric'); const centerX = design.fuselage.lengthM / 2;
+  const [view, setView] = useState<StandardView>('isometric'); const centerX = (design.fuselage.stations[0].xPositionM + design.fuselage.stations.at(-1)!.xPositionM) / 2;
   return <div className="viewport">
     <Canvas resize={{ scroll: false, debounce: { scroll: 0, resize: 80 } }} gl={{ antialias: true }}>
       <OrthographicCamera makeDefault position={[centerX - 10, -12, 8]} up={[0, 0, 1]} zoom={28} near={0.1} far={100} />
       <ViewController view={view} centerX={centerX} />
       <color attach="background" args={['#0d121a']} /><hemisphereLight args={['#d9e7f5', '#202833', 1.7]} /><directionalLight position={[-4, -6, 10]} intensity={2.6} />
-      <Aircraft design={design} selectedStationId={selectedStationId} onSelectStation={onSelectStation} selectedControlSurfaceId={selectedControlSurfaceId} onSelectControlSurface={onSelectControlSurface} showStationMarkers={showStationMarkers} showDimensions={showDimensions} showCrossSections={showCrossSections} showGeometryGuides={showGeometryGuides} /><gridHelper args={[30, 30, '#405469', '#253343']} rotation={[Math.PI / 2, 0, 0]} position={[centerX, 0, -0.72]} /><axesHelper args={[1.2]} position={[0, 0, -0.7]} />
+      <Aircraft design={design} selectedStationId={selectedStationId} onSelectStation={onSelectStation} selectedFuselageStationId={selectedFuselageStationId} onSelectFuselageStation={onSelectFuselageStation} selectedHorizontalTailStationId={selectedHorizontalTailStationId} onSelectHorizontalTailStation={onSelectHorizontalTailStation} selectedVerticalTailStationId={selectedVerticalTailStationId} onSelectVerticalTailStation={onSelectVerticalTailStation} selectedControlSurfaceId={selectedControlSurfaceId} onSelectControlSurface={onSelectControlSurface} showStationMarkers={showStationMarkers} showDimensions={showDimensions} showCrossSections={showCrossSections} showGeometryGuides={showGeometryGuides} /><gridHelper args={[30, 30, '#405469', '#253343']} rotation={[Math.PI / 2, 0, 0]} position={[centerX, 0, -0.72]} /><axesHelper args={[1.2]} position={[0, 0, -0.7]} />
       <OrbitControls makeDefault target={[centerX, 0, 0]} enableDamping dampingFactor={0.08} screenSpacePanning />
     </Canvas>
     <div className="view-toolbar" aria-label="Standard aircraft views">{(['isometric', 'top', 'side', 'front'] as StandardView[]).map((name) => <button key={name} className={view === name ? 'active' : ''} onClick={() => setView(name)}>{name}</button>)}</div>

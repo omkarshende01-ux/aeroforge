@@ -1,14 +1,22 @@
 import { create } from 'zustand';
-import type { AircraftDesign, ControlSurfaceModel, WingGeometry } from '../domain/types';
+import type { AircraftDesign, ControlSurfaceModel, FuselageGeometry, HorizontalTailGeometry, VerticalTailGeometry, WingGeometry } from '../domain/types';
 import { defaultDesign } from '../domain/types';
 import { updateWingFromLegacyField, validateWingGeometry, type LegacyWingEdit } from '../engineering/wingGeometry';
 import { validateControlSurfaceModel } from '../engineering/controlSurfaces';
+import { validateFuselageGeometry } from '../engineering/fuselageGeometry';
+import { validateHorizontalTailGeometry, validateVerticalTailGeometry } from '../engineering/tailGeometry';
 
 type SelectedSizingPoint = { wingLoadingNm2: number; shaftPowerLoadingWPerN: number };
 type Store = {
   design: AircraftDesign;
   wingHistory: WingGeometry[];
+  fuselageHistory: FuselageGeometry[];
+  horizontalTailHistory: HorizontalTailGeometry[];
+  verticalTailHistory: VerticalTailGeometry[];
   selectedWingStationId?: string;
+  selectedFuselageStationId?: string;
+  selectedHorizontalTailStationId?: string;
+  selectedVerticalTailStationId?: string;
   selectedControlSurfaceId?: string;
   selectedSizingPoint?: SelectedSizingPoint;
   update: (path: string, value: number | string) => void;
@@ -16,6 +24,18 @@ type Store = {
   selectWingStation: (stationId: string | undefined) => void;
   undoWingGeometry: () => void;
   resetWingGeometry: () => void;
+  commitFuselageGeometry: (fuselage: FuselageGeometry, selectedStationId?: string) => string[];
+  selectFuselageStation: (stationId: string | undefined) => void;
+  undoFuselageGeometry: () => void;
+  resetFuselageGeometry: () => void;
+  commitHorizontalTailGeometry: (tail: HorizontalTailGeometry, selectedStationId?: string) => string[];
+  selectHorizontalTailStation: (stationId: string | undefined) => void;
+  undoHorizontalTailGeometry: () => void;
+  resetHorizontalTailGeometry: () => void;
+  commitVerticalTailGeometry: (tail: VerticalTailGeometry, selectedStationId?: string) => string[];
+  selectVerticalTailStation: (stationId: string | undefined) => void;
+  undoVerticalTailGeometry: () => void;
+  resetVerticalTailGeometry: () => void;
   commitControlSurfaces: (model: ControlSurfaceModel, selectedControlSurfaceId?: string) => string[];
   selectControlSurface: (controlSurfaceId: string | undefined) => void;
   selectSizingPoint: (point: SelectedSizingPoint | undefined) => void;
@@ -23,11 +43,18 @@ type Store = {
 export const useDesignStore = create<Store>((set, get) => ({
   design: defaultDesign,
   wingHistory: [],
+  fuselageHistory: [], horizontalTailHistory: [], verticalTailHistory: [],
   selectedWingStationId: defaultDesign.wing.stations[0].id,
+  selectedFuselageStationId: defaultDesign.fuselage.stations[0].id,
+  selectedHorizontalTailStationId: defaultDesign.horizontalTail.stations[0].id,
+  selectedVerticalTailStationId: defaultDesign.verticalTail.stations[0].id,
   selectedControlSurfaceId: undefined,
   selectedSizingPoint: undefined,
   selectSizingPoint: (selectedSizingPoint) => set({ selectedSizingPoint }),
   selectWingStation: (selectedWingStationId) => set({ selectedWingStationId }),
+  selectFuselageStation: (selectedFuselageStationId) => set({ selectedFuselageStationId }),
+  selectHorizontalTailStation: (selectedHorizontalTailStationId) => set({ selectedHorizontalTailStationId }),
+  selectVerticalTailStation: (selectedVerticalTailStationId) => set({ selectedVerticalTailStationId }),
   selectControlSurface: (selectedControlSurfaceId) => set({ selectedControlSurfaceId }),
   commitWingGeometry: (wing, selectedStationId) => {
     const validation = validateWingGeometry(wing);
@@ -70,6 +97,24 @@ export const useDesignStore = create<Store>((set, get) => ({
       selectedWingStationId: defaultDesign.wing.stations[0].id,
     };
   }),
+  commitFuselageGeometry: (fuselage, selectedFuselageStationId) => {
+    const validation = validateFuselageGeometry(fuselage); if (!validation.valid) return validation.errors; const state = get();
+    set({ design: { ...state.design, revision: state.design.revision + 1, fuselage }, fuselageHistory: [...state.fuselageHistory.slice(-49), structuredClone(state.design.fuselage)], selectedFuselageStationId: selectedFuselageStationId ?? state.selectedFuselageStationId }); return [];
+  },
+  undoFuselageGeometry: () => set((state) => { const previous = state.fuselageHistory.at(-1); if (!previous) return state; return { design: { ...state.design, revision: state.design.revision + 1, fuselage: previous }, fuselageHistory: state.fuselageHistory.slice(0, -1), selectedFuselageStationId: previous.stations.some((station) => station.id === state.selectedFuselageStationId) ? state.selectedFuselageStationId : previous.stations[0].id }; }),
+  resetFuselageGeometry: () => set((state) => ({ design: { ...state.design, revision: state.design.revision + 1, fuselage: structuredClone(defaultDesign.fuselage) }, fuselageHistory: [...state.fuselageHistory.slice(-49), structuredClone(state.design.fuselage)], selectedFuselageStationId: defaultDesign.fuselage.stations[0].id })),
+  commitHorizontalTailGeometry: (horizontalTail, selectedHorizontalTailStationId) => {
+    const validation = validateHorizontalTailGeometry(horizontalTail); if (!validation.valid) return validation.errors; const state = get(); const prospective = { ...state.design, horizontalTail }; const controls = validateControlSurfaceModel(prospective); if (!controls.valid) return controls.errors.map((error) => `Horizontal-tail change conflicts with a control surface: ${error}`);
+    set({ design: { ...state.design, revision: state.design.revision + 1, horizontalTail }, horizontalTailHistory: [...state.horizontalTailHistory.slice(-49), structuredClone(state.design.horizontalTail)], selectedHorizontalTailStationId: selectedHorizontalTailStationId ?? state.selectedHorizontalTailStationId }); return [];
+  },
+  undoHorizontalTailGeometry: () => set((state) => { const previous = state.horizontalTailHistory.at(-1); if (!previous || !validateControlSurfaceModel({ ...state.design, horizontalTail: previous }).valid) return state; return { design: { ...state.design, revision: state.design.revision + 1, horizontalTail: previous }, horizontalTailHistory: state.horizontalTailHistory.slice(0, -1), selectedHorizontalTailStationId: previous.stations.some((station) => station.id === state.selectedHorizontalTailStationId) ? state.selectedHorizontalTailStationId : previous.stations[0].id }; }),
+  resetHorizontalTailGeometry: () => set((state) => { const horizontalTail = structuredClone(defaultDesign.horizontalTail); if (!validateControlSurfaceModel({ ...state.design, horizontalTail }).valid) return state; return { design: { ...state.design, revision: state.design.revision + 1, horizontalTail }, horizontalTailHistory: [...state.horizontalTailHistory.slice(-49), structuredClone(state.design.horizontalTail)], selectedHorizontalTailStationId: horizontalTail.stations[0].id }; }),
+  commitVerticalTailGeometry: (verticalTail, selectedVerticalTailStationId) => {
+    const validation = validateVerticalTailGeometry(verticalTail); if (!validation.valid) return validation.errors; const state = get(); const prospective = { ...state.design, verticalTail }; const controls = validateControlSurfaceModel(prospective); if (!controls.valid) return controls.errors.map((error) => `Vertical-tail change conflicts with a control surface: ${error}`);
+    set({ design: { ...state.design, revision: state.design.revision + 1, verticalTail }, verticalTailHistory: [...state.verticalTailHistory.slice(-49), structuredClone(state.design.verticalTail)], selectedVerticalTailStationId: selectedVerticalTailStationId ?? state.selectedVerticalTailStationId }); return [];
+  },
+  undoVerticalTailGeometry: () => set((state) => { const previous = state.verticalTailHistory.at(-1); if (!previous || !validateControlSurfaceModel({ ...state.design, verticalTail: previous }).valid) return state; return { design: { ...state.design, revision: state.design.revision + 1, verticalTail: previous }, verticalTailHistory: state.verticalTailHistory.slice(0, -1), selectedVerticalTailStationId: previous.stations.some((station) => station.id === state.selectedVerticalTailStationId) ? state.selectedVerticalTailStationId : previous.stations[0].id }; }),
+  resetVerticalTailGeometry: () => set((state) => { const verticalTail = structuredClone(defaultDesign.verticalTail); if (!validateControlSurfaceModel({ ...state.design, verticalTail }).valid) return state; return { design: { ...state.design, revision: state.design.revision + 1, verticalTail }, verticalTailHistory: [...state.verticalTailHistory.slice(-49), structuredClone(state.design.verticalTail)], selectedVerticalTailStationId: verticalTail.stations[0].id }; }),
   update: (path, value) => set((state) => {
   const [group, field] = path.split('.') as [keyof AircraftDesign, string];
   const current = state.design[group];

@@ -38,12 +38,13 @@ At the end of week 12, a user should be able to define a mission, size and edit 
 - **Completed (M5.2):** dedicated station-table editing, add/insert/duplicate/remove operations, symmetric/asymmetric conversion, selected-station viewport highlighting, engineering views, optional dimensions, live analytical references, actionable validation, and in-session undo/reset over the same authoritative schema-v2 wing.
 - **Completed (M5.3):** pure quarter-chord section transforms, positive/negative twist, independent station profiles, matched cosine-profile interpolation, refined render loft, corrected tip closure/winding/normals, supported-airfoil validation, and optional section/chord/quarter-chord/twist visualization.
 - **Completed (M5.4):** versioned conventional control-surface definitions; aileron, plain-flap, elevator, and rudder adapters; overlap/panel/limit validation; actual-profile trailing-edge skins; three-dimensional hinge rotation; linked, differential, and independent commands; interactive selection/edit/reset/delete; and live area/span/hinge feedback.
-- **Still planned:** generalized multi-section tails, generalized fuselage stations, aerodynamic analysis discretization, geometry export, and persisted editor history. Slotted/Fowler devices, slats, spoilers, aerodynamic effectiveness, hinge loads, actuators, trim, and flight controls remain later work.
+- **Completed (M5.5):** schema-v3/component-v1 fuselage and conventional empennage stations; smooth noncircular fuselage interpolation; closed lofts; volume, wetted area and centroid integration; multi-section tail lofts and reference metrics; station editors/history; legacy migration; and elevator/rudder compatibility.
+- **Still planned:** aerodynamic analysis discretization, geometry export, and persisted editor history. Unconventional tails, slotted/Fowler devices, slats, spoilers, aerodynamic effectiveness, hinge loads, actuators, trim, and flight controls remain later work.
 - **Engineering methods:** piecewise lofted sections, cosine airfoil sampling, consistent quarter-chord transforms, watertight surface checks, and separate render/analysis discretizations.
 - **Dependencies:** shared design schema, units, coordinate convention, migration for existing projects.
 - **Acceptance:** symmetric and asymmetric section definitions produce finite, correctly oriented meshes; derived area/MAC/volume agree with independent integration; invalid topology is rejected before analysis.
 - **Validation:** analytic rectangular/trapezoidal cases, mesh invariants, snapshot/reference views, and convergence of derived geometry with discretization.
-- **Remaining effort:** 5–7 days for MVP; 8–12 additional days for stretch geometry.
+- **Remaining effort:** 2–4 days for analysis discretization/export and independent CAD comparison; 8–12 additional days for stretch geometry.
 
 ### 3. Airfoil analysis and vortex-lattice methods — partial precursor, MVP
 

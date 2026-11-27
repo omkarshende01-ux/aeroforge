@@ -1,5 +1,7 @@
 import type { AircraftDesign, WingGeometry, WingSection, WingStation } from '../domain/types';
 import { parseNaca4Designation } from './airfoil';
+import { migrateLegacyFuselage, type LegacyFuselageDefinition } from './fuselageGeometry';
+import { migrateLegacyHorizontalTail, migrateLegacyVerticalTail, type LegacyHorizontalTailDefinition, type LegacyVerticalTailDefinition } from './tailGeometry';
 
 export const WING_GEOMETRY_MODEL_VERSION = 2 as const;
 const angleLimitDeg = 89;
@@ -262,8 +264,27 @@ export function updateWingFromLegacyField(wing: WingGeometry, field: LegacyWingE
   return validateWingGeometry(updated).valid ? updated : wing;
 }
 
-export type LegacyAircraftDesignV1 = Omit<AircraftDesign, 'schemaVersion' | 'wing' | 'controlSurfaces'> & { schemaVersion: 1; wing: LegacyWingDefinition; controlSurfaces?: AircraftDesign['controlSurfaces'] };
+type LegacyGeometryComponents = {
+  fuselage: AircraftDesign['fuselage'] | LegacyFuselageDefinition;
+  horizontalTail: AircraftDesign['horizontalTail'] | LegacyHorizontalTailDefinition;
+  verticalTail: AircraftDesign['verticalTail'] | LegacyVerticalTailDefinition;
+};
+
+export type LegacyAircraftDesignV1 = Omit<AircraftDesign, 'schemaVersion' | 'wing' | 'controlSurfaces' | keyof LegacyGeometryComponents> & LegacyGeometryComponents & { schemaVersion: 1; wing: LegacyWingDefinition; controlSurfaces?: AircraftDesign['controlSurfaces'] };
+export type LegacyAircraftDesignV2 = Omit<AircraftDesign, 'schemaVersion' | keyof LegacyGeometryComponents> & LegacyGeometryComponents & { schemaVersion: 2 };
+
+function migrateGeometryComponents(design: LegacyGeometryComponents) {
+  return {
+    fuselage: 'modelVersion' in design.fuselage ? design.fuselage : migrateLegacyFuselage(design.fuselage),
+    horizontalTail: 'modelVersion' in design.horizontalTail ? design.horizontalTail : migrateLegacyHorizontalTail(design.horizontalTail),
+    verticalTail: 'modelVersion' in design.verticalTail ? design.verticalTail : migrateLegacyVerticalTail(design.verticalTail),
+  };
+}
 
 export function migrateAircraftDesignV1(design: LegacyAircraftDesignV1): AircraftDesign {
-  return { ...design, schemaVersion: 2, wing: migrateLegacyWing(design.wing), controlSurfaces: design.controlSurfaces ?? { modelVersion: 1, surfaces: [] } };
+  return { ...design, ...migrateGeometryComponents(design), schemaVersion: 3, wing: migrateLegacyWing(design.wing), controlSurfaces: design.controlSurfaces ?? { modelVersion: 1, surfaces: [] } };
+}
+
+export function migrateAircraftDesignV2(design: LegacyAircraftDesignV2): AircraftDesign {
+  return { ...design, ...migrateGeometryComponents(design), schemaVersion: 3 };
 }

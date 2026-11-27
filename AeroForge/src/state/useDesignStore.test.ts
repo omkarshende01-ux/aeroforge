@@ -6,7 +6,12 @@ import { addControlSurface, editControlSurface } from '../engineering/controlSur
 import { useDesignStore } from './useDesignStore';
 
 describe('versioned aircraft design state', () => {
-  afterEach(() => useDesignStore.setState({ design: defaultDesign, selectedSizingPoint: undefined, wingHistory: [], selectedWingStationId: defaultDesign.wing.stations[0].id, selectedControlSurfaceId: undefined }));
+  afterEach(() => useDesignStore.setState({
+    design: defaultDesign, selectedSizingPoint: undefined, wingHistory: [], fuselageHistory: [], horizontalTailHistory: [], verticalTailHistory: [],
+    selectedWingStationId: defaultDesign.wing.stations[0].id, selectedFuselageStationId: defaultDesign.fuselage.stations[0].id,
+    selectedHorizontalTailStationId: defaultDesign.horizontalTail.stations[0].id, selectedVerticalTailStationId: defaultDesign.verticalTail.stations[0].id,
+    selectedControlSurfaceId: undefined,
+  }));
 
   it('preserves the schema version and increments the design revision on edits', () => {
     useDesignStore.setState({ design: defaultDesign });
@@ -67,5 +72,37 @@ describe('versioned aircraft design state', () => {
     const errors = useDesignStore.getState().commitWingGeometry(shortenedWing);
     expect(errors.join(' ')).toMatch(/conflicts with a control surface.*exceeds/i);
     expect(useDesignStore.getState().design.wing.stations[1].spanPositionM).toBe(6);
+  });
+
+  it('undoes and resets fuselage station geometry and rejects invalid commits', () => {
+    useDesignStore.setState({ design: structuredClone(defaultDesign), fuselageHistory: [] });
+    const edited = structuredClone(defaultDesign.fuselage); edited.stations[2].widthM = 1.6; edited.stations[2].heightM = 1.6;
+    expect(useDesignStore.getState().commitFuselageGeometry(edited, edited.stations[2].id)).toEqual([]);
+    expect(useDesignStore.getState().design.fuselage.stations[2].widthM).toBe(1.6);
+    useDesignStore.getState().undoFuselageGeometry();
+    expect(useDesignStore.getState().design.fuselage).toEqual(defaultDesign.fuselage);
+    const invalid = structuredClone(defaultDesign.fuselage); invalid.stations[2].widthM = -1;
+    expect(useDesignStore.getState().commitFuselageGeometry(invalid).join(' ')).toMatch(/nonnegative/);
+    useDesignStore.getState().commitFuselageGeometry(edited); useDesignStore.getState().resetFuselageGeometry();
+    expect(useDesignStore.getState().design.fuselage).toEqual(defaultDesign.fuselage);
+  });
+
+  it('preserves attached elevators and rudders when tail edits remain compatible and blocks incompatible edits', () => {
+    const design = structuredClone(defaultDesign);
+    const elevator = addControlSurface(design, 'elevator');
+    design.controlSurfaces = elevator.model!;
+    const rudder = addControlSurface(design, 'rudder');
+    design.controlSurfaces = rudder.model!;
+    useDesignStore.setState({ design, horizontalTailHistory: [], verticalTailHistory: [] });
+
+    const horizontal = structuredClone(design.horizontalTail); horizontal.stations[1].chordM *= 0.9;
+    expect(useDesignStore.getState().commitHorizontalTailGeometry(horizontal)).toEqual([]);
+    expect(useDesignStore.getState().design.controlSurfaces.surfaces.some((surface) => surface.kind === 'elevator')).toBe(true);
+    useDesignStore.getState().undoHorizontalTailGeometry();
+    expect(useDesignStore.getState().design.horizontalTail).toEqual(design.horizontalTail);
+
+    const vertical = structuredClone(design.verticalTail); vertical.stations[1].spanPositionM = 0.5;
+    expect(useDesignStore.getState().commitVerticalTailGeometry(vertical).join(' ')).toMatch(/conflicts.*exceeds/i);
+    expect(useDesignStore.getState().design.verticalTail).toEqual(design.verticalTail);
   });
 });

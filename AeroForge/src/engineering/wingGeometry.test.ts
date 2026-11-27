@@ -3,6 +3,7 @@ import { defaultDesign, type WingGeometry } from '../domain/types';
 import {
   calculateWingReferenceProperties,
   migrateAircraftDesignV1,
+  migrateAircraftDesignV2,
   migrateLegacyWing,
   physicalWingStations,
   validateWingGeometry,
@@ -124,12 +125,29 @@ describe('M5.1 multi-section wing geometry foundation', () => {
     const legacyDesign = { ...defaultDesign, schemaVersion: 1 as const, wing: legacyWing };
     const migrated = migrateAircraftDesignV1(legacyDesign);
     const result = calculateWingReferenceProperties(migrated.wing);
-    expect(migrated.schemaVersion).toBe(2);
+    expect(migrated.schemaVersion).toBe(3);
     expect(migrated.wing.modelVersion).toBe(2);
     expect(result.totalSpanM).toBe(12);
     expect(result.projectedAreaM2).toBeCloseTo(18, 12);
     expect(result.aspectRatio).toBeCloseTo(8, 12);
     expect(result.meanAerodynamicChordM).toBeCloseTo(14 / 9, 12);
     expect(migrated.wing.stations[1].leadingEdgeXM).toBeCloseTo(2.35 + 6 * Math.tan(3 * Math.PI / 180), 12);
+  });
+
+  it('migrates schema-v2 scalar fuselage and empennage definitions into component station models', () => {
+    const legacy = {
+      ...defaultDesign,
+      schemaVersion: 2 as const,
+      fuselage: { lengthM: 9, maxDiameterM: 1.4, noseLengthM: 1.45, cabinLengthM: 3.3 },
+      horizontalTail: { spanM: 4.2, rootChordM: 1.15, taperRatio: 0.55, sweepDeg: 8, incidenceDeg: 1, rootLeadingEdgeXM: 7.15, verticalPositionM: 0.3 },
+      verticalTail: { heightM: 1.9, rootChordM: 1.7, taperRatio: 0.4, sweepDeg: 24, rootLeadingEdgeXM: 6.85, basePositionM: 0.12 },
+    };
+    const migrated = migrateAircraftDesignV2(legacy);
+    expect(migrated.schemaVersion).toBe(3);
+    expect(migrated.fuselage.stations.at(-1)?.xPositionM).toBe(9);
+    expect(calculateWingReferenceProperties(migrated.wing)).toEqual(calculateWingReferenceProperties(defaultDesign.wing));
+    expect(migrated.horizontalTail.stations.at(-1)?.spanPositionM).toBe(2.1);
+    expect(migrated.verticalTail.stations.at(-1)?.spanPositionM).toBe(1.9);
+    expect(migrated.controlSurfaces).toEqual(defaultDesign.controlSurfaces);
   });
 });

@@ -1,4 +1,4 @@
-export const AIRCRAFT_DESIGN_SCHEMA_VERSION = 2 as const;
+export const AIRCRAFT_DESIGN_SCHEMA_VERSION = 3 as const;
 
 export type EngineeringValidity = 'valid' | 'partial' | 'invalid';
 
