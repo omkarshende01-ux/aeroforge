@@ -1,5 +1,19 @@
 # AeroForge progress
 
+## M5.3 checkpoint — 2026-11-26
+
+The repository is on the `development` branch. M5.3, Advanced Section-Level Geometry and Airfoil Lofting, is complete. The renderer now consumes a pure section-transform and interpolated-loft layer derived from the authoritative schema-v2 wing. Projected reference definitions and existing analysis results are unchanged. No control surfaces, VLM, polar database, advanced fuselage geometry, optimization, or persistence was added.
+
+## M5.3 completed
+
+- Separated normalized local NACA four-digit coordinates from the aircraft-coordinate transformation. Each physical station is transformed about its invariant quarter-chord using the documented `x` aft, `y` starboard, `z` up convention; positive and negative geometric twist support wash-in and washout.
+- Preserved sweep and dihedral exactly once: leading-edge `x` and propagated station `z` define the reference-line position, while twist alone rotates the local airfoil section. Analytical projected area, span, AR, MAC, and reference locations remain independent of loft tessellation.
+- Added matched cosine-sampled interpolation between independently selected station airfoils, with four render intervals per engineering section. The schema-v2 engineering stations remain authoritative; interpolated rings are disposable render geometry.
+- Corrected twisted tip-cap centers and root/tip cap winding, retained continuous symmetric/asymmetric loft topology, and computed finite vertex normals. Unsupported or zero-thickness airfoil identifiers are rejected before geometry commit.
+- Added exact station cross-section display plus optional chord-line, leading-edge, quarter-chord, and twist-angle guides in the M5.2 editor.
+- Added independent rectangular, swept/dihedral, positive/negative twist, quarter-chord invariance, profile interpolation, symmetry/asymmetry, finite triangle, nondegenerate topology, outward cap-normal, and reference-metric regression tests.
+- Browser smoke verified independent root/tip profiles, wash-in/washout, cross-section and guide toggles, annotations, asymmetric expansion, and reset. Verification passes: strict typecheck, 84 automated tests across 16 files, and the production build.
+
 ## M5.2 checkpoint — 2026-11-26
 
 The repository is on the `development` branch. M5.2, Interactive Wing Section Editor and 3D Lofting, is complete. The dedicated geometry workspace edits the existing schema-v2 wing directly, with validated real-time lofting and reference-property feedback. No control surfaces, VLM, new aerodynamic solver, advanced fuselage geometry, optimization, or persistence was added.
@@ -105,7 +119,7 @@ The codebase is a functional conceptual-design demonstrator with three prelimina
 |---|---|---|
 | Frontend foundation | React 18, strict TypeScript, Vite, Zustand, Three.js/React Three Fiber, Vitest; CAD-style navigation and inspector | Implemented baseline |
 | Shared design state | Typed `AircraftDesign` schema version 2 with incrementing revision and mission, geometry, mass, propulsion, stability, and structure groups | Versioned in memory; v1 wing migration exists, but project persistence is not implemented |
-| Geometry | Validated multi-section symmetric/asymmetric wing, interactive station editor, real-time loft, station selection/annotations, trapezoidal tails, NACA four-digit sections, circular-section fuselage loft, component stations, standard views, orbit/pan/zoom | M5.2 wing editor implemented; no control surfaces or generalized tail/fuselage stations |
+| Geometry | Validated multi-section symmetric/asymmetric wing, independent station airfoils/twist, cosine-interpolated loft, cross-section/guides, interactive station editor, trapezoidal tails, circular-section fuselage loft, component stations, standard views, orbit/pan/zoom | M5.3 wing loft implemented; no control surfaces or generalized tail/fuselage stations |
 | Geometry metrics | Piecewise projected area, span, aspect ratio, tip chord, MAC/reference locations, section properties, wing loading, conditional stall speed | Implemented and analytically tested |
 | Atmosphere | ISA 1976-style troposphere from 0–11 km plus manual density | Implemented and tested; manual-density Mach uses sea-level sound speed with warning |
 | Aerodynamics | Linear finite-wing lift slope, pre-stall CL, parabolic polar, forces, Mach, L/D, analytical elliptical span load | Implemented low-fidelity baseline; key coefficients are supplied assumptions |
@@ -114,7 +128,7 @@ The codebase is a functional conceptual-design demonstrator with three prelimina
 | Stability | Tail area/volume, neutral point, static margin from supplied tail/downwash assumptions | Implemented baseline; no trim, control authority, lateral or dynamic stability |
 | Flight envelope | Simplified aerodynamic/structural maneuver envelope | Implemented baseline; no gust or dynamic effects |
 | Structures | Half-wing Euler–Bernoulli cantilever, constant EI, elliptical limit load, shear/moment/stress/deflection/safety factor | Implemented benchmark model; no wing box, materials workflow, self-weight, torsion, buckling, or FEA |
-| Tests | 76 automated tests in 15 files, including editor operations/history, independent geometry cases, analytical fixtures, published-data sanity checks, mission/constraint benchmarks, mass/energy closure, robustness, version contracts, and unit conversions | Geometry reference equations and M4.2–M4.4 equations are independently verified in their declared scope; full-aircraft external validation remains incomplete |
+| Tests | 84 automated tests in 16 files, including section transforms/loft topology, editor operations/history, independent geometry cases, analytical fixtures, published-data sanity checks, mission/constraint benchmarks, mass/energy closure, robustness, version contracts, and unit conversions | Geometry reference equations and M4.2–M4.4 equations are independently verified in their declared scope; full-aircraft external validation remains incomplete |
 | Optimization, 6-DOF, controls | No implementation found | Planned |
 | Save/load, reports, geometry/data export, public release workflow | No implementation found | Planned |
 
@@ -130,7 +144,7 @@ The codebase is a functional conceptual-design demonstrator with three prelimina
 | Phase | Status | Principal gap |
 |---:|---|---|
 | 1. Mission requirements and preliminary sizing | M4.2–M4.5 complete; broader phase partial | Analytical pipeline independently verified; no takeoff model, matched full-aircraft closure validation, sourced empty-mass correlation, or segment mission sizing |
-| 2. Advanced parametric geometry | M5.2 wing editor complete; broader phase partial | Multi-section wing schema/calculations/interactive loft and v1 migration exist; no controls, generalized tail/fuselage stations, or analysis lattice |
+| 2. Advanced parametric geometry | M5.3 section loft complete; broader phase partial | Multi-section wing schema/calculations/editor, airfoil interpolation and v1 migration exist; no controls, generalized tail/fuselage stations, or analysis lattice |
 | 3. Airfoil analysis and VLM | Partial precursor | NACA coordinates and analytical lift model only; no polar import or VLM |
 | 4. Structures and materials | Partial precursor | Constant-EI beam only; no load transfer, wing box, materials, or advanced failure modes |
 | 5. Propulsion sizing | Partial precursor | Aggregate electric/fuel cruise sizing exists; no component maps, electrical details, derating, or operating-point coverage |
@@ -164,4 +178,4 @@ The codebase is a functional conceptual-design demonstrator with three prelimina
 
 ## Current stop point
 
-M5.2 is complete. Development stops here pending owner review. The schema-v2 wing is interactively editable and analysis-ready, but control surfaces and VLM discretization are not implemented. Provisional candidates remain isolated with no apply action; takeoff and full segment mission analysis remain unavailable, so mission feasibility remains indeterminate.
+M5.3 is complete. Development stops here pending owner review. The schema-v2 wing has independently transformed and interpolated station sections suitable for later analysis discretization, but control surfaces and VLM are not implemented. Provisional candidates remain isolated with no apply action; takeoff and full segment mission analysis remain unavailable, so mission feasibility remains indeterminate.

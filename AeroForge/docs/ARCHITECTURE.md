@@ -42,6 +42,10 @@ M5.2 adds an editing layer without adding a geometry representation. Pure statio
 
 The dedicated wing workspace computes live feedback with the existing reference-property functions. Viewport station markers, dimensions, selection highlights, and the loft all consume expanded physical stations from the authoritative wing; these overlays are presentation state and do not become analysis inputs. Control surfaces, a separate VLM lattice, generalized tail stations, and persisted editor history remain future contracts.
 
+M5.3 introduces a pure loft boundary between local airfoil geometry and rendering. The airfoil module produces normalized cosine-sampled NACA four-digit coordinates. The loft module validates and blends matching local coordinates, interpolates disposable render rings between physical schema-v2 stations, and transforms those points into aircraft coordinates about the station quarter-chord. The Three.js geometry module only triangulates the resulting rings and closes the two physical tips; it no longer owns the section transformation equations.
+
+Engineering stations remain the only stored geometry. Render-only rings use a fixed visualization refinement and cannot affect projected span, area, aspect ratio, MAC, reference locations, sizing, or candidate generation. Cross-section curves, chord/leading-edge/quarter-chord guides, and twist labels call the same station transform as the mesh. They are transient visualization state, not a second geometry model or an aerodynamic lattice.
+
 ## Milestone 1 acceptance
 - Local app opens; parameter edits visibly update mathematically generated geometry.
 - Orbit/pan/zoom and standard orthographic views work.

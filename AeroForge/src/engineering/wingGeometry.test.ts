@@ -72,9 +72,9 @@ describe('M5.1 multi-section wing geometry foundation', () => {
       symmetry: 'asymmetric',
       verticalPositionM: 0.4,
       stations: [
-        { id: 'port-tip', spanPositionM: -4, chordM: 2, leadingEdgeXM: 1, geometricTwistDeg: -2, airfoilId: 'PORT' },
-        { id: 'root', spanPositionM: 0, chordM: 3, leadingEdgeXM: 0, geometricTwistDeg: 0, airfoilId: 'ROOT' },
-        { id: 'starboard-tip', spanPositionM: 6, chordM: 1, leadingEdgeXM: 2, geometricTwistDeg: -4, airfoilId: 'STARBOARD' },
+        { id: 'port-tip', spanPositionM: -4, chordM: 2, leadingEdgeXM: 1, geometricTwistDeg: -2, airfoilId: 'NACA 0012' },
+        { id: 'root', spanPositionM: 0, chordM: 3, leadingEdgeXM: 0, geometricTwistDeg: 0, airfoilId: 'NACA 2412' },
+        { id: 'starboard-tip', spanPositionM: 6, chordM: 1, leadingEdgeXM: 2, geometricTwistDeg: -4, airfoilId: 'NACA 4412' },
       ],
       sections: [
         { id: 'port', fromStationId: 'port-tip', toStationId: 'root', dihedralDeg: -5 },
@@ -94,8 +94,8 @@ describe('M5.1 multi-section wing geometry foundation', () => {
 
   it('interpolates chord, leading edge, quarter chord, twist, and height at a span station', () => {
     const wing = symmetricWing([
-      { id: 'root', spanPositionM: 0, chordM: 4, leadingEdgeXM: 1, geometricTwistDeg: 0, airfoilId: 'ROOT' },
-      { id: 'tip', spanPositionM: 5, chordM: 2, leadingEdgeXM: 3, geometricTwistDeg: -5, airfoilId: 'TIP' },
+      { id: 'root', spanPositionM: 0, chordM: 4, leadingEdgeXM: 1, geometricTwistDeg: 0, airfoilId: 'NACA 2412' },
+      { id: 'tip', spanPositionM: 5, chordM: 2, leadingEdgeXM: 3, geometricTwistDeg: -5, airfoilId: 'NACA 0012' },
     ], [10]);
     const location = wingLocationAtSpan(wing, 2.5);
     expect(location.chordM).toBe(3);
@@ -107,14 +107,15 @@ describe('M5.1 multi-section wing geometry foundation', () => {
 
   it('rejects unordered, nonpositive, disconnected, and physically invalid definitions', () => {
     const base = symmetricWing([
-      { id: 'root', spanPositionM: 0, chordM: 2, leadingEdgeXM: 0, geometricTwistDeg: 0, airfoilId: 'ROOT' },
-      { id: 'tip', spanPositionM: 5, chordM: 1, leadingEdgeXM: 1, geometricTwistDeg: 0, airfoilId: 'TIP' },
+      { id: 'root', spanPositionM: 0, chordM: 2, leadingEdgeXM: 0, geometricTwistDeg: 0, airfoilId: 'NACA 2412' },
+      { id: 'tip', spanPositionM: 5, chordM: 1, leadingEdgeXM: 1, geometricTwistDeg: 0, airfoilId: 'NACA 0012' },
     ]);
     expect(validateWingGeometry({ ...base, stations: [base.stations[1], base.stations[0]] }).valid).toBe(false);
     expect(validateWingGeometry({ ...base, stations: [base.stations[0], { ...base.stations[1], chordM: 0 }] }).valid).toBe(false);
     expect(validateWingGeometry({ ...base, sections: [{ ...base.sections[0], toStationId: 'missing' }] }).valid).toBe(false);
     expect(validateWingGeometry({ ...base, sections: [{ ...base.sections[0], dihedralDeg: 90 }] }).valid).toBe(false);
     expect(validateWingGeometry({ ...base, stations: [base.stations[0], { ...base.stations[1], airfoilId: '' }] }).valid).toBe(false);
+    expect(validateWingGeometry({ ...base, stations: [base.stations[0], { ...base.stations[1], airfoilId: 'CUSTOM' }] }).errors.join(' ')).toMatch(/supported positive-thickness NACA/);
     expect(() => calculateWingReferenceProperties({ ...base, stations: [base.stations[0], { ...base.stations[1], chordM: -1 }] })).toThrow(/chord/);
   });
 

@@ -1,4 +1,5 @@
 import type { AircraftDesign, WingGeometry, WingSection, WingStation } from '../domain/types';
+import { parseNaca4Designation } from './airfoil';
 
 export const WING_GEOMETRY_MODEL_VERSION = 2 as const;
 const angleLimitDeg = 89;
@@ -92,6 +93,7 @@ export function validateWingGeometry(wing: WingGeometry): WingGeometryValidation
     if (!finite(station.leadingEdgeXM)) errors.push(`Wing station ${station.id || index} leading-edge x must be finite.`);
     if (!finite(station.geometricTwistDeg) || Math.abs(station.geometricTwistDeg) >= angleLimitDeg) errors.push(`Wing station ${station.id || index} twist must be finite and within (-89, 89) deg.`);
     if (!station.airfoilId.trim()) errors.push(`Wing station ${station.id || index} requires an airfoil identifier.`);
+    else if (!parseNaca4Designation(station.airfoilId)) errors.push(`Wing station ${station.id || index} airfoil must be a supported positive-thickness NACA four-digit designation.`);
     if (index > 0 && station.spanPositionM <= wing.stations[index - 1].spanPositionM) errors.push('Wing stations must be strictly ordered by increasing span position.');
   });
   if (wing.symmetry === 'symmetric') {

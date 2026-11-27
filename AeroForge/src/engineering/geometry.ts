@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import type { AircraftDesign } from '../domain/types';
 import { naca4SurfaceCoordinates } from './airfoil';
-import { physicalWingStations } from './wingGeometry';
+import { buildWingLoftRings } from './wingLoft';
 
 type HorizontalSurface = {
   spanM: number; rootChordM: number; taperRatio: number; sweepDeg: number;
@@ -39,27 +39,21 @@ function horizontalSurfaceGeometry(surface: HorizontalSurface): THREE.BufferGeom
 }
 
 export function wingMesh(design: AircraftDesign): THREE.BufferGeometry {
-  const stations = physicalWingStations(design.wing);
+  const rings = buildWingLoftRings(design.wing);
   const vertices: number[] = []; const indices: number[] = [];
-  const stationSections = stations.map((station) => naca4SurfaceCoordinates(station.airfoilId, 36));
-  const ringSize = stationSections[0].length;
-  for (let stationIndex = 0; stationIndex < stations.length; stationIndex += 1) {
-    const station = stations[stationIndex]; const angle = THREE.MathUtils.degToRad(station.geometricTwistDeg);
-    for (const [xNormalized, zNormalized] of stationSections[stationIndex]) {
-      const dx = (xNormalized - 0.25) * station.chordM; const dz = zNormalized * station.chordM;
-      vertices.push(station.leadingEdgeXM + 0.25 * station.chordM + dx * Math.cos(angle) + dz * Math.sin(angle), station.spanPositionM, station.verticalPositionM - dx * Math.sin(angle) + dz * Math.cos(angle));
-    }
-  }
-  for (let stationIndex = 0; stationIndex < stations.length - 1; stationIndex += 1) for (let index = 0; index < ringSize; index += 1) {
-    const next = (index + 1) % ringSize; const a = stationIndex * ringSize + index; const b = stationIndex * ringSize + next; const c = (stationIndex + 1) * ringSize + index; const d = (stationIndex + 1) * ringSize + next;
+  const ringSize = rings[0].points.length;
+  rings.forEach((ring) => ring.points.forEach((point) => vertices.push(...point)));
+  for (let ringIndex = 0; ringIndex < rings.length - 1; ringIndex += 1) for (let index = 0; index < ringSize; index += 1) {
+    const next = (index + 1) % ringSize; const a = ringIndex * ringSize + index; const b = ringIndex * ringSize + next; const c = (ringIndex + 1) * ringSize + index; const d = (ringIndex + 1) * ringSize + next;
     indices.push(a, c, b, b, c, d);
   }
-  for (const stationIndex of [0, stations.length - 1]) {
-    const station = stations[stationIndex]; const center = vertices.length / 3;
-    vertices.push(station.leadingEdgeXM + 0.4 * station.chordM, station.spanPositionM, station.verticalPositionM);
+  for (const ringIndex of [0, rings.length - 1]) {
+    const ring = rings[ringIndex]; const center = vertices.length / 3;
+    const centerPoint = ring.points.reduce<[number, number, number]>((sum, point) => [sum[0] + point[0], sum[1] + point[1], sum[2] + point[2]], [0, 0, 0]).map((value) => value / ringSize);
+    vertices.push(centerPoint[0], centerPoint[1], centerPoint[2]);
     for (let index = 0; index < ringSize; index += 1) {
-      const next = (index + 1) % ringSize; const a = stationIndex * ringSize + index; const b = stationIndex * ringSize + next;
-      if (stationIndex === 0) indices.push(center, b, a); else indices.push(center, a, b);
+      const next = (index + 1) % ringSize; const a = ringIndex * ringSize + index; const b = ringIndex * ringSize + next;
+      if (ringIndex === 0) indices.push(center, a, b); else indices.push(center, b, a);
     }
   }
   const geometry = new THREE.BufferGeometry(); geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3)); geometry.setIndex(indices); geometry.computeVertexNormals(); geometry.computeBoundingBox(); return geometry;

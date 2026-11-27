@@ -1,0 +1,89 @@
+import type { WingGeometry } from '../domain/types';
+import { naca4SurfaceCoordinates } from './airfoil';
+import { physicalWingStations, type PhysicalWingStation } from './wingGeometry';
+
+export type AirfoilPoint2 = readonly [xOverChord: number, zOverChord: number];
+export type AircraftPoint3 = readonly [xM: number, yM: number, zM: number];
+
+export type WingLoftRing = {
+  spanPositionM: number;
+  chordM: number;
+  leadingEdgeXM: number;
+  verticalPositionM: number;
+  geometricTwistDeg: number;
+  fromAirfoilId: string;
+  toAirfoilId: string;
+  airfoilBlendFraction: number;
+  points: AircraftPoint3[];
+};
+
+export const WING_AIRFOIL_COSINE_INTERVALS = 36;
+export const WING_LOFT_INTERVALS_PER_SECTION = 4;
+
+function interpolate(from: number, to: number, fraction: number): number { return from + fraction * (to - from); }
+
+/**
+ * Converts normalized airfoil x/z coordinates to aircraft x/y/z coordinates.
+ * The station quarter-chord is invariant. Positive twist is right-handed about
+ * +y and therefore raises the leading edge in the documented x-aft frame.
+ * Dihedral is already represented by station.verticalPositionM and is not
+ * applied a second time here.
+ */
+export function transformWingAirfoilPoint(station: PhysicalWingStation, point: AirfoilPoint2): AircraftPoint3 {
+  const angleRad = station.geometricTwistDeg * Math.PI / 180;
+  const dx = (point[0] - 0.25) * station.chordM;
+  const dz = point[1] * station.chordM;
+  const quarterChordXM = station.leadingEdgeXM + 0.25 * station.chordM;
+  return [
+    quarterChordXM + dx * Math.cos(angleRad) + dz * Math.sin(angleRad),
+    station.spanPositionM,
+    station.verticalPositionM - dx * Math.sin(angleRad) + dz * Math.cos(angleRad),
+  ];
+}
+
+export function interpolateAirfoilCoordinates(fromAirfoilId: string, toAirfoilId: string, fraction: number, cosineIntervals = WING_AIRFOIL_COSINE_INTERVALS): AirfoilPoint2[] {
+  if (!Number.isFinite(fraction) || fraction < 0 || fraction > 1) throw new RangeError('Airfoil blend fraction must be within [0, 1].');
+  const from = naca4SurfaceCoordinates(fromAirfoilId, cosineIntervals);
+  const to = naca4SurfaceCoordinates(toAirfoilId, cosineIntervals);
+  return from.map((point, index) => [interpolate(point[0], to[index][0], fraction), interpolate(point[1], to[index][1], fraction)]);
+}
+
+export function wingStationCrossSection(station: PhysicalWingStation, cosineIntervals = WING_AIRFOIL_COSINE_INTERVALS): AircraftPoint3[] {
+  return naca4SurfaceCoordinates(station.airfoilId, cosineIntervals).map((point) => transformWingAirfoilPoint(station, point));
+}
+
+export function buildWingLoftRings(wing: WingGeometry, intervalsPerSection = WING_LOFT_INTERVALS_PER_SECTION, cosineIntervals = WING_AIRFOIL_COSINE_INTERVALS): WingLoftRing[] {
+  if (!Number.isInteger(intervalsPerSection) || intervalsPerSection < 1) throw new RangeError('Wing loft intervals per section must be a positive integer.');
+  if (!Number.isInteger(cosineIntervals) || cosineIntervals < 4) throw new RangeError('Airfoil cosine intervals must be an integer of at least four.');
+  const stations = physicalWingStations(wing);
+  const rings: WingLoftRing[] = [];
+  for (let sectionIndex = 0; sectionIndex < stations.length - 1; sectionIndex += 1) {
+    const from = stations[sectionIndex]; const to = stations[sectionIndex + 1];
+    const startInterval = sectionIndex === 0 ? 0 : 1;
+    for (let interval = startInterval; interval <= intervalsPerSection; interval += 1) {
+      const fraction = interval / intervalsPerSection;
+      const station: PhysicalWingStation = {
+        id: fraction === 0 ? from.id : fraction === 1 ? to.id : `${from.id}--${to.id}-${interval}`,
+        spanPositionM: interpolate(from.spanPositionM, to.spanPositionM, fraction),
+        chordM: interpolate(from.chordM, to.chordM, fraction),
+        leadingEdgeXM: interpolate(from.leadingEdgeXM, to.leadingEdgeXM, fraction),
+        verticalPositionM: interpolate(from.verticalPositionM, to.verticalPositionM, fraction),
+        geometricTwistDeg: interpolate(from.geometricTwistDeg, to.geometricTwistDeg, fraction),
+        airfoilId: fraction < 0.5 ? from.airfoilId : to.airfoilId,
+      };
+      const localPoints = interpolateAirfoilCoordinates(from.airfoilId, to.airfoilId, fraction, cosineIntervals);
+      rings.push({
+        spanPositionM: station.spanPositionM,
+        chordM: station.chordM,
+        leadingEdgeXM: station.leadingEdgeXM,
+        verticalPositionM: station.verticalPositionM,
+        geometricTwistDeg: station.geometricTwistDeg,
+        fromAirfoilId: from.airfoilId,
+        toAirfoilId: to.airfoilId,
+        airfoilBlendFraction: fraction,
+        points: localPoints.map((point) => transformWingAirfoilPoint(station, point)),
+      });
+    }
+  }
+  return rings;
+}

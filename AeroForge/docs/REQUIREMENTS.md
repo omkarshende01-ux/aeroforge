@@ -37,7 +37,7 @@ Priority: **P0** is required for a releasable MVP, **P1** is desired if it does 
 | ID | Requirement | Priority | Status |
 |---|---|---:|---|
 | GEO-001 | Edit and render wing, fuselage, horizontal tail, and vertical tail from shared mathematical parameters with live derived metrics. | P0 | Implemented |
-| GEO-002 | Support multi-section lifting surfaces with section span/chord/sweep/dihedral/twist/airfoil and continuous loft validation. | P0 | Planned |
+| GEO-002 | Support multi-section lifting surfaces with section span/chord/sweep/dihedral/twist/airfoil and continuous loft validation. | P0 | **Partial (M5.3 wing scope):** schema-v2 wing editing and verified section-level loft are complete; generalized tail surfaces remain planned |
 | GEO-003 | Define aerodynamic references and analysis discretization independently of render tessellation. | P0 | Planned |
 | GEO-003A | Define control surfaces and reject overlaps or invalid hinge geometry. | P1 | Planned |
 | GEO-004 | Support generalized fuselage stations for noncircular cross-sections; nacelles, gear, and arbitrary configurations are P2. | P1 | Planned |

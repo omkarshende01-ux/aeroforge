@@ -29,6 +29,8 @@ export function WingGeometryWorkspace() {
   const undoWing = useDesignStore((state) => state.undoWingGeometry);
   const resetWing = useDesignStore((state) => state.resetWingGeometry);
   const [showDimensions, setShowDimensions] = useState(false);
+  const [showCrossSections, setShowCrossSections] = useState(false);
+  const [showGeometryGuides, setShowGeometryGuides] = useState(true);
   const [errors, setErrors] = useState<string[]>([]);
   const wing = design.wing;
   const properties = useMemo(() => calculateWingReferenceProperties(wing), [wing]);
@@ -49,8 +51,12 @@ export function WingGeometryWorkspace() {
 
   return <div className="wing-editor-workspace">
     <div className="wing-editor-viewport">
-      <Viewport selectedStationId={selectedStationId} onSelectStation={selectStation} showStationMarkers showDimensions={showDimensions} />
-      <button className="dimension-toggle" onClick={() => setShowDimensions((current) => !current)}>{showDimensions ? <EyeOff size={13} /> : <Eye size={13} />}{showDimensions ? 'Hide dimensions' : 'Show dimensions'}</button>
+      <Viewport selectedStationId={selectedStationId} onSelectStation={selectStation} showStationMarkers showDimensions={showDimensions} showCrossSections={showCrossSections} showGeometryGuides={showGeometryGuides} />
+      <div className="geometry-display-controls">
+        <button onClick={() => setShowCrossSections((current) => !current)}>{showCrossSections ? <EyeOff size={13} /> : <Eye size={13} />}{showCrossSections ? 'Hide sections' : 'Show sections'}</button>
+        <button onClick={() => setShowGeometryGuides((current) => !current)}>{showGeometryGuides ? <EyeOff size={13} /> : <Eye size={13} />}{showGeometryGuides ? 'Hide guides' : 'Show guides'}</button>
+        <button onClick={() => setShowDimensions((current) => !current)}>{showDimensions ? <EyeOff size={13} /> : <Eye size={13} />}{showDimensions ? 'Hide dimensions' : 'Show dimensions'}</button>
+      </div>
     </div>
     <section className="wing-editor-panel">
       <div className="wing-editor-heading">
