@@ -60,6 +60,8 @@ M5.6 adds a separately versioned analysis-geometry contract without changing `Ai
 
 Engineering station boundaries and enabled control-surface span/hinge boundaries are inserted exactly into uniform or cosine grids. Results are deterministic in wing, horizontal-tail, vertical-tail order and are stored only as transient derived analysis state tied to the design revision. The workspace reports stale results after any authoritative design edit. Three.js consumes that result solely for wireframe, normal, collocation, and bound-vortex overlays; visualization cannot change the computational mesh. M5.6 deliberately supports neutral control geometry only and adds no wake, influence matrix, circulation, force, pressure, or aerodynamic result.
 
+M5.7 independently verifies that schema-v3 station boundaries appear identically in the closed render loft and thin analysis lattice while retaining their intentionally separate surface definitions. The analysis contract is suitable input to a future neutral conventional horseshoe or vortex-ring solver: bound segments have a deterministic global increasing-span orientation, normals and frames are explicit, and trailing-edge panels are identified. Wake nodes/legs, neighbor and strip topology, circulation signs, solver frames, and force integration remain solver-owned contracts rather than geometry fields. Invalid selected parent geometry now short-circuits dependent control validation so mesh generation always returns structured diagnostics instead of throwing.
+
 ## Milestone 1 acceptance
 - Local app opens; parameter edits visibly update mathematically generated geometry.
 - Orbit/pan/zoom and standard orthographic views work.

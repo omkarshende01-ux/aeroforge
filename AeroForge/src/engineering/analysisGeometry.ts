@@ -226,8 +226,16 @@ function parentGeometryIssues(design: AircraftDesign, surfaceIds: AnalysisSurfac
     ['vertical-tail', validateVerticalTailGeometry(design.verticalTail)],
   ];
   const issues = checks.filter(([id]) => surfaceIds.includes(id)).flatMap(([surfaceId, validation]) => validation.errors.map((message) => ({ severity: 'error', code: 'invalid-parent-geometry', message, surfaceId }) as MeshValidationIssue));
-  const controls = validateControlSurfaceModel(design);
-  if (!controls.valid) issues.push(...controls.errors.map((message) => ({ severity: 'error', code: 'invalid-parent-geometry', message }) as MeshValidationIssue));
+  // Control validation samples its parent stations. Do not enter that path after
+  // a selected parent has already failed validation; mesh generation must report
+  // invalid engineering geometry rather than throw while diagnosing it.
+  if (issues.length > 0) return issues;
+  try {
+    const controls = validateControlSurfaceModel(design);
+    if (!controls.valid) issues.push(...controls.errors.map((message) => ({ severity: 'error', code: 'invalid-parent-geometry', message }) as MeshValidationIssue));
+  } catch (error) {
+    issues.push({ severity: 'error', code: 'invalid-parent-geometry', message: error instanceof Error ? error.message : 'Control-surface parent geometry is invalid.' });
+  }
   return issues;
 }
 

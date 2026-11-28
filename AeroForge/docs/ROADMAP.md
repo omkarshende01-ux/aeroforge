@@ -30,7 +30,7 @@ At the end of week 12, a user should be able to define a mission, size and edit 
 - **Validation:** M4.5 hand calculations and NASA TERA direct wing/power sanity checks pass; mass and energy balance residuals are reported. A fully matched published closure case remains a gate for authoritative automatic application.
 - **Remaining effort:** 3–5 days for a sourced reference-aircraft benchmark, richer empty-mass correlations, and mission-segment energy; M4.4 itself is complete.
 
-### 2. Advanced parametric aircraft geometry — partial, MVP core; stretch extensions
+### 2. Advanced parametric aircraft geometry — conventional MVP complete; stretch extensions remain
 
 - **Objective:** evolve the current single-trapezoid assembly into analysis-ready, editable geometry without coupling mesh rendering to physics.
 - **Milestones:** versioned geometry schema; multi-section wing and tail; per-section airfoil/twist/dihedral; control-surface definitions; generalized fuselage stations; geometry validation; reference areas and aerodynamic reference frame. Nacelles, landing gear, and arbitrary configurations are stretch.
@@ -40,7 +40,8 @@ At the end of week 12, a user should be able to define a mission, size and edit 
 - **Completed (M5.4):** versioned conventional control-surface definitions; aileron, plain-flap, elevator, and rudder adapters; overlap/panel/limit validation; actual-profile trailing-edge skins; three-dimensional hinge rotation; linked, differential, and independent commands; interactive selection/edit/reset/delete; and live area/span/hinge feedback.
 - **Completed (M5.5):** schema-v3/component-v1 fuselage and conventional empennage stations; smooth noncircular fuselage interpolation; closed lofts; volume, wetted area and centroid integration; multi-section tail lofts and reference metrics; station editors/history; legacy migration; and elevator/rudder compatibility.
 - **Completed (M5.6):** versioned thin mean-camber lifting-surface discretization; uniform/cosine controls; exact station and control boundaries; deterministic panel contracts; quality validation; stale-aware interactive mesh overlays; and neutral-geometry control identifiers.
-- **Still planned:** geometry export and persisted editor history. Deflected analysis lattices, unconventional tails, slotted/Fowler devices, slats, spoilers, aerodynamic effectiveness, hinge loads, actuators, trim, and flight controls remain later work.
+- **Completed (M5.7):** independent schema-v3 analytical benchmarks, NASA/OpenVSP published-dimension reproduction, render/computational topology audit, coarse/medium/fine geometric refinement, migration/integration regression, mirrored circulation-orientation verification, structured invalid-parent rejection, and a documented neutral-conventional VLM geometry readiness decision.
+- **Phase decision:** M5 is complete for the approved conventional, neutral-control geometry foundation. Geometry export and persisted editor history remain later I/O work. Deflected analysis lattices, unconventional tails, slotted/Fowler devices, slats, spoilers, aerodynamic effectiveness, hinge loads, actuators, trim, and flight controls remain later work.
 - **Engineering methods:** piecewise lofted sections, cosine airfoil sampling, consistent quarter-chord transforms, watertight surface checks, and separate render/analysis discretizations.
 - **Dependencies:** shared design schema, units, coordinate convention, migration for existing projects.
 - **Acceptance:** symmetric and asymmetric section definitions produce finite, correctly oriented meshes; derived area/MAC/volume agree with independent integration; invalid topology is rejected before analysis.

@@ -1,5 +1,21 @@
 # AeroForge progress
 
+## M5.7 checkpoint - 2026-11-27
+
+The repository is on the `development` branch. M5.7, Independent Aircraft Geometry and Computational Mesh Verification, is complete. The complete schema-v3 conventional geometry path has now been independently benchmarked from parametric definitions through closed render lofts and thin computational panels. M5 is complete for its declared conventional, neutral-control geometry scope; no aerodynamic solver, wake, circulation, force, CFD, FEA, or new aircraft component was added.
+
+## M5.7 completed
+
+- Added a reproducible independent fixture and 12 focused tests covering rectangular, trapezoidal, multi-section, asymmetric, swept, dihedral, twisted, fuselage, empennage, control-surface, rendered-loft, migration, stale-mesh, and computational-panel cases. Expected values are constants or independently evaluated equations rather than calls to the production functions under test.
+- Reproduced NASA NTRS 20220018375's documented rectangular OpenVSP wing dimensions. AeroForge exactly recovers the area implied by published span and chord; the maximum `0.06284%` comparison difference is the source's independently rounded quarter-chord location.
+- Verified panel corners, independent two-triangle areas, centroids/references, unit normals, local directions, bound-vortex endpoints, collocation points, trailing edges, deterministic ordering, station/control boundaries, connected shared-edge topology, and vertical/horizontal orientation. Mirrored horizontal vortices consistently run port-to-starboard, so mirroring does not introduce a circulation-sign reversal.
+- Verified render lofts and computational panels consume the same authoritative stations, while preserving the deliberate distinction between closed thickness render surfaces and thin mean-camber analysis surfaces.
+- Added coarse/medium/fine geometric refinement evidence. Representative mean-surface area converges `17.690472 -> 17.699828 -> 17.701057 m²` while projected reference area remains exactly `17.5 m²`; cylinder wetted area and station-defined ellipsoid volume converge monotonically toward closed-form values.
+- Maximum fine numerical error is `0.02856%` for cylinder wetted area; the fine ellipsoid volume error is `0.02219%`. Analytical planform/tail/panel cases agree to double-precision roundoff.
+- Corrected one validation-order defect: invalid parent geometry with attached controls now returns structured `invalid-parent-geometry` mesh errors instead of throwing during dependent control validation. Valid geometry calculations and numerical results are unchanged.
+- Audited future horseshoe/vortex-ring compatibility. Current contracts are sufficient for a neutral conventional first VLM, provided M7 defines circulation/wake signs, wake topology, adjacency/strip construction, and force/moment frames. Deflected lattices and unconventional configurations remain explicitly unsupported.
+- Verification passes: strict typecheck, 136 automated tests across 21 files, and production build. Vite's existing non-blocking main-chunk warning remains (`1,220.13 kB` minified / `334.28 kB` gzip).
+
 ## M5.6 checkpoint - 2026-11-27
 
 The repository is on the `development` branch. M5.6, Analysis-Ready Geometry Discretization, is complete. A versioned computational geometry layer now derives deterministic thin lifting-surface panels from the authoritative schema-v3 design without consuming or modifying visualization meshes. No VLM solve, wake, circulation, force, pressure, CFD, fuselage lattice, or structural FEA was added.
@@ -169,7 +185,7 @@ The codebase is a functional conceptual-design demonstrator with three prelimina
 |---|---|---|
 | Frontend foundation | React 18, strict TypeScript, Vite, Zustand, Three.js/React Three Fiber, Vitest; CAD-style navigation and inspector | Implemented baseline |
 | Shared design state | Typed `AircraftDesign` schema version 3 with incrementing revision and mission, geometry, mass, propulsion, stability, and structure groups | Versioned in memory; v1/v2 geometry migrations exist, but project persistence is not implemented |
-| Geometry | Validated multi-section wing and conventional empennage, independent station airfoils/twist, cosine-interpolated lofts, generalized fuselage stations/cross-sections, component editors/history, conventional controls, and separate thin mean-camber analysis panels | M5.6 conventional neutral geometry complete; no unconventional tails, complex high-lift devices, deflected lattice, or VLM solve |
+| Geometry | Validated multi-section wing and conventional empennage, independent station airfoils/twist, cosine-interpolated lofts, generalized fuselage stations/cross-sections, component editors/history, conventional controls, and separate thin mean-camber analysis panels | M5.7 independently verified conventional neutral geometry complete; no unconventional tails, complex high-lift devices, deflected lattice, or VLM solve |
 | Geometry metrics | Wing/tail projected area, span, aspect ratio, MAC/reference locations, tail moment arms/volume coefficients, fuselage area distribution/volume/wetted area/centroid, wing loading, and conditional stall speed | Implemented and analytically tested in declared scope |
 | Atmosphere | ISA 1976-style troposphere from 0–11 km plus manual density | Implemented and tested; manual-density Mach uses sea-level sound speed with warning |
 | Aerodynamics | Linear finite-wing lift slope, pre-stall CL, parabolic polar, forces, Mach, L/D, analytical elliptical span load | Implemented low-fidelity baseline; key coefficients are supplied assumptions |
@@ -178,14 +194,14 @@ The codebase is a functional conceptual-design demonstrator with three prelimina
 | Stability | Tail area/volume, neutral point, static margin from supplied tail/downwash assumptions | Implemented baseline; no trim, control authority, lateral or dynamic stability |
 | Flight envelope | Simplified aerodynamic/structural maneuver envelope | Implemented baseline; no gust or dynamic effects |
 | Structures | Half-wing Euler–Bernoulli cantilever, constant EI, elliptical limit load, shear/moment/stress/deflection/safety factor | Implemented benchmark model; no wing box, materials workflow, self-weight, torsion, buckling, or FEA |
-| Tests | 124 automated tests in 20 files, including analysis-panel geometry/refinement/quality/staleness, fuselage/tail analytical geometry and default attachments, watertight topology, control compatibility, migrations/isolation, section transforms, editor history, published-data sanity checks, mission/constraint benchmarks, mass/energy closure, robustness, version contracts, and units | Geometry reference equations and M4.2–M4.4 equations are independently verified in their declared scope; full-aircraft external validation remains incomplete |
+| Tests | 136 automated tests in 21 files, including independent schema-v3 geometry/panel benchmarks, published NASA dimensions, geometric convergence, analysis-panel topology/refinement/quality/staleness, fuselage/tail geometry, watertight render topology, control compatibility, migrations/isolation, mission/constraint benchmarks, mass/energy closure, robustness, version contracts, and units | Conventional geometry and M4.2–M4.4 equations are independently verified in their declared scope; full-aircraft external validation remains incomplete |
 | Optimization, 6-DOF, flight controls | Conventional movable geometry only; no aerodynamic effectiveness, dynamics, or controller implementation | Planned beyond geometry |
 | Save/load, reports, geometry/data export, public release workflow | No implementation found | Planned |
 
 ## Verification performed at this checkpoint
 
 - `npm.cmd run typecheck`: **passed**.
-- `npm.cmd test`: **passed**, 124 tests across 20 files.
+- `npm.cmd test`: **passed**, 136 tests across 21 files.
 - `npm.cmd run build`: **passed**.
 - Vite reports the existing production chunk warning: approximately 1.220 MB minified / 334 kB gzip for the main JavaScript asset.
 
@@ -194,7 +210,7 @@ The codebase is a functional conceptual-design demonstrator with three prelimina
 | Phase | Status | Principal gap |
 |---:|---|---|
 | 1. Mission requirements and preliminary sizing | M4.2–M4.5 complete; broader phase partial | Analytical pipeline independently verified; no takeoff model, matched full-aircraft closure validation, sourced empty-mass correlation, or segment mission sizing |
-| 2. Advanced parametric geometry | M5.6 conventional aircraft and neutral analysis geometry complete; broader phase partial | Multi-section wing/tails, generalized fuselage stations, migration, lofts, references, hinged surfaces, and a separate analysis lattice exist; no unconventional configurations, complex mechanisms, deflected lattice, or export |
+| 2. Advanced parametric geometry | M5.7 conventional aircraft and neutral analysis geometry complete | Independently benchmarked schema-v3 definitions, migrations, render lofts, references, controls, and analysis lattice exist; unconventional configurations, complex mechanisms, deflected lattice, persistence, and export remain later extensions |
 | 3. Airfoil analysis and VLM | Partial precursor | NACA coordinates, analytical lift model, and solver-ready panels exist; no polar import, wake, influence matrix, circulation, or VLM results |
 | 4. Structures and materials | Partial precursor | Constant-EI beam only; no load transfer, wing box, materials, or advanced failure modes |
 | 5. Propulsion sizing | Partial precursor | Aggregate electric/fuel cruise sizing exists; no component maps, electrical details, derating, or operating-point coverage |
@@ -228,4 +244,4 @@ The codebase is a functional conceptual-design demonstrator with three prelimina
 
 ## Current stop point
 
-M5.6 is complete. Development stops here pending owner review. Computational lifting-surface panels are versioned, validated, station/control-boundary aware, independently refinable, and interactively inspectable, but no wake, Biot–Savart solver, influence matrix, circulation, aerodynamic force, trim, or control-effectiveness model is implemented. Provisional candidates remain isolated with no apply action; takeoff and full segment mission analysis remain unavailable, so mission feasibility remains indeterminate.
+M5.7 and the bounded conventional M5 geometry phase are complete. Development stops here pending owner review. Independent analytical, published-dimension, render-topology, migration, integration, and geometric-refinement evidence supports proceeding to M6 airfoil/polar work and M7 neutral conventional VLM geometry use. No wake, Biot-Savart solver, influence matrix, circulation, aerodynamic force, trim, or control-effectiveness model is implemented. Provisional candidates remain isolated with no apply action; takeoff and full segment mission analysis remain unavailable, so mission feasibility remains indeterminate.
