@@ -48,7 +48,7 @@ Priority: **P0** is required for a releasable MVP, **P1** is desired if it does 
 | ID | Requirement | Priority | Status |
 |---|---|---:|---|
 | AER-001 | Retain the documented ISA/manual-density and analytical finite-wing/parabolic-polar model as a fast comparison model. | P0 | Implemented |
-| AER-002 | Import airfoil coordinates and polar tables with Reynolds number, Mach, transition settings, source, and license metadata. | P0 | Planned |
+| AER-002 | Import airfoil coordinates and polar tables with Reynolds number, Mach, transition settings, source, and license metadata. | P0 | **Implemented (M6.1):** versioned Selig/Lednicer/CSV geometry and CSV/XFOIL polar imports, raw provenance, explicit unknowns, library UI, and geometry selection |
 | AER-003 | Interpolate only inside supported polar domains unless explicit, warned extrapolation is selected. | P0 | Planned |
 | AER-004 | Compute geometry-sensitive attached-flow forces, moments, and span loads with a documented VLM and panel-convergence controls. | P0 | Planned |
 | AER-005 | Keep profile/viscous drag and stall treatment separate from inviscid VLM; never present VLM as stall-capable CFD. | P0 | Planned |

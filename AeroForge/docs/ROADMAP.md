@@ -50,6 +50,8 @@ At the end of week 12, a user should be able to define a mission, size and edit 
 
 ### 3. Airfoil analysis and vortex-lattice methods — partial precursor, MVP
 
+**Completed (M6.1):** versioned airfoil geometry/polar contracts; Selig, Lednicer, coordinate CSV, XFOIL polar, and polar CSV parsing; provenance/raw-source retention; imported cosine loft/mesh compatibility; profile preview/library metadata; reference-safe removal; and wing/tail selection. Reynolds/Mach interpolation remains M6.2.
+
 - **Objective:** replace purely supplied aerodynamic coefficients with geometry-sensitive attached-flow analysis while keeping viscous and stall limits explicit.
 - **Milestones:** airfoil coordinate/polar import with provenance; polar interpolation; horseshoe/ring VLM lattice; boundary conditions and linear solve; force/moment/span-load results; mesh convergence UI; comparison against the current analytical model.
 - **Engineering methods:** 2-D polar lookup or optional externally generated XFOIL data; incompressible VLM with Prandtl-Glauert correction only in a declared range; Trefftz-plane or near-field induced drag; stripwise viscous drag buildup. No VLM stall prediction.

@@ -116,6 +116,11 @@ The current suite contains 136 tests across 21 test files. Detailed M4.5 evidenc
 
 ### 3. Airfoil analysis and VLM
 
+- M6.1 uses synthetic project-authored fixtures with declared non-experimental provenance to verify Selig, Lednicer, and coordinate CSV parsing; leading/trailing-edge identification; normalization; ordering; consecutive duplicate handling; and rejection of malformed, degenerate, crossing, nonfinite, or duplicated geometry.
+- CSV and XFOIL polar fixtures verify exact tabulated recovery, missing coefficient preservation, convergence and transition metadata, multiple Reynolds groups, negative-drag/invalid-condition rejection, duplicate operating points, explicit moment reference/sign, raw-source retention, and source classification.
+- Imported geometry is cosine-resampled through the same wing loft, render mesh, and thin analysis-mesh paths as generated NACA profiles. Station airfoil changes increment design revision and make retained meshes stale; referenced imported geometry cannot be removed.
+- Full regression retains schema-v3 geometry, M4 sizing/candidate isolation, control surfaces, NACA lofting, and M5 computational geometry. M6.1 contains no polar interpolation or aerodynamic solution benchmark.
+
 - Polar parser exact-point recovery, interpolation manufactured solutions, domain boundary, and prohibited-extrapolation tests.
 - Rectangular unswept wing lift-curve trend against lifting-line theory; elliptic loading induced drag approaches `CL²/(pi*AR)` for `e=1`.
 - Symmetric geometry at zero sideslip: near-zero side force, rolling moment, and yawing moment.

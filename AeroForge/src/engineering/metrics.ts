@@ -6,7 +6,7 @@ const g = 9.80665;
 const msToKt = 1.943844492;
 
 export function calculateMetrics(design: AircraftDesign): DesignMetrics {
-  const geometryValidation = validateWingGeometry(design.wing);
+  const geometryValidation = validateWingGeometry(design.wing, undefined, true);
   const geometry = geometryValidation.valid ? calculateWingReferenceProperties(design.wing) : undefined;
   const area = geometry?.projectedAreaM2 ?? 0;
   const ar = geometry?.aspectRatio ?? 0;

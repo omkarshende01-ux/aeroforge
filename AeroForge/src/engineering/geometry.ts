@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import type { AircraftDesign } from '../domain/types';
+import type { AirfoilLibrary } from '../domain/airfoilData';
 import { buildWingLoftRings } from './wingLoft';
 import { buildControlSurfaceGeometry } from './controlSurfaces';
 import { buildFuselageMeshData } from './fuselageGeometry';
@@ -32,8 +33,8 @@ function closedLoftGeometry(rings: readonly { points: readonly (readonly [number
   const geometry = new THREE.BufferGeometry(); geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3)); geometry.setIndex(indices); geometry.computeVertexNormals(); geometry.computeBoundingBox(); return geometry;
 }
 
-export function wingMesh(design: AircraftDesign): THREE.BufferGeometry {
-  const rings = buildWingLoftRings(design.wing);
+export function wingMesh(design: AircraftDesign, airfoilLibrary?: AirfoilLibrary): THREE.BufferGeometry {
+  const rings = buildWingLoftRings(design.wing, undefined, undefined, airfoilLibrary);
   const vertices: number[] = []; const indices: number[] = [];
   const ringSize = rings[0].points.length;
   rings.forEach((ring) => ring.points.forEach((point) => vertices.push(...point)));
@@ -53,8 +54,8 @@ export function wingMesh(design: AircraftDesign): THREE.BufferGeometry {
   const geometry = new THREE.BufferGeometry(); geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3)); geometry.setIndex(indices); geometry.computeVertexNormals(); geometry.computeBoundingBox(); return geometry;
 }
 
-export function controlSurfaceMeshes(design: AircraftDesign): ControlSurfaceRenderMesh[] {
-  return design.controlSurfaces.surfaces.filter((surface) => surface.enabled).flatMap((surface) => buildControlSurfaceGeometry(design, surface).map((instance) => {
+export function controlSurfaceMeshes(design: AircraftDesign, airfoilLibrary?: AirfoilLibrary): ControlSurfaceRenderMesh[] {
+  return design.controlSurfaces.surfaces.filter((surface) => surface.enabled).flatMap((surface) => buildControlSurfaceGeometry(design, surface, airfoilLibrary).map((instance) => {
     const geometry = new THREE.BufferGeometry();
     const vertices = instance.deflectedVertices.flatMap((point) => [...point]);
     geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
@@ -63,14 +64,14 @@ export function controlSurfaceMeshes(design: AircraftDesign): ControlSurfaceRend
   }));
 }
 
-export function horizontalTailMesh(design: AircraftDesign): THREE.BufferGeometry {
-  return closedLoftGeometry(buildHorizontalTailLoftRings(design.horizontalTail));
+export function horizontalTailMesh(design: AircraftDesign, airfoilLibrary?: AirfoilLibrary): THREE.BufferGeometry {
+  return closedLoftGeometry(buildHorizontalTailLoftRings(design.horizontalTail, airfoilLibrary));
 }
 
 export function fuselageGeometry(design: AircraftDesign): THREE.BufferGeometry {
   const mesh = buildFuselageMeshData(design.fuselage); const geometry = new THREE.BufferGeometry(); geometry.setAttribute('position', new THREE.Float32BufferAttribute(mesh.vertices.flatMap((point) => [...point]), 3)); geometry.setIndex(mesh.indices); geometry.computeVertexNormals(); geometry.computeBoundingBox(); return geometry;
 }
 
-export function verticalTailMesh(design: AircraftDesign): THREE.BufferGeometry {
-  return closedLoftGeometry(buildVerticalTailLoftRings(design.verticalTail), true);
+export function verticalTailMesh(design: AircraftDesign, airfoilLibrary?: AirfoilLibrary): THREE.BufferGeometry {
+  return closedLoftGeometry(buildVerticalTailLoftRings(design.verticalTail, undefined, airfoilLibrary), true);
 }

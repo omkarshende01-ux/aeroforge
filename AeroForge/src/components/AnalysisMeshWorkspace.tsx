@@ -19,12 +19,12 @@ function sameConfiguration(first: AnalysisMeshConfiguration, second: AnalysisMes
 }
 
 export function AnalysisMeshWorkspace() {
-  const design = useDesignStore((state) => state.design); const mesh = useDesignStore((state) => state.analysisMesh); const setMesh = useDesignStore((state) => state.setAnalysisMesh);
+  const design = useDesignStore((state) => state.design); const airfoilLibrary = useDesignStore((state) => state.airfoilLibrary); const mesh = useDesignStore((state) => state.analysisMesh); const setMesh = useDesignStore((state) => state.setAnalysisMesh);
   const [configuration, setConfiguration] = useState<AnalysisMeshConfiguration>(() => structuredClone(mesh?.configuration ?? DEFAULT_ANALYSIS_MESH_CONFIGURATION));
   const [showNormals, setShowNormals] = useState(false); const [showCollocation, setShowCollocation] = useState(false); const [showVortices, setShowVortices] = useState(true);
   const stale = isAnalysisMeshStale(mesh, design) || (mesh !== undefined && !sameConfiguration(mesh.configuration, configuration));
   const panelCounts = useMemo(() => surfaces.map((surface) => ({ ...surface, count: mesh?.panels.filter((panel) => panel.parentSurfaceId === surface.id).length ?? 0 })), [mesh]);
-  const generate = () => setMesh(generateAnalysisMesh(design, configuration));
+  const generate = () => setMesh(generateAnalysisMesh(design, configuration, airfoilLibrary));
   const toggleSurface = (id: AnalysisSurfaceId) => setConfiguration((current) => ({ ...current, surfaceIds: surfaces.map((surface) => surface.id).filter((surfaceId) => surfaceId === id ? !current.surfaceIds.includes(id) : current.surfaceIds.includes(surfaceId)) }));
   const setSpacing = (field: 'chordwiseSpacing' | 'spanwiseSpacing', value: AnalysisSpacing) => setConfiguration((current) => ({ ...current, [field]: value }));
   const applyPreset = (name: keyof typeof ANALYSIS_MESH_PRESETS) => setConfiguration((current) => ({ ...current, ...ANALYSIS_MESH_PRESETS[name] }));

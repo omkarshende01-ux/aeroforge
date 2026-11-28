@@ -1,5 +1,21 @@
 # AeroForge progress
 
+## M6.1 checkpoint - 2026-11-27
+
+M6.1, Airfoil Coordinate and Aerodynamic Polar Data Foundation, is complete on the `development` branch. AeroForge now has a separately versioned model-v1 airfoil library while retaining aircraft schema v3 and the existing NACA four-digit generator. Imported geometry and two-dimensional polar data remain source records; they do not alter aircraft-level aerodynamic coefficients automatically.
+
+## M6.1 completed
+
+- Added strongly typed v1 contracts for airfoil identity, normalized upper/lower coordinates, ordering, provenance, polar operating conditions, optional coefficients/transition/convergence metadata, moment reference/sign, generation method, applicability, and raw source retention. Unknown values remain explicitly unavailable.
+- Added validated Selig DAT, Lednicer DAT, and documented CSV coordinate imports with chord normalization, leading/trailing-edge detection, surface separation, ordering and duplicate handling, and rejection of nonfinite, degenerate, crossing, or self-intersecting profiles. No smoothing or geometry repair is performed.
+- Added documented CSV and XFOIL polar imports with exact Reynolds/Mach grouping, finite-value and condition checks, duplicate-point rejection, missing-coefficient preservation, negative-drag rejection, moment-reference validation, transition/convergence metadata, and explicit experimental/computational/user-supplied classification.
+- Integrated imported profiles into the existing cosine-sampled wing, empennage, control-surface, render-loft, and thin analysis-mesh paths without replacing the NACA generator or changing projected reference calculations.
+- Added an Airfoils workspace for coordinate/polar file import, validation messages, normalized profile preview, metadata and associated-dataset inspection, reference-safe removal, and imported-profile selection in wing and tail editors.
+- Added 13 focused M6.1 tests with synthetic project-authored fixtures covering all supported formats, normalization, ordering, duplicate/invalid/degenerate inputs, missing values, multiple Reynolds datasets, identifier uniqueness, reference checks, imported loft/mesh compatibility, staleness, and NACA regression.
+- No solver, interpolation, extrapolation, stall prediction, or automatic sectional-to-aircraft aerodynamic coupling was added. Format and convention details are in `docs/AIRFOIL_DATA.md`.
+- Browser smoke passed Selig coordinate import, normalized profile preview, XFOIL polar import/metadata inspection, and imported wing-profile selection with live loft rendering and no validation alert.
+- Verification passes: strict typecheck, 149 automated tests across 22 files, and production build. Vite's existing non-blocking main-chunk warning remains (`1,245.50 kB` minified / `341.60 kB` gzip).
+
 ## M5.7 checkpoint - 2026-11-27
 
 The repository is on the `development` branch. M5.7, Independent Aircraft Geometry and Computational Mesh Verification, is complete. The complete schema-v3 conventional geometry path has now been independently benchmarked from parametric definitions through closed render lofts and thin computational panels. M5 is complete for its declared conventional, neutral-control geometry scope; no aerodynamic solver, wake, circulation, force, CFD, FEA, or new aircraft component was added.

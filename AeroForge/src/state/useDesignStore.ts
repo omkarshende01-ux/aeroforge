@@ -6,10 +6,14 @@ import { validateControlSurfaceModel } from '../engineering/controlSurfaces';
 import { validateFuselageGeometry } from '../engineering/fuselageGeometry';
 import { validateHorizontalTailGeometry, validateVerticalTailGeometry } from '../engineering/tailGeometry';
 import type { AerodynamicMesh } from '../domain/analysisGeometry';
+import type { AerodynamicPolarDataset, AirfoilLibrary, ImportedAirfoilGeometry } from '../domain/airfoilData';
+import { emptyAirfoilLibrary } from '../domain/airfoilData';
+import { referencedAirfoilIds, registerAirfoilGeometry, registerPolarDatasets, removeAirfoilGeometry, removePolarDataset } from '../engineering/airfoilData';
 
 type SelectedSizingPoint = { wingLoadingNm2: number; shaftPowerLoadingWPerN: number };
 type Store = {
   design: AircraftDesign;
+  airfoilLibrary: AirfoilLibrary;
   wingHistory: WingGeometry[];
   fuselageHistory: FuselageGeometry[];
   horizontalTailHistory: HorizontalTailGeometry[];
@@ -42,9 +46,14 @@ type Store = {
   selectControlSurface: (controlSurfaceId: string | undefined) => void;
   setAnalysisMesh: (analysisMesh: AerodynamicMesh | undefined) => void;
   selectSizingPoint: (point: SelectedSizingPoint | undefined) => void;
+  registerAirfoilGeometry: (geometry: ImportedAirfoilGeometry) => string[];
+  registerPolarDatasets: (datasets: AerodynamicPolarDataset[]) => string[];
+  removeAirfoilGeometry: (airfoilId: string) => string[];
+  removePolarDataset: (datasetId: string) => string[];
 };
 export const useDesignStore = create<Store>((set, get) => ({
   design: defaultDesign,
+  airfoilLibrary: emptyAirfoilLibrary(),
   wingHistory: [],
   fuselageHistory: [], horizontalTailHistory: [], verticalTailHistory: [],
   selectedWingStationId: defaultDesign.wing.stations[0].id,
@@ -61,8 +70,12 @@ export const useDesignStore = create<Store>((set, get) => ({
   selectVerticalTailStation: (selectedVerticalTailStationId) => set({ selectedVerticalTailStationId }),
   selectControlSurface: (selectedControlSurfaceId) => set({ selectedControlSurfaceId }),
   setAnalysisMesh: (analysisMesh) => set({ analysisMesh }),
+  registerAirfoilGeometry: (geometry) => { const result = registerAirfoilGeometry(get().airfoilLibrary, geometry); if (result.value) set({ airfoilLibrary: result.value }); return result.messages.map((item) => item.message); },
+  registerPolarDatasets: (datasets) => { const result = registerPolarDatasets(get().airfoilLibrary, datasets); if (result.value) set({ airfoilLibrary: result.value }); return result.messages.map((item) => item.message); },
+  removeAirfoilGeometry: (airfoilId) => { const state = get(); const result = removeAirfoilGeometry(state.airfoilLibrary, airfoilId, referencedAirfoilIds(state.design)); if (result.value) set({ airfoilLibrary: result.value }); return result.messages.map((item) => item.message); },
+  removePolarDataset: (datasetId) => { const result = removePolarDataset(get().airfoilLibrary, datasetId); if (result.value) set({ airfoilLibrary: result.value }); return result.messages.map((item) => item.message); },
   commitWingGeometry: (wing, selectedStationId) => {
-    const validation = validateWingGeometry(wing);
+    const validation = validateWingGeometry(wing, get().airfoilLibrary);
     if (!validation.valid) return validation.errors;
     const state = get();
     const prospective = { ...state.design, wing };
@@ -109,13 +122,13 @@ export const useDesignStore = create<Store>((set, get) => ({
   undoFuselageGeometry: () => set((state) => { const previous = state.fuselageHistory.at(-1); if (!previous) return state; return { design: { ...state.design, revision: state.design.revision + 1, fuselage: previous }, fuselageHistory: state.fuselageHistory.slice(0, -1), selectedFuselageStationId: previous.stations.some((station) => station.id === state.selectedFuselageStationId) ? state.selectedFuselageStationId : previous.stations[0].id }; }),
   resetFuselageGeometry: () => set((state) => ({ design: { ...state.design, revision: state.design.revision + 1, fuselage: structuredClone(defaultDesign.fuselage) }, fuselageHistory: [...state.fuselageHistory.slice(-49), structuredClone(state.design.fuselage)], selectedFuselageStationId: defaultDesign.fuselage.stations[0].id })),
   commitHorizontalTailGeometry: (horizontalTail, selectedHorizontalTailStationId) => {
-    const validation = validateHorizontalTailGeometry(horizontalTail); if (!validation.valid) return validation.errors; const state = get(); const prospective = { ...state.design, horizontalTail }; const controls = validateControlSurfaceModel(prospective); if (!controls.valid) return controls.errors.map((error) => `Horizontal-tail change conflicts with a control surface: ${error}`);
+    const validation = validateHorizontalTailGeometry(horizontalTail, get().airfoilLibrary); if (!validation.valid) return validation.errors; const state = get(); const prospective = { ...state.design, horizontalTail }; const controls = validateControlSurfaceModel(prospective); if (!controls.valid) return controls.errors.map((error) => `Horizontal-tail change conflicts with a control surface: ${error}`);
     set({ design: { ...state.design, revision: state.design.revision + 1, horizontalTail }, horizontalTailHistory: [...state.horizontalTailHistory.slice(-49), structuredClone(state.design.horizontalTail)], selectedHorizontalTailStationId: selectedHorizontalTailStationId ?? state.selectedHorizontalTailStationId }); return [];
   },
   undoHorizontalTailGeometry: () => set((state) => { const previous = state.horizontalTailHistory.at(-1); if (!previous || !validateControlSurfaceModel({ ...state.design, horizontalTail: previous }).valid) return state; return { design: { ...state.design, revision: state.design.revision + 1, horizontalTail: previous }, horizontalTailHistory: state.horizontalTailHistory.slice(0, -1), selectedHorizontalTailStationId: previous.stations.some((station) => station.id === state.selectedHorizontalTailStationId) ? state.selectedHorizontalTailStationId : previous.stations[0].id }; }),
   resetHorizontalTailGeometry: () => set((state) => { const horizontalTail = structuredClone(defaultDesign.horizontalTail); if (!validateControlSurfaceModel({ ...state.design, horizontalTail }).valid) return state; return { design: { ...state.design, revision: state.design.revision + 1, horizontalTail }, horizontalTailHistory: [...state.horizontalTailHistory.slice(-49), structuredClone(state.design.horizontalTail)], selectedHorizontalTailStationId: horizontalTail.stations[0].id }; }),
   commitVerticalTailGeometry: (verticalTail, selectedVerticalTailStationId) => {
-    const validation = validateVerticalTailGeometry(verticalTail); if (!validation.valid) return validation.errors; const state = get(); const prospective = { ...state.design, verticalTail }; const controls = validateControlSurfaceModel(prospective); if (!controls.valid) return controls.errors.map((error) => `Vertical-tail change conflicts with a control surface: ${error}`);
+    const validation = validateVerticalTailGeometry(verticalTail, get().airfoilLibrary); if (!validation.valid) return validation.errors; const state = get(); const prospective = { ...state.design, verticalTail }; const controls = validateControlSurfaceModel(prospective); if (!controls.valid) return controls.errors.map((error) => `Vertical-tail change conflicts with a control surface: ${error}`);
     set({ design: { ...state.design, revision: state.design.revision + 1, verticalTail }, verticalTailHistory: [...state.verticalTailHistory.slice(-49), structuredClone(state.design.verticalTail)], selectedVerticalTailStationId: selectedVerticalTailStationId ?? state.selectedVerticalTailStationId }); return [];
   },
   undoVerticalTailGeometry: () => set((state) => { const previous = state.verticalTailHistory.at(-1); if (!previous || !validateControlSurfaceModel({ ...state.design, verticalTail: previous }).valid) return state; return { design: { ...state.design, revision: state.design.revision + 1, verticalTail: previous }, verticalTailHistory: state.verticalTailHistory.slice(0, -1), selectedVerticalTailStationId: previous.stations.some((station) => station.id === state.selectedVerticalTailStationId) ? state.selectedVerticalTailStationId : previous.stations[0].id }; }),

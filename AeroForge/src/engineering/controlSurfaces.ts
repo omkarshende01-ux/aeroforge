@@ -6,7 +6,9 @@ import type {
   ControlSurfaceParent,
   ControlSurfaceSide,
 } from '../domain/types';
-import { naca4PointAtChordFraction, type AirfoilSurfaceSide } from './airfoil';
+import type { AirfoilSurfaceSide } from './airfoil';
+import type { AirfoilLibrary } from '../domain/airfoilData';
+import { airfoilPointAtChordFraction } from './airfoilData';
 import { physicalWingStations } from './wingGeometry';
 import { sampleWingSectionAtSpan, transformWingAirfoilPoint, type AircraftPoint3, type AirfoilPoint2, type WingSectionSample } from './wingLoft';
 import { sampleHorizontalTailSectionAtDistance, sampleVerticalTailSection, transformVerticalTailAirfoilPoint } from './tailGeometry';
@@ -63,7 +65,7 @@ function physicalSides(surface: ControlSurfaceDefinition): PhysicalControlSide[]
 }
 
 function wingSideSpan(design: AircraftDesign, side: 'port' | 'starboard'): number {
-  const stations = physicalWingStations(design.wing);
+  const stations = physicalWingStations(design.wing, undefined, true);
   return side === 'port' ? Math.abs(stations[0].spanPositionM) : stations.at(-1)!.spanPositionM;
 }
 
@@ -76,7 +78,7 @@ function maximumSpan(design: AircraftDesign, parent: ControlSurfaceParent, side:
 function parentPanelBoundaries(design: AircraftDesign, parent: ControlSurfaceParent, side: PhysicalControlSide): number[] {
   if (parent === 'horizontal-tail') return design.horizontalTail.stations.map((station) => station.spanPositionM);
   if (parent === 'vertical-tail') return design.verticalTail.stations.map((station) => station.spanPositionM);
-  const distances = physicalWingStations(design.wing)
+  const distances = physicalWingStations(design.wing, undefined, true)
     .filter((station) => side === 'port' ? station.spanPositionM <= tolerance : station.spanPositionM >= -tolerance)
     .map((station) => Math.abs(station.spanPositionM));
   return [...new Set(distances)].sort((a, b) => a - b);
@@ -200,30 +202,30 @@ type ParentSample = {
   profilePoint: (xOverChord: number, side: AirfoilSurfaceSide) => AircraftPoint3;
 };
 
-function blendAirfoilPoint(sample: Pick<WingSectionSample, 'fromAirfoilId' | 'toAirfoilId' | 'airfoilBlendFraction'>, xOverChord: number, side: AirfoilSurfaceSide): AirfoilPoint2 {
-  const from = naca4PointAtChordFraction(sample.fromAirfoilId, xOverChord, side);
-  const to = naca4PointAtChordFraction(sample.toAirfoilId, xOverChord, side);
+function blendAirfoilPoint(sample: Pick<WingSectionSample, 'fromAirfoilId' | 'toAirfoilId' | 'airfoilBlendFraction'>, xOverChord: number, side: AirfoilSurfaceSide, airfoilLibrary?: AirfoilLibrary): AirfoilPoint2 {
+  const from = airfoilPointAtChordFraction(sample.fromAirfoilId, xOverChord, side, airfoilLibrary);
+  const to = airfoilPointAtChordFraction(sample.toAirfoilId, xOverChord, side, airfoilLibrary);
   return [interpolate(from[0], to[0], sample.airfoilBlendFraction), interpolate(from[1], to[1], sample.airfoilBlendFraction)];
 }
 
-function parentSample(design: AircraftDesign, parent: ControlSurfaceParent, side: PhysicalControlSide, distanceM: number): ParentSample {
+function parentSample(design: AircraftDesign, parent: ControlSurfaceParent, side: PhysicalControlSide, distanceM: number, airfoilLibrary?: AirfoilLibrary): ParentSample {
   if (parent === 'wing') {
-    const spanPositionM = side === 'port' ? -distanceM : distanceM; const sample = sampleWingSectionAtSpan(design.wing, spanPositionM);
+    const spanPositionM = side === 'port' ? -distanceM : distanceM; const sample = sampleWingSectionAtSpan(design.wing, spanPositionM, airfoilLibrary);
     return {
       chordM: sample.station.chordM,
       point: (x, z) => transformWingAirfoilPoint(sample.station, [x, z]),
-      profilePoint: (x, surfaceSide) => transformWingAirfoilPoint(sample.station, blendAirfoilPoint(sample, x, surfaceSide)),
+      profilePoint: (x, surfaceSide) => transformWingAirfoilPoint(sample.station, blendAirfoilPoint(sample, x, surfaceSide, airfoilLibrary)),
     };
   }
   if (parent === 'horizontal-tail') {
-    const sample = sampleHorizontalTailSectionAtDistance(design.horizontalTail, side as 'port' | 'starboard', distanceM);
-    return { chordM: sample.station.chordM, point: (x, z) => transformWingAirfoilPoint(sample.station, [x, z]), profilePoint: (x, surfaceSide) => transformWingAirfoilPoint(sample.station, blendAirfoilPoint(sample, x, surfaceSide)) };
+    const sample = sampleHorizontalTailSectionAtDistance(design.horizontalTail, side as 'port' | 'starboard', distanceM, airfoilLibrary);
+    return { chordM: sample.station.chordM, point: (x, z) => transformWingAirfoilPoint(sample.station, [x, z]), profilePoint: (x, surfaceSide) => transformWingAirfoilPoint(sample.station, blendAirfoilPoint(sample, x, surfaceSide, airfoilLibrary)) };
   }
   const sample = sampleVerticalTailSection(design.verticalTail, distanceM);
   return {
     chordM: sample.station.chordM,
     point: (x, y) => transformVerticalTailAirfoilPoint(design.verticalTail, sample.station, [x, y]),
-    profilePoint: (x, surfaceSide) => transformVerticalTailAirfoilPoint(design.verticalTail, sample.station, blendAirfoilPoint(sample, x, surfaceSide)),
+    profilePoint: (x, surfaceSide) => transformVerticalTailAirfoilPoint(design.verticalTail, sample.station, blendAirfoilPoint(sample, x, surfaceSide, airfoilLibrary)),
   };
 }
 
@@ -257,10 +259,10 @@ function trailingEdgeRing(sample: ParentSample, hingeChordFraction: number): Air
   return [...fractions.slice().reverse().map((fraction) => sample.profilePoint(fraction, 'upper')), ...fractions.map((fraction) => sample.profilePoint(fraction, 'lower'))];
 }
 
-function instanceProperties(design: AircraftDesign, surface: ControlSurfaceDefinition, side: PhysicalControlSide): ControlSurfaceInstanceProperties {
-  const start = parentSample(design, surface.parentSurface, side, surface.spanStartM); const end = parentSample(design, surface.parentSurface, side, surface.spanEndM);
+function instanceProperties(design: AircraftDesign, surface: ControlSurfaceDefinition, side: PhysicalControlSide, airfoilLibrary?: AirfoilLibrary): ControlSurfaceInstanceProperties {
+  const start = parentSample(design, surface.parentSurface, side, surface.spanStartM, airfoilLibrary); const end = parentSample(design, surface.parentSurface, side, surface.spanEndM, airfoilLibrary);
   const hingeStart = start.point(surface.hingeChordFraction, 0); const hingeEnd = end.point(surface.hingeChordFraction, 0);
-  const middle = parentSample(design, surface.parentSurface, side, (surface.spanStartM + surface.spanEndM) / 2).point(surface.hingeChordFraction, 0);
+  const middle = parentSample(design, surface.parentSurface, side, (surface.spanStartM + surface.spanEndM) / 2, airfoilLibrary).point(surface.hingeChordFraction, 0);
   return {
     key: `${surface.id}-${side}`, side, projectedSpanM: surface.spanEndM - surface.spanStartM,
     projectedAreaM2: (surface.spanEndM - surface.spanStartM) * (start.chordM + end.chordM) * surface.chordFraction / 2,
@@ -269,10 +271,10 @@ function instanceProperties(design: AircraftDesign, surface: ControlSurfaceDefin
   };
 }
 
-export function calculateControlSurfaceProperties(design: AircraftDesign, surface: ControlSurfaceDefinition): ControlSurfaceProperties {
+export function calculateControlSurfaceProperties(design: AircraftDesign, surface: ControlSurfaceDefinition, airfoilLibrary?: AirfoilLibrary): ControlSurfaceProperties {
   const validation = validateControlSurfaceModel(design);
   if (!validation.valid) throw new RangeError(validation.errors.join(' '));
-  const instances = physicalSides(surface).map((side) => instanceProperties(design, surface, side));
+  const instances = physicalSides(surface).map((side) => instanceProperties(design, surface, side, airfoilLibrary));
   const warnings = instances.filter((instance) => instance.hingeStraightnessDeviationM > 1e-6).map((instance) => `${instance.side} hinge uses a straight endpoint-axis approximation; midpoint deviation is ${(instance.hingeStraightnessDeviationM * 1000).toFixed(2)} mm.`);
   return {
     id: surface.id,
@@ -283,10 +285,10 @@ export function calculateControlSurfaceProperties(design: AircraftDesign, surfac
   };
 }
 
-export function buildControlSurfaceGeometry(design: AircraftDesign, surface: ControlSurfaceDefinition): ControlSurfaceGeometryInstance[] {
-  const properties = calculateControlSurfaceProperties(design, surface);
+export function buildControlSurfaceGeometry(design: AircraftDesign, surface: ControlSurfaceDefinition, airfoilLibrary?: AirfoilLibrary): ControlSurfaceGeometryInstance[] {
+  const properties = calculateControlSurfaceProperties(design, surface, airfoilLibrary);
   return properties.instances.map((instance) => {
-    const start = parentSample(design, surface.parentSurface, instance.side, surface.spanStartM); const end = parentSample(design, surface.parentSurface, instance.side, surface.spanEndM);
+    const start = parentSample(design, surface.parentSurface, instance.side, surface.spanStartM, airfoilLibrary); const end = parentSample(design, surface.parentSurface, instance.side, surface.spanEndM, airfoilLibrary);
     const startRing = trailingEdgeRing(start, surface.hingeChordFraction); const endRing = trailingEdgeRing(end, surface.hingeChordFraction); const ringSize = startRing.length;
     const neutralVertices: AircraftPoint3[] = [...startRing, ...endRing]; const indices: number[] = [];
     for (let index = 0; index < ringSize; index += 1) {

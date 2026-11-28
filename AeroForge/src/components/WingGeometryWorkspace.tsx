@@ -18,13 +18,14 @@ import { Viewport } from './Viewport';
 import { ControlSurfaceEditor } from './ControlSurfaceEditor';
 import { FuselageEditor } from './FuselageEditor';
 import { EmpennageEditor } from './EmpennageEditor';
-
-const airfoilOptions = ['NACA 0012', 'NACA 2412', 'NACA 4412'];
+import { airfoilDisplayOptions } from '../engineering/airfoilData';
 
 function numberValue(value: string): number { return value === '' ? Number.NaN : Number(value); }
 
 export function WingGeometryWorkspace() {
   const design = useDesignStore((state) => state.design);
+  const airfoilLibrary = useDesignStore((state) => state.airfoilLibrary);
+  const airfoilOptions = useMemo(() => airfoilDisplayOptions(airfoilLibrary), [airfoilLibrary]);
   const historyCount = useDesignStore((state) => state.wingHistory.length);
   const selectedStationId = useDesignStore((state) => state.selectedWingStationId) ?? design.wing.stations[0].id;
   const selectStation = useDesignStore((state) => state.selectWingStation);
@@ -104,7 +105,7 @@ export function WingGeometryWorkspace() {
               <td>{section ? <input aria-label={`${section.id} leading edge sweep`} type="number" step="0.5" value={Number(sectionSweepDeg(wing, index).toFixed(6))} onChange={(event) => apply(editWingSectionSweep(wing, section.id, numberValue(event.target.value)))} /> : <span className="not-applicable">TIP</span>}</td>
               <td><input aria-label={`${station.id} geometric twist`} type="number" step="0.25" value={station.geometricTwistDeg} onChange={(event) => editNumber(station.id, 'geometricTwistDeg', event.target.value)} /></td>
               <td>{section ? <input aria-label={`${section.id} dihedral`} type="number" step="0.25" value={section.dihedralDeg} onChange={(event) => apply(editWingSection(wing, section.id, { dihedralDeg: numberValue(event.target.value) }))} /> : <span className="not-applicable">TIP</span>}</td>
-              <td><select aria-label={`${station.id} airfoil`} value={station.airfoilId} onChange={(event) => apply(editWingStation(wing, station.id, { airfoilId: event.target.value }))}>{!airfoilOptions.includes(station.airfoilId) && <option value={station.airfoilId}>{station.airfoilId}</option>}{airfoilOptions.map((airfoil) => <option key={airfoil} value={airfoil}>{airfoil}</option>)}</select></td>
+              <td><select aria-label={`${station.id} airfoil`} value={station.airfoilId} onChange={(event) => apply(editWingStation(wing, station.id, { airfoilId: event.target.value }))}>{!airfoilOptions.some((airfoil) => airfoil.id === station.airfoilId) && <option value={station.airfoilId}>{station.airfoilId}</option>}{airfoilOptions.map((airfoil) => <option key={airfoil.id} value={airfoil.id}>{airfoil.name}</option>)}</select></td>
             </tr>;
           })}</tbody>
         </table>

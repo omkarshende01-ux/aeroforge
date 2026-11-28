@@ -1,5 +1,11 @@
 # Proposed architecture
 
+## M6.1 airfoil data boundary
+
+The model-v1 airfoil library is versioned independently from aircraft schema v3. Aircraft lifting-surface stations continue to store stable airfoil identifiers. Pure resolvers map an identifier to either the deterministic NACA four-digit generator or a registered imported geometry, and the library is passed explicitly into render-loft, control-surface, and computational-mesh generation. This avoids global mutable registries and avoids a schema-v4 migration solely for source data.
+
+Imported geometry stores normalized leading-edge-to-trailing-edge upper/lower surfaces plus raw source and provenance. Polar datasets reference an airfoil identifier but remain separate 2-D sectional records. Store operations enforce unique IDs, prevent removal of referenced profiles, and increment the aircraft design revision when a station selection changes, so retained computational meshes become stale through the existing revision contract.
+
 ## Stack
 React + strict TypeScript + Vite, Three.js via React Three Fiber, Zustand for shared state, Tailwind CSS, Vitest; Plotly.js for plots when needed. Start browser-only. Later use Python with NumPy/SciPy/AeroSandbox and FastAPI for advanced computation, potentially hosted on Railway/Render, while Vercel serves the frontend. GitHub for version control. Verify current library compatibility before installation.
 

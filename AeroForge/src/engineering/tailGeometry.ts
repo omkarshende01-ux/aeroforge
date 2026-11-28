@@ -1,5 +1,6 @@
 import type { AircraftDesign, HorizontalTailGeometry, VerticalTailGeometry, WingGeometry, WingSection, WingStation } from '../domain/types';
-import { parseNaca4Designation } from './airfoil';
+import type { AirfoilLibrary } from '../domain/airfoilData';
+import { airfoilExists } from './airfoilData';
 import { calculateWingReferenceProperties, physicalWingStations, validateWingGeometry, wingLocationAtSpan, type PhysicalWingStation } from './wingGeometry';
 import { buildWingLoftRings, interpolateAirfoilCoordinates, sampleWingSectionAtSpan, transformWingAirfoilPoint, type AircraftPoint3, type AirfoilPoint2, type WingLoftRing, type WingSectionSample } from './wingLoft';
 
@@ -34,7 +35,7 @@ export type EmpennageReferenceProperties = {
 function finite(value: number): boolean { return Number.isFinite(value); }
 function interpolate(from: number, to: number, fraction: number): number { return from + fraction * (to - from); }
 
-function validateSourceStations(stations: WingStation[], sections: WingSection[], label: string, allowDihedral: boolean): string[] {
+function validateSourceStations(stations: WingStation[], sections: WingSection[], label: string, allowDihedral: boolean, airfoilLibrary?: AirfoilLibrary, allowUnregisteredAirfoils = false): string[] {
   const errors: string[] = []; const stationIds = new Set<string>(); const sectionIds = new Set<string>();
   if (stations.length < 2) errors.push(`${label} requires at least root and tip stations.`);
   stations.forEach((station, index) => {
@@ -45,7 +46,7 @@ function validateSourceStations(stations: WingStation[], sections: WingSection[]
     if (!finite(station.chordM) || station.chordM <= 0) errors.push(`${label} station ${station.id || index + 1} chord must be positive and finite.`);
     if (!finite(station.leadingEdgeXM)) errors.push(`${label} station ${station.id || index + 1} leading-edge x must be finite.`);
     if (!finite(station.geometricTwistDeg) || Math.abs(station.geometricTwistDeg) >= angleLimitDeg) errors.push(`${label} station ${station.id || index + 1} twist must remain within (-89, 89) deg.`);
-    if (!parseNaca4Designation(station.airfoilId)) errors.push(`${label} station ${station.id || index + 1} requires a supported positive-thickness NACA four-digit airfoil.`);
+    if (!allowUnregisteredAirfoils && !airfoilExists(airfoilLibrary, station.airfoilId)) errors.push(`${label} station ${station.id || index + 1} requires a supported NACA four-digit or registered imported airfoil.`);
   });
   if (sections.length !== Math.max(0, stations.length - 1)) errors.push(`${label} sections must connect every adjacent station.`);
   sections.forEach((section, index) => {
@@ -57,18 +58,18 @@ function validateSourceStations(stations: WingStation[], sections: WingSection[]
   return errors;
 }
 
-export function validateHorizontalTailGeometry(tail: HorizontalTailGeometry): TailValidation {
+export function validateHorizontalTailGeometry(tail: HorizontalTailGeometry, airfoilLibrary?: AirfoilLibrary, allowUnregisteredAirfoils = false): TailValidation {
   const errors = tail.modelVersion === TAIL_GEOMETRY_MODEL_VERSION ? [] : [`Unsupported horizontal-tail model version ${String(tail.modelVersion)}.`];
   if (!finite(tail.lateralPositionM) || !finite(tail.verticalPositionM)) errors.push('Horizontal-tail placement coordinates must be finite.');
   if (!finite(tail.incidenceDeg) || Math.abs(tail.incidenceDeg) >= angleLimitDeg) errors.push('Horizontal-tail incidence must remain within (-89, 89) deg.');
-  errors.push(...validateSourceStations(tail.stations, tail.sections, 'Horizontal tail', true));
+  errors.push(...validateSourceStations(tail.stations, tail.sections, 'Horizontal tail', true, airfoilLibrary, allowUnregisteredAirfoils));
   return { valid: errors.length === 0, errors: [...new Set(errors)] };
 }
 
-export function validateVerticalTailGeometry(tail: VerticalTailGeometry): TailValidation {
+export function validateVerticalTailGeometry(tail: VerticalTailGeometry, airfoilLibrary?: AirfoilLibrary, allowUnregisteredAirfoils = false): TailValidation {
   const errors = tail.modelVersion === TAIL_GEOMETRY_MODEL_VERSION ? [] : [`Unsupported vertical-tail model version ${String(tail.modelVersion)}.`];
   if (!finite(tail.lateralPositionM) || !finite(tail.baseVerticalPositionM)) errors.push('Vertical-tail placement coordinates must be finite.');
-  errors.push(...validateSourceStations(tail.stations, tail.sections, 'Vertical tail', false));
+  errors.push(...validateSourceStations(tail.stations, tail.sections, 'Vertical tail', false, airfoilLibrary, allowUnregisteredAirfoils));
   return { valid: errors.length === 0, errors: [...new Set(errors)] };
 }
 
@@ -106,12 +107,12 @@ export function verticalTailAsEditorWing(tail: VerticalTailGeometry): WingGeomet
 export function horizontalTailFromWing(tail: HorizontalTailGeometry, wing: WingGeometry): HorizontalTailGeometry { return { ...tail, stations: wing.stations.map((station) => ({ ...station })), sections: wing.sections.map((section) => ({ ...section })) }; }
 export function verticalTailFromWing(tail: VerticalTailGeometry, wing: WingGeometry): VerticalTailGeometry { return { ...tail, stations: wing.stations.map((station) => ({ ...station })), sections: wing.sections.map((section) => ({ ...section, dihedralDeg: 0 })) }; }
 
-export function horizontalTailPhysicalStations(tail: HorizontalTailGeometry): PhysicalWingStation[] {
-  return physicalWingStations(horizontalTailAsWing(tail, true)).map((station) => ({ ...station, spanPositionM: station.spanPositionM + tail.lateralPositionM }));
+export function horizontalTailPhysicalStations(tail: HorizontalTailGeometry, airfoilLibrary?: AirfoilLibrary): PhysicalWingStation[] {
+  return physicalWingStations(horizontalTailAsWing(tail, true), airfoilLibrary).map((station) => ({ ...station, spanPositionM: station.spanPositionM + tail.lateralPositionM }));
 }
 
-export function sampleHorizontalTailSectionAtDistance(tail: HorizontalTailGeometry, side: 'port' | 'starboard', distanceM: number): WingSectionSample {
-  const sample = sampleWingSectionAtSpan(horizontalTailAsWing(tail, true), side === 'port' ? -distanceM : distanceM);
+export function sampleHorizontalTailSectionAtDistance(tail: HorizontalTailGeometry, side: 'port' | 'starboard', distanceM: number, airfoilLibrary?: AirfoilLibrary): WingSectionSample {
+  const sample = sampleWingSectionAtSpan(horizontalTailAsWing(tail, true), side === 'port' ? -distanceM : distanceM, airfoilLibrary);
   return { ...sample, station: { ...sample.station, spanPositionM: sample.station.spanPositionM + tail.lateralPositionM } };
 }
 
@@ -130,30 +131,30 @@ export function transformVerticalTailAirfoilPoint(tail: VerticalTailGeometry, st
   return [quarterChordX + dx * Math.cos(angle) - dy * Math.sin(angle), tail.lateralPositionM + dx * Math.sin(angle) + dy * Math.cos(angle), station.verticalPositionM];
 }
 
-export function buildHorizontalTailLoftRings(tail: HorizontalTailGeometry): WingLoftRing[] {
-  return buildWingLoftRings(horizontalTailAsWing(tail, true)).map((ring) => ({ ...ring, spanPositionM: ring.spanPositionM + tail.lateralPositionM, points: ring.points.map((point) => [point[0], point[1] + tail.lateralPositionM, point[2]] as AircraftPoint3) }));
+export function buildHorizontalTailLoftRings(tail: HorizontalTailGeometry, airfoilLibrary?: AirfoilLibrary): WingLoftRing[] {
+  return buildWingLoftRings(horizontalTailAsWing(tail, true), undefined, undefined, airfoilLibrary).map((ring) => ({ ...ring, spanPositionM: ring.spanPositionM + tail.lateralPositionM, points: ring.points.map((point) => [point[0], point[1] + tail.lateralPositionM, point[2]] as AircraftPoint3) }));
 }
 
-export function buildVerticalTailLoftRings(tail: VerticalTailGeometry, intervalsPerSection = 4): VerticalTailLoftRing[] {
+export function buildVerticalTailLoftRings(tail: VerticalTailGeometry, intervalsPerSection = 4, airfoilLibrary?: AirfoilLibrary): VerticalTailLoftRing[] {
   const rings: VerticalTailLoftRing[] = [];
   for (let sectionIndex = 0; sectionIndex < tail.stations.length - 1; sectionIndex += 1) {
     const from = tail.stations[sectionIndex]; const to = tail.stations[sectionIndex + 1];
     for (let interval = sectionIndex === 0 ? 0 : 1; interval <= intervalsPerSection; interval += 1) {
-      const fraction = interval / intervalsPerSection; const height = interpolate(from.spanPositionM, to.spanPositionM, fraction); const sample = sampleVerticalTailSection(tail, height); const local = interpolateAirfoilCoordinates(from.airfoilId, to.airfoilId, fraction);
+      const fraction = interval / intervalsPerSection; const height = interpolate(from.spanPositionM, to.spanPositionM, fraction); const sample = sampleVerticalTailSection(tail, height); const local = interpolateAirfoilCoordinates(from.airfoilId, to.airfoilId, fraction, undefined, airfoilLibrary);
       rings.push({ heightPositionM: height, chordM: sample.station.chordM, leadingEdgeXM: sample.station.leadingEdgeXM, lateralPositionM: tail.lateralPositionM, verticalPositionM: sample.station.verticalPositionM, geometricTwistDeg: sample.station.geometricTwistDeg, fromAirfoilId: from.airfoilId, toAirfoilId: to.airfoilId, airfoilBlendFraction: fraction, points: local.map((point) => transformVerticalTailAirfoilPoint(tail, sample.station, point)) });
     }
   }
   return rings;
 }
 
-export function horizontalTailStationCrossSection(tail: HorizontalTailGeometry, stationId: string): AircraftPoint3[] {
-  const station = horizontalTailPhysicalStations(tail).find((item) => item.id.replace(/-mirrored$/, '') === stationId); if (!station) throw new RangeError(`Horizontal-tail station "${stationId}" was not found.`);
-  return interpolateAirfoilCoordinates(station.airfoilId, station.airfoilId, 0).map((point) => transformWingAirfoilPoint(station, point));
+export function horizontalTailStationCrossSection(tail: HorizontalTailGeometry, stationId: string, airfoilLibrary?: AirfoilLibrary): AircraftPoint3[] {
+  const station = horizontalTailPhysicalStations(tail, airfoilLibrary).find((item) => item.id.replace(/-mirrored$/, '') === stationId); if (!station) throw new RangeError(`Horizontal-tail station "${stationId}" was not found.`);
+  return interpolateAirfoilCoordinates(station.airfoilId, station.airfoilId, 0, undefined, airfoilLibrary).map((point) => transformWingAirfoilPoint(station, point));
 }
 
-export function verticalTailStationCrossSection(tail: VerticalTailGeometry, stationId: string): AircraftPoint3[] {
+export function verticalTailStationCrossSection(tail: VerticalTailGeometry, stationId: string, airfoilLibrary?: AirfoilLibrary): AircraftPoint3[] {
   const source = tail.stations.find((station) => station.id === stationId); if (!source) throw new RangeError(`Vertical-tail station "${stationId}" was not found.`); const station = sampleVerticalTailSection(tail, source.spanPositionM).station;
-  return interpolateAirfoilCoordinates(source.airfoilId, source.airfoilId, 0).map((point) => transformVerticalTailAirfoilPoint(tail, station, point));
+  return interpolateAirfoilCoordinates(source.airfoilId, source.airfoilId, 0, undefined, airfoilLibrary).map((point) => transformVerticalTailAirfoilPoint(tail, station, point));
 }
 
 function integrateVerticalTail(tail: VerticalTailGeometry): TailReferenceProperties {
@@ -171,11 +172,11 @@ function integrateVerticalTail(tail: VerticalTailGeometry): TailReferencePropert
 }
 
 export function calculateHorizontalTailReferenceProperties(tail: HorizontalTailGeometry): TailReferenceProperties {
-  const validation = validateHorizontalTailGeometry(tail); if (!validation.valid) throw new RangeError(validation.errors.join(' ')); const equivalentWing = horizontalTailAsWing(tail); const properties = calculateWingReferenceProperties(equivalentWing); const referenceLocation = wingLocationAtSpan(equivalentWing, properties.meanAerodynamicChordSpanPositionM);
+  const validation = validateHorizontalTailGeometry(tail, undefined, true); if (!validation.valid) throw new RangeError(validation.errors.join(' ')); const equivalentWing = horizontalTailAsWing(tail); const properties = calculateWingReferenceProperties(equivalentWing); const referenceLocation = wingLocationAtSpan(equivalentWing, properties.meanAerodynamicChordSpanPositionM);
   return { projectedAreaM2: properties.projectedAreaM2, spanM: properties.totalSpanM, aspectRatio: properties.aspectRatio, meanAerodynamicChordM: properties.meanAerodynamicChordM, meanAerodynamicChordLeadingEdgeXM: properties.meanAerodynamicChordLeadingEdgeXM, meanAerodynamicChordQuarterChordXM: properties.meanAerodynamicChordQuarterChordXM, meanAerodynamicChordSpanPositionM: properties.meanAerodynamicChordSpanPositionM, aerodynamicCenterM: [properties.meanAerodynamicChordQuarterChordXM, tail.lateralPositionM, referenceLocation.verticalPositionM] };
 }
 
-export function calculateVerticalTailReferenceProperties(tail: VerticalTailGeometry): TailReferenceProperties { const validation = validateVerticalTailGeometry(tail); if (!validation.valid) throw new RangeError(validation.errors.join(' ')); return integrateVerticalTail(tail); }
+export function calculateVerticalTailReferenceProperties(tail: VerticalTailGeometry): TailReferenceProperties { const validation = validateVerticalTailGeometry(tail, undefined, true); if (!validation.valid) throw new RangeError(validation.errors.join(' ')); return integrateVerticalTail(tail); }
 
 export function calculateEmpennageReferenceProperties(design: AircraftDesign): EmpennageReferenceProperties {
   const horizontal = calculateHorizontalTailReferenceProperties(design.horizontalTail); const vertical = calculateVerticalTailReferenceProperties(design.verticalTail); const wing = calculateWingReferenceProperties(design.wing);

@@ -25,6 +25,7 @@ npm run build
 
 - Parametric wing, fuselage and empennage geometry with a Three.js viewport.
 - NACA four-digit airfoil sections and trapezoidal-wing metrics.
+- Versioned Selig/Lednicer/CSV airfoil-coordinate and CSV/XFOIL polar import with provenance, validation, preview, and lifting-surface selection.
 - ISA troposphere or manual density flight conditions.
 - Linear finite-wing lift, parabolic drag polar, lift/drag forces and an analytical elliptical span-load estimate.
 - Component mass/CG accounting, mission power and range estimates, static margin, a simplified maneuver envelope and constant-EI wing-beam loads.

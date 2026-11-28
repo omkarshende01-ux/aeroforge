@@ -11,7 +11,8 @@ import type {
 } from '../domain/analysisGeometry';
 import { ANALYSIS_GEOMETRY_MODEL_VERSION } from '../domain/analysisGeometry';
 import type { AircraftDesign, ControlSurfaceDefinition } from '../domain/types';
-import { naca4PointAtChordFraction } from './airfoil';
+import type { AirfoilLibrary } from '../domain/airfoilData';
+import { airfoilPointAtChordFraction } from './airfoilData';
 import { validateControlSurfaceModel } from './controlSurfaces';
 import {
   horizontalTailPhysicalStations,
@@ -66,14 +67,14 @@ function average(points: AnalysisPoint3[]): AnalysisPoint3 { return scale(points
 function finitePoint(point: AnalysisPoint3): boolean { return point.every(Number.isFinite); }
 function interpolate(from: number, to: number, fraction: number): number { return from + fraction * (to - from); }
 
-function meanCamberPoint(airfoilId: string, chordFraction: number): AirfoilPoint2 {
-  const upper = naca4PointAtChordFraction(airfoilId, chordFraction, 'upper');
-  const lower = naca4PointAtChordFraction(airfoilId, chordFraction, 'lower');
+function meanCamberPoint(airfoilId: string, chordFraction: number, airfoilLibrary?: AirfoilLibrary): AirfoilPoint2 {
+  const upper = airfoilPointAtChordFraction(airfoilId, chordFraction, 'upper', airfoilLibrary);
+  const lower = airfoilPointAtChordFraction(airfoilId, chordFraction, 'lower', airfoilLibrary);
   return [(upper[0] + lower[0]) / 2, (upper[1] + lower[1]) / 2];
 }
 
-function blendedMeanCamberPoint(fromAirfoilId: string, toAirfoilId: string, blend: number, chordFraction: number): AirfoilPoint2 {
-  const from = meanCamberPoint(fromAirfoilId, chordFraction); const to = meanCamberPoint(toAirfoilId, chordFraction);
+function blendedMeanCamberPoint(fromAirfoilId: string, toAirfoilId: string, blend: number, chordFraction: number, airfoilLibrary?: AirfoilLibrary): AirfoilPoint2 {
+  const from = meanCamberPoint(fromAirfoilId, chordFraction, airfoilLibrary); const to = meanCamberPoint(toAirfoilId, chordFraction, airfoilLibrary);
   return [interpolate(from[0], to[0], blend), interpolate(from[1], to[1], blend)];
 }
 
@@ -84,55 +85,55 @@ function sectionSourceIndex(physicalIndex: number, sourceSectionCount: number, s
 
 function sectionSideSuffix(spanCoordinateM: number, centerM: number): string { return spanCoordinateM < centerM ? 'port' : 'starboard'; }
 
-function wingAdapter(design: AircraftDesign): SurfaceAdapter {
-  const stations = physicalWingStations(design.wing); const sourceCount = design.wing.sections.length;
+function wingAdapter(design: AircraftDesign, airfoilLibrary?: AirfoilLibrary): SurfaceAdapter {
+  const stations = physicalWingStations(design.wing, airfoilLibrary); const sourceCount = design.wing.sections.length;
   return {
     id: 'wing', spanStartM: stations[0].spanPositionM, spanEndM: stations.at(-1)!.spanPositionM,
     stationBoundariesM: stations.map((station) => station.spanPositionM), expectedNormal: [0, 0, 1],
     pointAt: (span, chordFraction) => {
-      const sample = sampleWingSectionAtSpan(design.wing, span);
-      return transformWingAirfoilPoint(sample.station, blendedMeanCamberPoint(sample.fromAirfoilId, sample.toAirfoilId, sample.airfoilBlendFraction, chordFraction));
+      const sample = sampleWingSectionAtSpan(design.wing, span, airfoilLibrary);
+      return transformWingAirfoilPoint(sample.station, blendedMeanCamberPoint(sample.fromAirfoilId, sample.toAirfoilId, sample.airfoilBlendFraction, chordFraction, airfoilLibrary));
     },
     sectionIdAt: (span) => {
-      const sample = sampleWingSectionAtSpan(design.wing, span); const sourceIndex = sectionSourceIndex(sample.physicalSectionIndex, sourceCount, design.wing.symmetry === 'symmetric');
+      const sample = sampleWingSectionAtSpan(design.wing, span, airfoilLibrary); const sourceIndex = sectionSourceIndex(sample.physicalSectionIndex, sourceCount, design.wing.symmetry === 'symmetric');
       const sourceId = design.wing.sections[sourceIndex].id;
       return design.wing.symmetry === 'symmetric' ? `${sourceId}-${sectionSideSuffix(span, 0)}` : sourceId;
     },
   };
 }
 
-function horizontalTailAdapter(design: AircraftDesign): SurfaceAdapter {
-  const tail = design.horizontalTail; const stations = horizontalTailPhysicalStations(tail); const center = tail.lateralPositionM; const sourceCount = tail.sections.length;
+function horizontalTailAdapter(design: AircraftDesign, airfoilLibrary?: AirfoilLibrary): SurfaceAdapter {
+  const tail = design.horizontalTail; const stations = horizontalTailPhysicalStations(tail, airfoilLibrary); const center = tail.lateralPositionM; const sourceCount = tail.sections.length;
   return {
     id: 'horizontal-tail', spanStartM: stations[0].spanPositionM, spanEndM: stations.at(-1)!.spanPositionM,
     stationBoundariesM: stations.map((station) => station.spanPositionM), expectedNormal: [0, 0, 1],
     pointAt: (span, chordFraction) => {
-      const side = span < center ? 'port' : 'starboard'; const sample = sampleHorizontalTailSectionAtDistance(tail, side, Math.abs(span - center));
-      return transformWingAirfoilPoint(sample.station, blendedMeanCamberPoint(sample.fromAirfoilId, sample.toAirfoilId, sample.airfoilBlendFraction, chordFraction));
+      const side = span < center ? 'port' : 'starboard'; const sample = sampleHorizontalTailSectionAtDistance(tail, side, Math.abs(span - center), airfoilLibrary);
+      return transformWingAirfoilPoint(sample.station, blendedMeanCamberPoint(sample.fromAirfoilId, sample.toAirfoilId, sample.airfoilBlendFraction, chordFraction, airfoilLibrary));
     },
     sectionIdAt: (span) => {
-      const side = span < center ? 'port' : 'starboard'; const sample = sampleHorizontalTailSectionAtDistance(tail, side, Math.abs(span - center));
+      const side = span < center ? 'port' : 'starboard'; const sample = sampleHorizontalTailSectionAtDistance(tail, side, Math.abs(span - center), airfoilLibrary);
       return `${tail.sections[sectionSourceIndex(sample.physicalSectionIndex, sourceCount, true)].id}-${side}`;
     },
   };
 }
 
-function verticalTailAdapter(design: AircraftDesign): SurfaceAdapter {
+function verticalTailAdapter(design: AircraftDesign, airfoilLibrary?: AirfoilLibrary): SurfaceAdapter {
   const tail = design.verticalTail; const end = tail.stations.at(-1)!.spanPositionM;
   return {
     id: 'vertical-tail', spanStartM: 0, spanEndM: end, stationBoundariesM: tail.stations.map((station) => station.spanPositionM), expectedNormal: [0, 1, 0],
     pointAt: (height, chordFraction) => {
       const sample = sampleVerticalTailSection(tail, height);
-      return transformVerticalTailAirfoilPoint(tail, sample.station, blendedMeanCamberPoint(sample.fromAirfoilId, sample.toAirfoilId, sample.airfoilBlendFraction, chordFraction));
+      return transformVerticalTailAirfoilPoint(tail, sample.station, blendedMeanCamberPoint(sample.fromAirfoilId, sample.toAirfoilId, sample.airfoilBlendFraction, chordFraction, airfoilLibrary));
     },
     sectionIdAt: (height) => tail.sections[sampleVerticalTailSection(tail, height).sectionIndex].id,
   };
 }
 
-function adapterFor(design: AircraftDesign, id: AnalysisSurfaceId): SurfaceAdapter {
-  if (id === 'wing') return wingAdapter(design);
-  if (id === 'horizontal-tail') return horizontalTailAdapter(design);
-  return verticalTailAdapter(design);
+function adapterFor(design: AircraftDesign, id: AnalysisSurfaceId, airfoilLibrary?: AirfoilLibrary): SurfaceAdapter {
+  if (id === 'wing') return wingAdapter(design, airfoilLibrary);
+  if (id === 'horizontal-tail') return horizontalTailAdapter(design, airfoilLibrary);
+  return verticalTailAdapter(design, airfoilLibrary);
 }
 
 function spacing(count: number, kind: AnalysisSpacing): number[] {
@@ -219,11 +220,11 @@ function configurationIssues(configuration: AnalysisMeshConfiguration): MeshVali
   return issues;
 }
 
-function parentGeometryIssues(design: AircraftDesign, surfaceIds: AnalysisSurfaceId[]): MeshValidationIssue[] {
+function parentGeometryIssues(design: AircraftDesign, surfaceIds: AnalysisSurfaceId[], airfoilLibrary?: AirfoilLibrary): MeshValidationIssue[] {
   const checks: [AnalysisSurfaceId, { valid: boolean; errors: string[] }][] = [
-    ['wing', validateWingGeometry(design.wing)],
-    ['horizontal-tail', validateHorizontalTailGeometry(design.horizontalTail)],
-    ['vertical-tail', validateVerticalTailGeometry(design.verticalTail)],
+    ['wing', validateWingGeometry(design.wing, airfoilLibrary)],
+    ['horizontal-tail', validateHorizontalTailGeometry(design.horizontalTail, airfoilLibrary)],
+    ['vertical-tail', validateVerticalTailGeometry(design.verticalTail, airfoilLibrary)],
   ];
   const issues = checks.filter(([id]) => surfaceIds.includes(id)).flatMap(([surfaceId, validation]) => validation.errors.map((message) => ({ severity: 'error', code: 'invalid-parent-geometry', message, surfaceId }) as MeshValidationIssue));
   // Control validation samples its parent stations. Do not enter that path after
@@ -287,11 +288,11 @@ function emptyMesh(design: AircraftDesign, configuration: AnalysisMeshConfigurat
   };
 }
 
-export function generateAnalysisMesh(design: AircraftDesign, configuration: AnalysisMeshConfiguration = DEFAULT_ANALYSIS_MESH_CONFIGURATION): AerodynamicMesh {
+export function generateAnalysisMesh(design: AircraftDesign, configuration: AnalysisMeshConfiguration = DEFAULT_ANALYSIS_MESH_CONFIGURATION, airfoilLibrary?: AirfoilLibrary): AerodynamicMesh {
   const selectedIds = surfaceOrder.filter((id) => configuration.surfaceIds.includes(id));
-  const initialIssues = [...configurationIssues(configuration), ...parentGeometryIssues(design, selectedIds)];
+  const initialIssues = [...configurationIssues(configuration), ...parentGeometryIssues(design, selectedIds, airfoilLibrary)];
   if (initialIssues.some((issue) => issue.severity === 'error')) return emptyMesh(design, configuration, initialIssues);
-  const adapters = selectedIds.map((id) => adapterFor(design, id));
+  const adapters = selectedIds.map((id) => adapterFor(design, id, airfoilLibrary));
   const surfaceData = adapters.map((adapter) => ({ adapter, span: spanBreaks(design, adapter, configuration), chord: chordBreaks(design, adapter.id, configuration) }));
   const estimatedCount = surfaceData.reduce((sum, item) => sum + (item.span.length - 1) * (item.chord.length - 1), 0);
   if (estimatedCount > maximumPanelCount) return emptyMesh(design, configuration, [{ severity: 'error', code: 'invalid-configuration', message: `Requested mesh would create ${estimatedCount} panels; the interactive limit is ${maximumPanelCount}.` }]);

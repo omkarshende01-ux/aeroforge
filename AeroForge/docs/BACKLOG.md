@@ -35,6 +35,8 @@ Milestone status as of 2026-11-26:
 | GEO-04 | 3 | P1 | Generalized fuselage stations, closed loft, and geometric properties | GEO-01 | 2.0 d | **Complete (M5.5 conventional scope):** circular/elliptical/superelliptical stations, C1 interpolation, editor/history, closed mesh, volume/centroid, and convergent wetted area are tested; cabin/packaging semantics remain excluded |
 | AFL-01 | 4 | P0 | Airfoil coordinate and polar import parser with provenance/license fields | ARC-01 | 1.5 d | Valid fixtures round-trip; malformed files produce diagnostics |
 | AFL-02 | 4 | P0 | Reynolds/Mach/alpha polar interpolation with strict domain checks | AFL-01 | 2.0 d | Tabulated points and interpolation cases meet tolerance |
+
+M6.1 closes AFL-01 for the documented Selig, Lednicer, coordinate CSV, XFOIL text, and polar CSV formats. AFL-02 remains open; no interpolation or extrapolation is present.
 | AFL-03 | 4 | P1 | Airfoil plot, dataset selector, and provenance UI | AFL-01 | 1.0 d | User can identify source and valid domain for every curve |
 | VLM-01 | 5 | P0 | Analysis lattice, wake, boundary conditions, and robust linear solve | GEO-02 | 3.0 d | **Geometry precursor complete (M5.6):** versioned panels, collocation points, bound-vortex segments, refinement controls, and diagnostics exist; wake, boundary conditions, influence matrix, circulation, and residual solve remain |
 | VLM-02 | 5 | P0 | Force/moment coefficients and frame transforms | VLM-01 | 2.0 d | Sign/frame and zero-sideslip invariants pass |

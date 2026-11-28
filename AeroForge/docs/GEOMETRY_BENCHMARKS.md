@@ -122,7 +122,7 @@ The following are not blockers for a neutral conventional-wing first solver, but
 - bound vortices are panel-local quarter chord and collocation points are panel-local three-quarter chord, as required by the current thin-lattice convention;
 - port vortices are globally port-to-starboard, not root-to-tip; a solver must not reverse them when iterating each half independently;
 - only neutral control geometry is supported; deflected lattices, control gaps, and aerodynamic control effectiveness remain unavailable;
-- mean camber is derived only from supported NACA four-digit sections; no imported airfoil coordinates or polar provenance exists yet;
+- this M5.7 benchmark used mean camber derived only from supported NACA four-digit sections; M6.1 subsequently added imported coordinate and polar provenance without changing these benchmark cases;
 - vertical-tail `+y` orientation is conventional for the current single fin and must be handled consistently in force/moment transforms;
 - unconventional/canted/twin/V tails, curved rigid hinges across station breaks, complex high-lift devices, fuselage interference, and body lattices remain outside scope;
 - render surfaces are closed thickness lofts while computational surfaces are thin mean-camber lattices by design; their areas are not interchangeable.

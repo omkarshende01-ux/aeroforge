@@ -1,5 +1,13 @@
 # Engineering model specification (preliminary)
 
+## M6.1 imported airfoil geometry and polar data
+
+- Imported coordinates use normalized `(x/c,z/c)` with x aft from the leading edge and positive z on the upper surface. Import normalization translates the detected leading edge to `(0,0)` and uniformly scales by detected chord; it does not rotate, smooth, fit, or close data.
+- Stored surfaces run leading edge to trailing edge. Render lofts evaluate both surfaces at the established cosine stations, preserving matched topology for spanwise blending. Linear surface evaluation is a geometry resampling operation, not aerodynamic interpolation.
+- Polar records are two-dimensional sectional data at exact tabulated angle of attack, Reynolds, and Mach conditions. `CL`, `CD`, and `CM` are dimensionless; angle is degrees. The moment chord reference and nose-up/nose-down sign are stored explicitly. Missing values remain unavailable.
+- Experimental, computational, user-supplied, and generated sources are distinct. XFOIL text is classified as computational prediction. No imported polar is assumed to be truth or copied into the existing three-dimensional aircraft analytical model.
+- M6.1 adds no Reynolds/Mach interpolation, extrapolation, XFOIL/CFD/VLM solve, stall model, or automatic 2-D-to-3-D correction. See `docs/AIRFOIL_DATA.md` for exact formats and validation rules.
+
 ## Phase 1
 - Geometry and rendering use a right-handed aircraft-fixed convention: `x` aft from the nose, `y` starboard and `z` up. Positive sweep moves an outboard leading edge aft; positive dihedral raises both tips; twist is applied about each section's quarter-chord. Component placement stations use the same axes as mass and stability inputs.
 For a symmetric, single trapezoidal wing, span b, root chord cr, tip chord ct, taper lambda=ct/cr:
@@ -103,11 +111,11 @@ For a symmetric, single trapezoidal wing, span b, root chord cr, tip chord ct, t
 - Leading-edge sweep shown for a section is derived from its adjacent station coordinates, `Lambda_LE=atan2(Delta x_LE, Delta y)`. Editing sweep moves only that section's outboard leading edge. Dihedral remains a section property; twist and airfoil identifier remain station properties.
 - Undo stores validated in-session wing snapshots; reset restores the default schema-v2 wing. Neither is project persistence. Selection, markers, dimension annotations, and engineering camera views are visualization state only and do not affect geometry or metrics.
 - Live span, projected area, aspect ratio, MAC, and reference locations use the analytical M5.1 equations after every accepted edit. The renderer lofts the same expanded physical stations, so render tessellation and annotations cannot change reference properties.
-- Airfoil editing is restricted to the NACA four-digit identifiers currently supported by the loft generator. An identifier selects section coordinates only; it does not supply a polar. Control surfaces, VLM, complex-wing aerodynamic validity, takeoff analysis, and optimization remain outside M5.2.
+- M5.2 initially restricted airfoil editing to NACA four-digit identifiers. M6.1 also permits registered imported geometry in wing and tail editors. An identifier selects section coordinates only; it does not supply or apply a polar. VLM, complex-wing aerodynamic validity, takeoff analysis, and optimization remain outside this model.
 
 ## M5.3 section transforms and airfoil lofting
 
-- A local airfoil point is `(xi,zeta)`, normalized by local chord with `xi=0` at the leading edge and `xi=1` at the trailing edge. NACA four-digit surfaces use 36 cosine intervals on each surface. Positive thickness is required; unsupported identifiers are rejected by schema-v2 wing validation rather than failing inside the renderer.
+- A local airfoil point is `(xi,zeta)`, normalized by local chord with `xi=0` at the leading edge and `xi=1` at the trailing edge. NACA four-digit and M6.1 imported surfaces use 36 cosine intervals on each surface. Positive thickness is required; unsupported identifiers are rejected before geometry commit rather than failing inside the renderer.
 - For station chord `c`, leading edge `x_LE`, reference height `z_s`, span position `y_s`, and twist `theta`, define `dx=(xi-0.25)c`, `dz=zeta c`, and `x_q=x_LE+0.25c`. The aircraft-coordinate transform is `x=x_q+dx cos(theta)+dz sin(theta)`, `y=y_s`, `z=z_s-dx sin(theta)+dz cos(theta)`. Angles are converted from stored degrees to radians for evaluation.
 - Twist is right-handed about the station `+y` axis in the documented `x`-aft frame. Positive twist raises the leading edge and lowers the trailing edge; negative twist is washout. The point `(xi,zeta)=(0.25,0)` is invariant, so every section preserves its defined quarter-chord reference.
 - Sweep is represented by station leading-edge `x`; section dihedral propagates station reference height as defined in M5.1. Neither is reapplied in the local airfoil transform. Engineering cross-sections remain in constant-`y` station planes; this avoids double-counting reference-line sweep or dihedral and preserves the established schema-v2 convention.

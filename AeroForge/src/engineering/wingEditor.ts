@@ -5,7 +5,7 @@ export type WingStationNumericField = 'spanPositionM' | 'chordM' | 'leadingEdgeX
 export type WingEditResult = { wing?: WingGeometry; errors: string[]; selectedStationId?: string };
 
 function accepted(wing: WingGeometry, selectedStationId?: string): WingEditResult {
-  const validation = validateWingGeometry(wing);
+  const validation = validateWingGeometry(wing, undefined, true);
   return validation.valid ? { wing, errors: [], selectedStationId } : { errors: validation.errors };
 }
 
@@ -121,7 +121,7 @@ export function removeWingStation(wing: WingGeometry, stationId: string): WingEd
 export function changeWingSymmetry(wing: WingGeometry, symmetry: WingSymmetry): WingEditResult {
   if (wing.symmetry === symmetry) return accepted(wing, wing.stations[0]?.id);
   if (symmetry === 'asymmetric') {
-    const physical = physicalWingStations(wing);
+    const physical = physicalWingStations(wing, undefined, true);
     const stations: WingStation[] = physical.map(({ verticalPositionM: _verticalPositionM, ...station }) => ({ ...station }));
     const sections: WingSection[] = stations.slice(0, -1).map((station, index) => {
       const sourceIndex = index < wing.stations.length - 1 ? wing.stations.length - 2 - index : index - (wing.stations.length - 1);

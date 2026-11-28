@@ -1,5 +1,6 @@
 import type { AircraftDesign, WingGeometry, WingSection, WingStation } from '../domain/types';
-import { parseNaca4Designation } from './airfoil';
+import type { AirfoilLibrary } from '../domain/airfoilData';
+import { airfoilExists } from './airfoilData';
 import { migrateLegacyFuselage, type LegacyFuselageDefinition } from './fuselageGeometry';
 import { migrateLegacyHorizontalTail, migrateLegacyVerticalTail, type LegacyHorizontalTailDefinition, type LegacyVerticalTailDefinition } from './tailGeometry';
 
@@ -81,7 +82,7 @@ export function migrateLegacyWing(legacy: LegacyWingDefinition): WingGeometry {
   };
 }
 
-export function validateWingGeometry(wing: WingGeometry): WingGeometryValidation {
+export function validateWingGeometry(wing: WingGeometry, airfoilLibrary?: AirfoilLibrary, allowUnregisteredAirfoils = false): WingGeometryValidation {
   const errors: string[] = [];
   if (wing.modelVersion !== WING_GEOMETRY_MODEL_VERSION) errors.push(`Unsupported wing geometry model version ${String(wing.modelVersion)}.`);
   if (!finite(wing.verticalPositionM)) errors.push('Wing vertical position must be finite.');
@@ -95,7 +96,7 @@ export function validateWingGeometry(wing: WingGeometry): WingGeometryValidation
     if (!finite(station.leadingEdgeXM)) errors.push(`Wing station ${station.id || index} leading-edge x must be finite.`);
     if (!finite(station.geometricTwistDeg) || Math.abs(station.geometricTwistDeg) >= angleLimitDeg) errors.push(`Wing station ${station.id || index} twist must be finite and within (-89, 89) deg.`);
     if (!station.airfoilId.trim()) errors.push(`Wing station ${station.id || index} requires an airfoil identifier.`);
-    else if (!parseNaca4Designation(station.airfoilId)) errors.push(`Wing station ${station.id || index} airfoil must be a supported positive-thickness NACA four-digit designation.`);
+    else if (!allowUnregisteredAirfoils && !airfoilExists(airfoilLibrary, station.airfoilId)) errors.push(`Wing station ${station.id || index} airfoil must be a supported positive-thickness NACA four-digit designation or registered imported geometry.`);
     if (index > 0 && station.spanPositionM <= wing.stations[index - 1].spanPositionM) errors.push('Wing stations must be strictly ordered by increasing span position.');
   });
   if (wing.symmetry === 'symmetric') {
@@ -117,8 +118,8 @@ export function validateWingGeometry(wing: WingGeometry): WingGeometryValidation
   return { valid: errors.length === 0, errors };
 }
 
-function sourceStationsWithVerticalPosition(wing: WingGeometry): PhysicalWingStation[] {
-  const validation = validateWingGeometry(wing);
+function sourceStationsWithVerticalPosition(wing: WingGeometry, airfoilLibrary?: AirfoilLibrary, allowUnregisteredAirfoils = false): PhysicalWingStation[] {
+  const validation = validateWingGeometry(wing, airfoilLibrary, allowUnregisteredAirfoils);
   if (!validation.valid) throw new RangeError(validation.errors.join(' '));
   const rootIndex = wing.symmetry === 'symmetric' ? 0 : wing.stations.findIndex((station) => Math.abs(station.spanPositionM) <= tolerance);
   const result = wing.stations.map((station) => ({ ...station, verticalPositionM: wing.verticalPositionM }));
@@ -133,8 +134,8 @@ function sourceStationsWithVerticalPosition(wing: WingGeometry): PhysicalWingSta
   return result;
 }
 
-export function physicalWingStations(wing: WingGeometry): PhysicalWingStation[] {
-  const source = sourceStationsWithVerticalPosition(wing);
+export function physicalWingStations(wing: WingGeometry, airfoilLibrary?: AirfoilLibrary, allowUnregisteredAirfoils = false): PhysicalWingStation[] {
+  const source = sourceStationsWithVerticalPosition(wing, airfoilLibrary, allowUnregisteredAirfoils);
   if (wing.symmetry === 'asymmetric') return source;
   const mirrored = source.slice(1).reverse().map((station) => ({ ...station, id: `${station.id}-mirrored`, spanPositionM: -station.spanPositionM }));
   return [...mirrored, ...source];
@@ -167,7 +168,7 @@ function sectionProperties(from: PhysicalWingStation, to: PhysicalWingStation, s
 }
 
 export function calculateWingReferenceProperties(wing: WingGeometry): WingReferenceProperties {
-  const stations = physicalWingStations(wing);
+  const stations = physicalWingStations(wing, undefined, true);
   const sourceSectionByPair = new Map(wing.sections.map((section) => [`${section.fromStationId}|${section.toStationId}`, section]));
   const sections: WingSectionProperties[] = [];
   for (let index = 0; index < stations.length - 1; index += 1) {
@@ -198,7 +199,7 @@ export function calculateWingReferenceProperties(wing: WingGeometry): WingRefere
 }
 
 export function wingLocationAtSpan(wing: WingGeometry, spanPositionM: number): WingSpanwiseLocation {
-  const stations = physicalWingStations(wing);
+  const stations = physicalWingStations(wing, undefined, true);
   if (!finite(spanPositionM) || spanPositionM < stations[0].spanPositionM - tolerance || spanPositionM > stations[stations.length - 1].spanPositionM + tolerance) throw new RangeError('Span position lies outside the wing.');
   const exact = stations.find((station) => Math.abs(station.spanPositionM - spanPositionM) <= tolerance);
   if (exact) return { ...exact, quarterChordXM: exact.leadingEdgeXM + 0.25 * exact.chordM };
@@ -232,7 +233,7 @@ export function updateWingFromLegacyField(wing: WingGeometry, field: LegacyWingE
   const view = legacyWingView(wing);
   if (field === 'verticalPositionM') {
     const updated = { ...wing, verticalPositionM: value as number };
-    return validateWingGeometry(updated).valid ? updated : wing;
+    return validateWingGeometry(updated, undefined, true).valid ? updated : wing;
   }
   const stations = wing.stations.map((station) => ({ ...station }));
   const sections = wing.sections.map((section) => ({ ...section }));
@@ -261,7 +262,7 @@ export function updateWingFromLegacyField(wing: WingGeometry, field: LegacyWingE
     stations.forEach((station) => { station.airfoilId = value as string; });
   }
   const updated = { ...wing, stations, sections };
-  return validateWingGeometry(updated).valid ? updated : wing;
+  return validateWingGeometry(updated, undefined, true).valid ? updated : wing;
 }
 
 type LegacyGeometryComponents = {
